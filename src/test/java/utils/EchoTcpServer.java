@@ -18,11 +18,27 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.entity.arangosearch;
+package utils;
+
+import reactor.netty.tcp.TcpServer;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Michele Rastelli
  */
-public enum AnalyzerType {
-	identity, delimiter, stem, norm, ngram, text
+class EchoTcpServer {
+
+    public CompletableFuture<Void> start() {
+        CompletableFuture<Void> done = new CompletableFuture<>();
+        new Thread(() -> TcpServer.create()
+                .host("0.0.0.0")
+                .port(9000)
+                .doOnBound((c) -> done.complete(null))
+                .handle((inbound, outbound) -> outbound.sendByteArray(inbound.receive().asByteArray()).neverComplete())
+                .bindNow().onDispose().block()).start();
+
+        return done;
+    }
+
 }

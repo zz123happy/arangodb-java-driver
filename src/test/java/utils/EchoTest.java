@@ -18,18 +18,23 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.async.internal;
+package utils;
 
-import com.arangodb.internal.net.HostHandle;
-import com.arangodb.velocystream.Request;
-import com.arangodb.velocystream.Response;
-
-import java.io.Closeable;
-import java.util.concurrent.CompletableFuture;
+import org.junit.Test;
 
 /**
  * @author Michele Rastelli
  */
-public interface CommunicationAsync extends Closeable {
-    CompletableFuture<Response> execute(final Request request, final HostHandle hostHandle);
+public class EchoTest {
+
+    @Test
+    public void echoTcpTest() throws InterruptedException {
+        new EchoTcpServer().start().join();
+        EchoTcpClient echoClient = new EchoTcpClient();
+        echoClient.start().join();
+
+        echoClient.send("hello");
+        Thread.sleep(100);
+    }
+
 }
