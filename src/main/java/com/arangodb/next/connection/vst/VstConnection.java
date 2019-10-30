@@ -18,11 +18,9 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.internal.velocystream.internal;
+package com.arangodb.next.connection.vst;
 
-import com.arangodb.ArangoDBException;
-import com.arangodb.internal.net.Connection;
-import com.arangodb.internal.net.HostDescription;
+import com.arangodb.next.connection.HostDescription;
 import com.arangodb.velocypack.VPackSlice;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.ssl.ClientAuth;
@@ -41,7 +39,7 @@ import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import static com.arangodb.internal.ArangoDefaults.HEADER_SIZE;
+import static com.arangodb.next.ArangoDefaults.HEADER_SIZE;
 import static io.netty.buffer.Unpooled.wrappedBuffer;
 import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
 import static reactor.netty.resources.ConnectionProvider.DEFAULT_POOL_ACQUIRE_TIMEOUT;
@@ -50,7 +48,7 @@ import static reactor.netty.resources.ConnectionProvider.DEFAULT_POOL_ACQUIRE_TI
  * @author Mark Vollmary
  * @author Michele Rastelli
  */
-public abstract class VstConnection implements Connection {
+public abstract class VstConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(VstConnection.class);
     private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes();
 
@@ -119,20 +117,19 @@ public abstract class VstConnection implements Connection {
         }
     }
 
-    @Override
     public synchronized void close() {
         arangoTcpClient.disconnect();
     }
 
-    protected synchronized void writeIntern(final Message message, final Collection<Chunk> chunks) throws ArangoDBException {
-        final ByteBuf messageBuffer = IOUtils.createBuffer();
+    protected synchronized void writeIntern(final Message message, final Collection<Chunk> chunks) {
+        final ByteBuf messageBuffer = VstUtils.createBuffer();
         messageBuffer.writeBytes(message.getHead().getBuffer(), 0, message.getHead().getByteSize());
         final VPackSlice body = message.getBody();
         if (body != null) {
             messageBuffer.writeBytes(body.getBuffer(), 0, message.getBody().getByteSize());
         }
 
-        final ByteBuf out = IOUtils.createBuffer();
+        final ByteBuf out = VstUtils.createBuffer();
 
         for (final Chunk chunk : chunks) {
             if (LOGGER.isDebugEnabled()) {
@@ -167,8 +164,8 @@ public abstract class VstConnection implements Connection {
         private volatile CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
         private TcpClient tcpClient;
         private Chunk chunk;
-        private ByteBuf chunkHeaderBuffer = IOUtils.createBuffer();
-        private ByteBuf chunkContentBuffer = IOUtils.createBuffer();
+        private ByteBuf chunkHeaderBuffer = VstUtils.createBuffer();
+        private ByteBuf chunkContentBuffer = VstUtils.createBuffer();
         private final ChunkStore chunkStore;
 
         void send(ByteBuf buf) {

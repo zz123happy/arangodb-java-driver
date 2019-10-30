@@ -18,7 +18,7 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.internal.net;
+package com.arangodb.next.connection;
 
 /**
  * @author Mark Vollmary

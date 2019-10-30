@@ -18,21 +18,11 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.internal.http;
+package com.arangodb.next.connection.http;
 
-import com.arangodb.ArangoDBException;
-import com.arangodb.Protocol;
-import com.arangodb.internal.net.Connection;
-import com.arangodb.internal.net.HostDescription;
-import com.arangodb.internal.util.CURLLogger;
-import com.arangodb.internal.util.IOUtils;
-import com.arangodb.internal.util.ResponseUtils;
-import com.arangodb.util.ArangoSerialization;
-import com.arangodb.util.ArangoSerializer;
+import com.arangodb.next.connection.*;
 import com.arangodb.velocypack.VPackSlice;
-import com.arangodb.velocystream.Request;
-import com.arangodb.velocystream.RequestType;
-import com.arangodb.velocystream.Response;
+import com.arangodb.next.connection.vst.RequestType;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
@@ -50,7 +40,6 @@ import reactor.netty.http.client.HttpClientResponse;
 import reactor.netty.resources.ConnectionProvider;
 
 import javax.net.ssl.SSLContext;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
@@ -63,7 +52,7 @@ import static reactor.netty.resources.ConnectionProvider.DEFAULT_POOL_ACQUIRE_TI
 /**
  * @author Mark Vollmary
  */
-public class HttpConnection implements Connection {
+public class HttpConnection implements ArangoConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpConnection.class);
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=UTF-8";
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";
@@ -71,10 +60,9 @@ public class HttpConnection implements Connection {
     public static class Builder {
         private String user;
         private String password;
-        private ArangoSerialization util;
         private Boolean useSsl;
         private Boolean resendCookies;
-        private Protocol contentType;
+        private ContentType contentType;
         private HostDescription host;
         private Long ttl;
         private SSLContext sslContext;
@@ -90,11 +78,6 @@ public class HttpConnection implements Connection {
             return this;
         }
 
-        public Builder serializationUtil(final ArangoSerialization util) {
-            this.util = util;
-            return this;
-        }
-
         public Builder useSsl(final Boolean useSsl) {
             this.useSsl = useSsl;
             return this;
@@ -105,7 +88,7 @@ public class HttpConnection implements Connection {
             return this;
         }
 
-        public Builder contentType(final Protocol contentType) {
+        public Builder contentType(final ContentType contentType) {
             this.contentType = contentType;
             return this;
         }
@@ -131,16 +114,15 @@ public class HttpConnection implements Connection {
         }
 
         public HttpConnection build() {
-            return new HttpConnection(host, timeout, user, password, useSsl, sslContext, util, contentType, ttl, resendCookies);
+            return new HttpConnection(host, timeout, user, password, useSsl, sslContext, contentType, ttl, resendCookies);
         }
     }
 
     private final String user;
     private final String password;
-    private final ArangoSerialization util;
     private final Boolean useSsl;
     private final SSLContext sslContext;
-    private final Protocol contentType;
+    private final ContentType contentType;
     private final HostDescription host;
     private final Integer timeout;
     private final ConnectionProvider connectionProvider;
@@ -152,7 +134,7 @@ public class HttpConnection implements Connection {
     private final Map<Cookie, Long> cookies;
 
     private HttpConnection(final HostDescription host, final Integer timeout, final String user, final String password,
-                           final Boolean useSsl, final SSLContext sslContext, final ArangoSerialization util, final Protocol contentType,
+                           final Boolean useSsl, final SSLContext sslContext, final ContentType contentType,
                            final Long ttl, final Boolean resendCookies) {
         super();
         this.host = host;
@@ -161,7 +143,6 @@ public class HttpConnection implements Connection {
         this.password = password;
         this.useSsl = useSsl;
         this.sslContext = sslContext;
-        this.util = util;
         this.contentType = contentType;
         this.ttl = ttl;
         this.resendCookies = resendCookies;
@@ -217,7 +198,6 @@ public class HttpConnection implements Connection {
         return "Basic " + encodedAuth;
     }
 
-    @Override
     public void close() {
         connectionProvider.disposeLater().block();
     }
@@ -260,9 +240,9 @@ public class HttpConnection implements Connection {
     }
 
     private String getContentType() {
-        if (contentType == Protocol.HTTP_VPACK) {
+        if (contentType == ContentType.VPACK) {
             return CONTENT_TYPE_VPACK;
-        } else if (contentType == Protocol.HTTP_JSON) {
+        } else if (contentType == ContentType.JSON) {
             return CONTENT_TYPE_APPLICATION_JSON;
         } else {
             throw new IllegalArgumentException();
@@ -272,9 +252,9 @@ public class HttpConnection implements Connection {
     private byte[] getBody(final Request request) {
         final VPackSlice body = request.getBody();
         if (body != null) {
-            if (contentType == Protocol.HTTP_VPACK) {
+            if (contentType == ContentType.VPACK) {
                 return Arrays.copyOfRange(body.getBuffer(), body.getStart(), body.getStart() + body.getByteSize());
-            } else if (contentType == Protocol.HTTP_JSON) {
+            } else if (contentType == ContentType.JSON) {
                 return body.toString().getBytes();
             } else {
                 throw new IllegalArgumentException();
@@ -289,7 +269,7 @@ public class HttpConnection implements Connection {
                 .headers(headers -> {
                     headers.set(CONTENT_LENGTH, bodyLength);
                     headers.set(USER_AGENT, "Mozilla/5.0 (compatible; ArangoDB-JavaDriver/1.1; +http://mt.orz.at/)");
-                    if (contentType == Protocol.HTTP_VPACK) {
+                    if (contentType == ContentType.VPACK) {
                         headers.set(ACCEPT, "application/x-velocypack");
                     }
                     addHeaders(request, headers);
@@ -299,19 +279,10 @@ public class HttpConnection implements Connection {
                 });
     }
 
-    public Mono<Response> execute(final Request request) throws ArangoDBException {
+    @Override
+    public Mono<Response> execute(final Request request) {
         byte[] body = getBody(request);
         final String url = buildUrl(request);
-
-        if (LOGGER.isDebugEnabled()) {
-            CURLLogger.log(
-                    url,
-                    request,
-                    Optional.ofNullable(user),
-                    Optional.ofNullable(password),
-                    util
-            );
-        }
 
         return applyTimeout(
                 Mono.defer(() ->
@@ -321,9 +292,7 @@ public class HttpConnection implements Connection {
                                 .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
                                 .send(Mono.just(Unpooled.wrappedBuffer(body)))
                                 .responseSingle(this::buildResponse))
-                        .doOnNext(response -> ResponseUtils.checkError(util, response))
                         .subscribeOn(scheduler)
-                        .doOnError(e -> !(e instanceof ArangoDBException), e -> connectionProvider.dispose())
         );
     }
 
@@ -375,18 +344,12 @@ public class HttpConnection implements Connection {
 
         if (resp.method() == HttpMethod.HEAD || "0".equals(resp.responseHeaders().get(CONTENT_LENGTH))) {
             vPackSliceMono = Mono.just(new VPackSlice(null));
-        } else if (contentType == Protocol.HTTP_VPACK) {
+        } else if (contentType == ContentType.VPACK) {
             vPackSliceMono = bytes.asByteArray().map(VPackSlice::new);
-        } else if (contentType == Protocol.HTTP_JSON) {
+        } else if (contentType == ContentType.JSON) {
             vPackSliceMono = bytes.asInputStream()
-                    .map(input -> {
-                        try {
-                            String content = IOUtils.toString(input);
-                            return util.serialize(content, new ArangoSerializer.Options().stringAsJson(true).serializeNullValues(true));
-                        } catch (IOException e) {
-                            throw new ArangoDBException(e);
-                        }
-                    });
+                    // FIXME
+                    .map(input -> null);
         } else {
             throw new IllegalArgumentException();
         }

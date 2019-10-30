@@ -18,11 +18,38 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.entity;
+package com.arangodb.next.connection.vst;
+
+import com.arangodb.next.connection.Request;
 
 /**
- * @author Michele Rastelli
+ * @author Mark Vollmary
+ *
  */
-public enum StreamTransactionStatus {
-	running, committed, aborted
+public class AuthenticationRequest extends Request {
+
+	private final String user;
+	private final String password;
+	private final String encryption;// "plain"
+
+	public AuthenticationRequest(final String user, final String password, final String encryption) {
+		super(null, null, null);
+		this.user = user;
+		this.password = password;
+		this.encryption = encryption;
+		setType(1000);
+	}
+
+	public String getUser() {
+		return user;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public String getEncryption() {
+		return encryption;
+	}
+
 }

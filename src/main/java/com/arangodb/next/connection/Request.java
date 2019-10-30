@@ -18,8 +18,9 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.velocystream;
+package com.arangodb.next.connection;
 
+import com.arangodb.next.connection.vst.RequestType;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.annotations.Expose;
 
