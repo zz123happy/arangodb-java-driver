@@ -21,96 +21,34 @@
 package com.arangodb.next.connection;
 
 import com.arangodb.next.connection.vst.RequestType;
-import com.arangodb.velocypack.VPackSlice;
-import com.arangodb.velocypack.annotations.Expose;
+import org.immutables.value.Value;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author Mark Vollmary
- *
+ * @author Michele Rastelli
  */
-public class Request {
+@Value.Immutable
+public abstract class Request {
 
-	private int version = 1;
-	private int type = 1;
-	private final String database;
-	private final RequestType requestType;
-	private final String path;
-	private final Map<String, String> queryParam;
-	private final Map<String, String> headerParam;
-	@Expose(serialize = false)
-	private byte[] body = new byte[0];
+    public int getVersion() {
+        return 1;
+    }
 
-	public Request(final String database, final RequestType requestType, final String path) {
-		super();
-		this.database = database;
-		this.requestType = requestType;
-		this.path = path;
-        queryParam = new HashMap<>();
-        headerParam = new HashMap<>();
-	}
+    public int getType() {
+        return 1;
+    }
 
-	public int getVersion() {
-		return version;
-	}
+    abstract public String getDatabase();
 
-	public Request setVersion(final int version) {
-		this.version = version;
-		return this;
-	}
+    abstract public RequestType getRequestType();
 
-	public int getType() {
-		return type;
-	}
+    abstract public String getPath();
 
-	public Request setType(final int type) {
-		this.type = type;
-		return this;
-	}
+    abstract public Map<String, String> getQueryParam();
 
-	public String getDatabase() {
-		return database;
-	}
+    abstract public Map<String, String> getHeaderParam();
 
-	public RequestType getRequestType() {
-		return requestType;
-	}
-
-	public String getPath() {
-		return path;
-	}
-
-	public Map<String, String> getQueryParam() {
-		return queryParam;
-	}
-
-	public Request putQueryParam(final String key, final Object value) {
-		if (value != null) {
-			queryParam.put(key, value.toString());
-		}
-		return this;
-	}
-
-	public Map<String, String> getHeaderParam() {
-		return headerParam;
-	}
-
-	public Request putHeaderParam(final String key, final String value) {
-		if (value != null) {
-			headerParam.put(key, value);
-		}
-		return this;
-	}
-
-	public byte[] getBody() {
-		return body;
-	}
-
-	public Request setBody(final byte[] body) {
-		this.body = body;
-		return this;
-	}
+    abstract public byte[] getBody();
 
 }

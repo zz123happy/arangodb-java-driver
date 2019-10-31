@@ -20,36 +20,27 @@
 
 package com.arangodb.next.connection.vst;
 
-import com.arangodb.next.connection.Request;
+import org.immutables.value.Value;
+
 
 /**
- * @author Mark Vollmary
- *
+ * @author Michele Rastelli
  */
-public class AuthenticationRequest extends Request {
+@Value.Immutable
+public abstract class AuthenticationRequest {
 
-	private final String user;
-	private final String password;
-	private final String encryption;// "plain"
+    public int getVersion() {
+        return 1;
+    }
 
-	public AuthenticationRequest(final String user, final String password, final String encryption) {
-		super(null, null, null);
-		this.user = user;
-		this.password = password;
-		this.encryption = encryption;
-		setType(1000);
-	}
+    public int getType() {
+        return 1000;
+    }
 
-	public String getUser() {
-		return user;
-	}
+    abstract public String getUser();
 
-	public String getPassword() {
-		return password;
-	}
+    abstract public String getPassword();
 
-	public String getEncryption() {
-		return encryption;
-	}
+    abstract public String getEncryption();
 
 }

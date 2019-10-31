@@ -20,7 +20,7 @@
 
 package immutables;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -28,7 +28,6 @@ import static org.assertj.core.api.Assertions.*;
  * @author Michele Rastelli
  */
 public class ImmutablesTest {
-
 
     @Test
     public void immutablesTest() {
