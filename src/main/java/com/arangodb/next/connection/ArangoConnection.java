@@ -22,10 +22,11 @@ package com.arangodb.next.connection;
 
 import reactor.core.publisher.Mono;
 
+import java.io.Closeable;
+
 /**
  * @author Michele Rastelli
  */
-public interface ArangoConnection {
+public interface ArangoConnection extends Closeable {
     Mono<Response> execute(final Request request);
-
 }

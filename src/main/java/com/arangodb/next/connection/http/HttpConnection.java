@@ -198,6 +198,7 @@ public class HttpConnection implements ArangoConnection {
         return "Basic " + encodedAuth;
     }
 
+    @Override
     public void close() {
         connectionProvider.disposeLater().block();
     }
@@ -208,7 +209,7 @@ public class HttpConnection implements ArangoConnection {
         if (database != null && !database.isEmpty()) {
             sb.append("/_db/").append(database);
         }
-        sb.append(request.getRequest());
+        sb.append(request.getPath());
 
         if (!request.getQueryParam().isEmpty()) {
             sb.append("?");
@@ -249,21 +250,6 @@ public class HttpConnection implements ArangoConnection {
         }
     }
 
-    private byte[] getBody(final Request request) {
-        final VPackSlice body = request.getBody();
-        if (body != null) {
-            if (contentType == ContentType.VPACK) {
-                return Arrays.copyOfRange(body.getBuffer(), body.getStart(), body.getStart() + body.getByteSize());
-            } else if (contentType == ContentType.JSON) {
-                return body.toString().getBytes();
-            } else {
-                throw new IllegalArgumentException();
-            }
-        } else {
-            return new byte[0];
-        }
-    }
-
     private HttpClient createHttpClient(final Request request, final int bodyLength) {
         return addCookies(client)
                 .headers(headers -> {
@@ -281,16 +267,15 @@ public class HttpConnection implements ArangoConnection {
 
     @Override
     public Mono<Response> execute(final Request request) {
-        byte[] body = getBody(request);
         final String url = buildUrl(request);
 
         return applyTimeout(
                 Mono.defer(() ->
                         // this block runs on the single scheduler executor, so that cookies reads and writes are
                         // always performed by the same thread, thus w/o need for concurrency management
-                        createHttpClient(request, body.length)
+                        createHttpClient(request, request.getBody().length)
                                 .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
-                                .send(Mono.just(Unpooled.wrappedBuffer(body)))
+                                .send(Mono.just(Unpooled.wrappedBuffer(request.getBody())))
                                 .responseSingle(this::buildResponse))
                         .subscribeOn(scheduler)
         );

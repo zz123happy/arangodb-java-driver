@@ -37,18 +37,17 @@ public class Request {
 	private int type = 1;
 	private final String database;
 	private final RequestType requestType;
-	private final String request;
+	private final String path;
 	private final Map<String, String> queryParam;
 	private final Map<String, String> headerParam;
 	@Expose(serialize = false)
-	private VPackSlice body;
+	private byte[] body = new byte[0];
 
 	public Request(final String database, final RequestType requestType, final String path) {
 		super();
 		this.database = database;
 		this.requestType = requestType;
-		this.request = path;
-		body = null;
+		this.path = path;
         queryParam = new HashMap<>();
         headerParam = new HashMap<>();
 	}
@@ -79,8 +78,8 @@ public class Request {
 		return requestType;
 	}
 
-	public String getRequest() {
-		return request;
+	public String getPath() {
+		return path;
 	}
 
 	public Map<String, String> getQueryParam() {
@@ -105,11 +104,11 @@ public class Request {
 		return this;
 	}
 
-	public VPackSlice getBody() {
+	public byte[] getBody() {
 		return body;
 	}
 
-	public Request setBody(final VPackSlice body) {
+	public Request setBody(final byte[] body) {
 		this.body = body;
 		return this;
 	}
