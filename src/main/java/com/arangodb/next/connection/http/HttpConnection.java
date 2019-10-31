@@ -21,13 +21,14 @@
 package com.arangodb.next.connection.http;
 
 import com.arangodb.next.connection.*;
-import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.next.connection.vst.RequestType;
+import com.arangodb.velocypack.VPackSlice;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.cookie.Cookie;
-import io.netty.handler.ssl.*;
+import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.JdkSslContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -39,7 +40,6 @@ import reactor.netty.http.client.HttpClient;
 import reactor.netty.http.client.HttpClientResponse;
 import reactor.netty.resources.ConnectionProvider;
 
-import javax.net.ssl.SSLContext;
 import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
@@ -47,146 +47,55 @@ import java.util.stream.Collectors;
 
 import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
 import static io.netty.handler.codec.http.HttpHeaderNames.*;
-import static reactor.netty.resources.ConnectionProvider.DEFAULT_POOL_ACQUIRE_TIMEOUT;
 
 /**
  * @author Mark Vollmary
  */
-public class HttpConnection implements ArangoConnection {
+
+public abstract class HttpConnection implements ArangoConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpConnection.class);
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=UTF-8";
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";
 
-    public static class Builder {
-        private String user;
-        private String password;
-        private Boolean useSsl;
-        private Boolean resendCookies;
-        private ContentType contentType;
-        private HostDescription host;
-        private Long ttl;
-        private SSLContext sslContext;
-        private Integer timeout;
+    private final Scheduler scheduler = Schedulers.single();
+    private final Map<Cookie, Long> cookies = new HashMap<>();
 
-        public Builder user(final String user) {
-            this.user = user;
-            return this;
-        }
-
-        public Builder password(final String password) {
-            this.password = password;
-            return this;
-        }
-
-        public Builder useSsl(final Boolean useSsl) {
-            this.useSsl = useSsl;
-            return this;
-        }
-
-        public Builder httpResendCookies(Boolean resendCookies) {
-            this.resendCookies = resendCookies;
-            return this;
-        }
-
-        public Builder contentType(final ContentType contentType) {
-            this.contentType = contentType;
-            return this;
-        }
-
-        public Builder host(final HostDescription host) {
-            this.host = host;
-            return this;
-        }
-
-        public Builder ttl(final Long ttl) {
-            this.ttl = ttl;
-            return this;
-        }
-
-        public Builder sslContext(final SSLContext sslContext) {
-            this.sslContext = sslContext;
-            return this;
-        }
-
-        public Builder timeout(final Integer timeout) {
-            this.timeout = timeout;
-            return this;
-        }
-
-        public HttpConnection build() {
-            return new HttpConnection(host, timeout, user, password, useSsl, sslContext, contentType, ttl, resendCookies);
-        }
-    }
-
-    private final String user;
-    private final String password;
-    private final Boolean useSsl;
-    private final SSLContext sslContext;
-    private final ContentType contentType;
-    private final HostDescription host;
-    private final Integer timeout;
-    private final ConnectionProvider connectionProvider;
+    private final ConnectionConfig config;
+    private ConnectionProvider connectionProvider;
     private final HttpClient client;
-    private final Long ttl;
-    private final Boolean resendCookies;
 
-    private final Scheduler scheduler;
-    private final Map<Cookie, Long> cookies;
-
-    private HttpConnection(final HostDescription host, final Integer timeout, final String user, final String password,
-                           final Boolean useSsl, final SSLContext sslContext, final ContentType contentType,
-                           final Long ttl, final Boolean resendCookies) {
-        super();
-        this.host = host;
-        this.timeout = timeout;
-        this.user = user;
-        this.password = password;
-        this.useSsl = useSsl;
-        this.sslContext = sslContext;
-        this.contentType = contentType;
-        this.ttl = ttl;
-        this.resendCookies = resendCookies;
-
-        this.scheduler = Schedulers.single();
-        this.cookies = new HashMap<>();
-
-        this.connectionProvider = initConnectionProvider();
-        this.client = initClient();
+    private HttpConnection(final ConnectionConfig config) {
+        this.config = config;
+        connectionProvider = getConnectionProvider();
+        client = getClient();
     }
 
-    private ConnectionProvider initConnectionProvider() {
+    private ConnectionProvider getConnectionProvider() {
         return ConnectionProvider.fixed(
                 "http",
                 1,  // FIXME: connection pooling should happen here, inside HttpConnection
-                getAcquireTimeout(),
-                ttl != null ? Duration.ofMillis(ttl) : null);
+                config.getTimeout(),
+                config.getTtl());
     }
 
-    private long getAcquireTimeout() {
-        return timeout != null && timeout >= 0 ? timeout : DEFAULT_POOL_ACQUIRE_TIMEOUT;
-    }
-
-    private HttpClient initClient() {
+    private HttpClient getClient() {
         return applySslContext(
                 HttpClient
                         .create(connectionProvider)
-                        .tcpConfiguration(tcpClient ->
-                                timeout != null && timeout >= 0 ? tcpClient.option(CONNECT_TIMEOUT_MILLIS, timeout) : tcpClient)
+                        .tcpConfiguration(tcpClient -> tcpClient.option(CONNECT_TIMEOUT_MILLIS, config.getTimeout()))
                         .wiretap(true)
                         .protocol(HttpProtocol.HTTP11)
                         .keepAlive(true)
-                        .baseUrl((Boolean.TRUE == useSsl ? "https://" : "http://") + host.getHost() + ":" + host.getPort())
-                        .headers(headers -> {
-                            if (user != null)
-                                headers.set(AUTHORIZATION, buildBasicAuthentication(user, password));
-                        })
+                        .baseUrl((Boolean.TRUE == config.getUseSsl() ? "https://" : "http://") + config.getHost().getHost() + ":" + config.getHost().getPort())
+                        .headers(headers -> config.getUser().ifPresent(user ->
+                                headers.set(AUTHORIZATION, buildBasicAuthentication(user, config.getPassword()))))
         );
     }
 
     private HttpClient applySslContext(HttpClient httpClient) {
-        if (Boolean.TRUE == useSsl && sslContext != null) {
-            //noinspection deprecation
-            return httpClient.secure(spec -> spec.sslContext(new JdkSslContext(sslContext, true, ClientAuth.NONE)));
+        if (config.getUseSsl() && config.getSslContext().isPresent()) {
+            return httpClient.secure(spec ->
+                    spec.sslContext(new JdkSslContext(config.getSslContext().get(), true, ClientAuth.NONE)));
         } else {
             return httpClient;
         }
@@ -241,12 +150,13 @@ public class HttpConnection implements ArangoConnection {
     }
 
     private String getContentType() {
-        if (contentType == ContentType.VPACK) {
-            return CONTENT_TYPE_VPACK;
-        } else if (contentType == ContentType.JSON) {
-            return CONTENT_TYPE_APPLICATION_JSON;
-        } else {
-            throw new IllegalArgumentException();
+        switch (config.getContentType()) {
+            case VPACK:
+                return CONTENT_TYPE_VPACK;
+            case JSON:
+                return CONTENT_TYPE_APPLICATION_JSON;
+            default:
+                throw new IllegalArgumentException();
         }
     }
 
@@ -254,8 +164,7 @@ public class HttpConnection implements ArangoConnection {
         return addCookies(client)
                 .headers(headers -> {
                     headers.set(CONTENT_LENGTH, bodyLength);
-                    headers.set(USER_AGENT, "Mozilla/5.0 (compatible; ArangoDB-JavaDriver/1.1; +http://mt.orz.at/)");
-                    if (contentType == ContentType.VPACK) {
+                    if (config.getContentType() == ContentType.VPACK) {
                         headers.set(ACCEPT, "application/x-velocypack");
                     }
                     addHeaders(request, headers);
@@ -282,11 +191,7 @@ public class HttpConnection implements ArangoConnection {
     }
 
     private Mono<Response> applyTimeout(Mono<Response> client) {
-        if (timeout != null && timeout > 0) {
-            return client.timeout(Duration.ofMillis(timeout));
-        } else {
-            return client;
-        }
+        return client.timeout(Duration.ofMillis(config.getTimeout()));
     }
 
     private static void addHeaders(final Request request, final HttpHeaders headers) {
@@ -314,7 +219,7 @@ public class HttpConnection implements ArangoConnection {
     }
 
     private void saveCookies(HttpClientResponse resp) {
-        if (resendCookies != null && resendCookies) {
+        if (config.getResendCookies()) {
             resp.cookies().values().stream().flatMap(Collection::stream)
                     .forEach(cookie -> {
                         LOGGER.debug("saving cookie: {}", cookie);
@@ -329,9 +234,9 @@ public class HttpConnection implements ArangoConnection {
 
         if (resp.method() == HttpMethod.HEAD || "0".equals(resp.responseHeaders().get(CONTENT_LENGTH))) {
             vPackSliceMono = Mono.just(new VPackSlice(null));
-        } else if (contentType == ContentType.VPACK) {
+        } else if (config.getContentType() == ContentType.VPACK) {
             vPackSliceMono = bytes.asByteArray().map(VPackSlice::new);
-        } else if (contentType == ContentType.JSON) {
+        } else if (config.getContentType() == ContentType.JSON) {
             vPackSliceMono = bytes.asInputStream()
                     // FIXME
                     .map(input -> null);
