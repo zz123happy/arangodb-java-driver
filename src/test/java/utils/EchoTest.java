@@ -21,6 +21,9 @@
 package utils;
 
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
+import reactor.netty.ByteBufFlux;
+import reactor.netty.http.client.HttpClient;
 
 /**
  * @author Michele Rastelli
@@ -34,6 +37,23 @@ public class EchoTest {
         echoClient.start().join();
 
         echoClient.send("hello");
+        Thread.sleep(100);
+    }
+
+    @Test
+    public void echoHttpTest() throws InterruptedException {
+        new EchoHttpServer().start().join();
+
+        HttpClient.create()
+                .post()
+                .uri("127.0.0.1:9000")
+                .send(ByteBufFlux.fromString(Mono.just("hello")))
+                .response((meta, content) -> {
+                    System.out.println(meta.responseHeaders());
+                    return content.asString().doOnNext(System.out::println);
+                })
+                .subscribe();
+
         Thread.sleep(100);
     }
 
