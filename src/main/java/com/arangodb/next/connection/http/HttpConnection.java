@@ -22,7 +22,6 @@ package com.arangodb.next.connection.http;
 
 import com.arangodb.next.connection.*;
 import com.arangodb.next.connection.vst.RequestType;
-import com.arangodb.velocypack.VPackSlice;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
@@ -41,7 +40,10 @@ import reactor.netty.http.client.HttpClientResponse;
 import reactor.netty.resources.ConnectionProvider;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -161,6 +163,10 @@ public class HttpConnection implements ArangoConnection {
                     headers.set(CONTENT_LENGTH, bodyLength);
                     if (config.getContentType() == ContentType.VPACK) {
                         headers.set(ACCEPT, "application/x-velocypack");
+                    } else if (config.getContentType() == ContentType.JSON) {
+                        headers.set(ACCEPT, "application/json");
+                    } else {
+                        throw new IllegalArgumentException();
                     }
                     addHeaders(request, headers);
                     if (bodyLength > 0) {
@@ -172,22 +178,17 @@ public class HttpConnection implements ArangoConnection {
     @Override
     public Mono<Response> execute(final Request request) {
         final String url = buildUrl(request);
-
-        return applyTimeout(
-                Mono.defer(() ->
-                        // this block runs on the single scheduler executor, so that cookies reads and writes are
-                        // always performed by the same thread, thus w/o need for concurrency management
-                        createHttpClient(request, request.getBody().readableBytes())
-                                .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
-                                .send(Mono.just(request.getBody()))
-                                .responseSingle(this::buildResponse))
-                        .subscribeOn(scheduler)
-        );
+        return Mono.defer(() ->
+                // this block runs on the single scheduler executor, so that cookies reads and writes are
+                // always performed by the same thread, thus w/o need for concurrency management
+                createHttpClient(request, request.getBody().readableBytes())
+                        .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
+                        .send(Mono.just(request.getBody()))
+                        .responseSingle(this::buildResponse))
+                .subscribeOn(scheduler)
+                .timeout(Duration.ofMillis(config.getTimeout()));
     }
 
-    private Mono<Response> applyTimeout(Mono<Response> client) {
-        return client.timeout(Duration.ofMillis(config.getTimeout()));
-    }
 
     private static void addHeaders(final Request request, final HttpHeaders headers) {
         for (final Entry<String, String> header : request.getHeaderParam().entrySet()) {
@@ -224,29 +225,13 @@ public class HttpConnection implements ArangoConnection {
     }
 
     private Mono<Response> buildResponse(HttpClientResponse resp, ByteBufMono bytes) {
-
-        final Mono<VPackSlice> vPackSliceMono;
-
-        if (resp.method() == HttpMethod.HEAD || "0".equals(resp.responseHeaders().get(CONTENT_LENGTH))) {
-            vPackSliceMono = Mono.just(new VPackSlice(null));
-        } else if (config.getContentType() == ContentType.VPACK) {
-            vPackSliceMono = bytes.asByteArray().map(VPackSlice::new);
-        } else if (config.getContentType() == ContentType.JSON) {
-            vPackSliceMono = bytes.asInputStream()
-                    // FIXME
-                    .map(input -> null);
-        } else {
-            throw new IllegalArgumentException();
-        }
-
-        return vPackSliceMono
-                .map(body -> {
+        return bytes
+                .switchIfEmpty(Mono.just(Unpooled.EMPTY_BUFFER))
+                .map(byteBuf -> {
                     final Response response = new Response();
                     response.setResponseCode(resp.status().code());
                     resp.responseHeaders().forEach(it -> response.getMeta().put(it.getKey(), it.getValue()));
-                    if (body.getBuffer() != null && body.getBuffer().length > 0) {
-                        response.setBody(body);
-                    }
+                    response.setBody(IOUtils.copyOf(byteBuf));
                     return response;
                 })
                 .publishOn(scheduler)

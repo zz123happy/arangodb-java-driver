@@ -20,8 +20,8 @@
 
 package com.arangodb.next.connection;
 
-import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.annotations.Expose;
+import io.netty.buffer.ByteBuf;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +37,7 @@ public class Response {
 	private int responseCode;
 	private Map<String, String> meta;
 	@Expose(deserialize = false)
-	private VPackSlice body = null;
+	private ByteBuf body = null;
 
 	public Response() {
 		super();
@@ -76,11 +76,11 @@ public class Response {
 		this.meta = meta;
 	}
 
-	public VPackSlice getBody() {
+	public ByteBuf getBody() {
 		return body;
 	}
 
-	public void setBody(final VPackSlice body) {
+	public void setBody(final ByteBuf body) {
 		this.body = body;
 	}
 

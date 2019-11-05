@@ -28,6 +28,11 @@ import reactor.core.publisher.Mono;
  */
 public interface ArangoConnection {
 
+    /**
+     * Note: the consumer is responsible to call release() on Response body
+     * @param request
+     * @return
+     */
     Mono<Response> execute(final Request request);
 
     Mono<Void> close();

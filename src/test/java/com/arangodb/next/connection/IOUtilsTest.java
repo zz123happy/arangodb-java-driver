@@ -20,33 +20,17 @@
 
 package com.arangodb.next.connection;
 
-
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
 
 /**
  * @author Michele Rastelli
  */
-public class IOUtils {
-    private static final int DEFAULT_INITIAL_CAPACITY = 256;
-    private static final int DEFAULT_MAX_CAPACITY = Integer.MAX_VALUE;
+public class IOUtilsTest {
 
-    public static ByteBuf createBuffer() {
-        return createBuffer(DEFAULT_INITIAL_CAPACITY);
-    }
-
-    public static ByteBuf createBuffer(int initialCapacity) {
-        return createBuffer(initialCapacity, DEFAULT_MAX_CAPACITY);
-    }
-
-    public static ByteBuf createBuffer(int initialCapacity, int maxCapacity) {
-        return PooledByteBufAllocator.DEFAULT.directBuffer(initialCapacity, maxCapacity);
-    }
-
-    public static ByteBuf copyOf(final ByteBuf orig) {
-        ByteBuf created = IOUtils.createBuffer(orig.readableBytes());
-        orig.readBytes(created);
-        return created;
+    public static byte[] getByteArray(final ByteBuf byteBuf) {
+        byte[] array = new byte[byteBuf.readableBytes()];
+        byteBuf.readBytes(array);
+        return array;
     }
 
 }
