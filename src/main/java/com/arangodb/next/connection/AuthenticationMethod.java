@@ -35,11 +35,11 @@ public interface AuthenticationMethod {
 
     List<Object> getVstAuthenticationMessage();
 
-    static AuthenticationMethod jwt(final String jwt) {
+    static AuthenticationMethod ofJwt(final String jwt) {
         return ImmutableJwtAuthenticationMethod.of(jwt);
     }
 
-    static AuthenticationMethod basic(final String user, final String password) {
+    static AuthenticationMethod ofBasic(final String user, final String password) {
         return ImmutableBasicAuthenticationMethod.of(user, password);
     }
 

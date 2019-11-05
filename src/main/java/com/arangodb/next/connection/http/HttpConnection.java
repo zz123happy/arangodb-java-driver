@@ -64,7 +64,7 @@ public class HttpConnection implements ArangoConnection {
     private ConnectionProvider connectionProvider;
     private final HttpClient client;
 
-    private HttpConnection(final ConnectionConfig config) {
+    HttpConnection(final ConnectionConfig config) {
         this.config = config;
         connectionProvider = getConnectionProvider();
         client = getClient();

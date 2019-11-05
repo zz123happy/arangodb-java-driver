@@ -29,26 +29,30 @@ import java.util.Map;
  * @author Michele Rastelli
  */
 @Value.Immutable
-public abstract class Request {
+public interface Request {
 
-    public int getVersion() {
+    static ImmutableRequest.Builder builder() {
+        return ImmutableRequest.builder();
+    }
+
+    default int getVersion() {
         return 1;
     }
 
-    public int getType() {
+    default int getType() {
         return 1;
     }
 
-    abstract public String getDatabase();
+    String getDatabase();
 
-    abstract public RequestType getRequestType();
+    RequestType getRequestType();
 
-    abstract public String getPath();
+    String getPath();
 
-    abstract public Map<String, String> getQueryParam();
+    Map<String, String> getQueryParam();
 
-    abstract public Map<String, String> getHeaderParam();
+    Map<String, String> getHeaderParam();
 
-    abstract public byte[] getBody();
+    byte[] getBody();
 
 }

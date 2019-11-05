@@ -22,11 +22,17 @@ package com.arangodb.next.connection;
 
 import org.immutables.value.Value;
 
-@Value.Immutable
+@Value.Immutable(builder = false)
 public interface HostDescription {
 
+    static HostDescription of(String host, int port) {
+        return ImmutableHostDescription.of(host, port);
+    }
+
+    @Value.Parameter(order = 1)
     String getHost();
 
+    @Value.Parameter(order = 2)
     int getPort();
 
 }

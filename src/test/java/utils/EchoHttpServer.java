@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * @author Michele Rastelli
  */
-class EchoHttpServer {
+public class EchoHttpServer {
 
     public CompletableFuture<Void> start() {
         CompletableFuture<Void> done = new CompletableFuture<>();

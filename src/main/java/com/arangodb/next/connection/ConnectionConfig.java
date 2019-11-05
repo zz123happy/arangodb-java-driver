@@ -36,10 +36,17 @@ import static reactor.netty.resources.ConnectionProvider.DEFAULT_POOL_ACQUIRE_TI
 @Value.Immutable
 public interface ConnectionConfig {
 
+    static ImmutableConnectionConfig.Builder builder() {
+        return ImmutableConnectionConfig.builder();
+    }
+
     /**
      * @return max number of connections
      */
-    int getMaxConnections();
+    @Value.Default
+    default int getMaxConnections() {
+        return 1;
+    }
 
     /**
      * @return the authenticationMethod to use
