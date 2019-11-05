@@ -21,6 +21,7 @@
 package com.arangodb.next.connection;
 
 import com.arangodb.next.connection.vst.RequestType;
+import io.netty.buffer.ByteBuf;
 import org.immutables.value.Value;
 
 import java.util.Map;
@@ -53,6 +54,6 @@ public interface Request {
 
     Map<String, String> getHeaderParam();
 
-    byte[] getBody();
+    ByteBuf getBody();
 
 }

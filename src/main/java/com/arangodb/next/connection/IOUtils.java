@@ -18,7 +18,7 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.connection.vst;
+package com.arangodb.next.connection;
 
 
 import io.netty.buffer.ByteBuf;
@@ -27,19 +27,19 @@ import io.netty.buffer.PooledByteBufAllocator;
 /**
  * @author Michele Rastelli
  */
-class VstUtils {
+public class IOUtils {
     private static final int DEFAULT_INITIAL_CAPACITY = 256;
     private static final int DEFAULT_MAX_CAPACITY = Integer.MAX_VALUE;
 
-    static ByteBuf createBuffer() {
+    public static ByteBuf createBuffer() {
         return createBuffer(DEFAULT_INITIAL_CAPACITY);
     }
 
-    static ByteBuf createBuffer(int initialCapacity) {
+    public static ByteBuf createBuffer(int initialCapacity) {
         return createBuffer(initialCapacity, DEFAULT_MAX_CAPACITY);
     }
 
-    static ByteBuf createBuffer(int initialCapacity, int maxCapacity) {
+    public static ByteBuf createBuffer(int initialCapacity, int maxCapacity) {
         return PooledByteBufAllocator.DEFAULT.directBuffer(initialCapacity, maxCapacity);
     }
 

@@ -20,6 +20,7 @@
 
 package com.arangodb.next.connection.vst;
 
+import com.arangodb.next.connection.IOUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.ReferenceCounted;
 
@@ -51,7 +52,7 @@ public class ChunkStore {
                 return;
             }
             final int length = chunk.getChunk() > 1 ? (int) chunk.getMessageLength() : chunk.getContentLength();
-            chunkBuffer = VstUtils.createBuffer(length, length);
+            chunkBuffer = IOUtils.createBuffer(length, length);
             data.put(messageId, chunkBuffer);
         }
 

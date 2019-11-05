@@ -21,6 +21,7 @@
 package com.arangodb.next.connection.vst;
 
 import com.arangodb.next.connection.HostDescription;
+import com.arangodb.next.connection.IOUtils;
 import com.arangodb.velocypack.VPackSlice;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.ssl.ClientAuth;
@@ -122,14 +123,14 @@ public abstract class VstConnection {
     }
 
     protected synchronized void writeIntern(final Message message, final Collection<Chunk> chunks) {
-        final ByteBuf messageBuffer = VstUtils.createBuffer();
+        final ByteBuf messageBuffer = IOUtils.createBuffer();
         messageBuffer.writeBytes(message.getHead().getBuffer(), 0, message.getHead().getByteSize());
         final VPackSlice body = message.getBody();
         if (body != null) {
             messageBuffer.writeBytes(body.getBuffer(), 0, message.getBody().getByteSize());
         }
 
-        final ByteBuf out = VstUtils.createBuffer();
+        final ByteBuf out = IOUtils.createBuffer();
 
         for (final Chunk chunk : chunks) {
             if (LOGGER.isDebugEnabled()) {
@@ -164,8 +165,8 @@ public abstract class VstConnection {
         private volatile CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
         private TcpClient tcpClient;
         private Chunk chunk;
-        private ByteBuf chunkHeaderBuffer = VstUtils.createBuffer();
-        private ByteBuf chunkContentBuffer = VstUtils.createBuffer();
+        private ByteBuf chunkHeaderBuffer = IOUtils.createBuffer();
+        private ByteBuf chunkContentBuffer = IOUtils.createBuffer();
         private final ChunkStore chunkStore;
 
         void send(ByteBuf buf) {

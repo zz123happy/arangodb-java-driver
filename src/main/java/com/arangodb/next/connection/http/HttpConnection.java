@@ -177,9 +177,9 @@ public class HttpConnection implements ArangoConnection {
                 Mono.defer(() ->
                         // this block runs on the single scheduler executor, so that cookies reads and writes are
                         // always performed by the same thread, thus w/o need for concurrency management
-                        createHttpClient(request, request.getBody().length)
+                        createHttpClient(request, request.getBody().readableBytes())
                                 .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
-                                .send(Mono.just(Unpooled.wrappedBuffer(request.getBody())))
+                                .send(Mono.just(request.getBody()))
                                 .responseSingle(this::buildResponse))
                         .subscribeOn(scheduler)
         );

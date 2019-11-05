@@ -51,7 +51,7 @@ class HttpConnectionTest {
     }
 
     @Test
-    void jwtAuthentication(){
+    void jwtAuthentication() {
         new EchoHttpServer().start().join();
 
         ConnectionConfig config = ConnectionConfig.builder()
@@ -66,7 +66,7 @@ class HttpConnectionTest {
                 .database("database")
                 .path("path")
                 .requestType(RequestType.GET)
-                .body()
+                .body(IOUtils.createBuffer())
                 .build();
 
         Response response = connection.execute(request).block();
