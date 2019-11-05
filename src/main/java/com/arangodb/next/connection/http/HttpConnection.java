@@ -52,7 +52,7 @@ import static io.netty.handler.codec.http.HttpHeaderNames.*;
  * @author Mark Vollmary
  */
 
-public abstract class HttpConnection implements ArangoConnection {
+public class HttpConnection implements ArangoConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpConnection.class);
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=UTF-8";
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";
@@ -87,8 +87,9 @@ public abstract class HttpConnection implements ArangoConnection {
                         .protocol(HttpProtocol.HTTP11)
                         .keepAlive(true)
                         .baseUrl((Boolean.TRUE == config.getUseSsl() ? "https://" : "http://") + config.getHost().getHost() + ":" + config.getHost().getPort())
-                        .headers(headers -> config.getUser().ifPresent(user ->
-                                headers.set(AUTHORIZATION, buildBasicAuthentication(user, config.getPassword()))))
+                        .headers(headers -> config.getAuthenticationMethod().ifPresent(
+                                method -> headers.set(AUTHORIZATION, method.getHttpAuthorizationHeader())
+                        ))
         );
     }
 
@@ -101,15 +102,9 @@ public abstract class HttpConnection implements ArangoConnection {
         }
     }
 
-    private static String buildBasicAuthentication(final String principal, final String password) {
-        final String plainAuth = principal + ":" + (password == null ? "" : password);
-        String encodedAuth = Base64.getEncoder().encodeToString(plainAuth.getBytes());
-        return "Basic " + encodedAuth;
-    }
-
     @Override
-    public void close() {
-        connectionProvider.disposeLater().block();
+    public Mono<Void> close() {
+        return connectionProvider.disposeLater();
     }
 
     private static String buildUrl(final Request request) {

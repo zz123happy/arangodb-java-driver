@@ -23,6 +23,7 @@ package com.arangodb.next.connection;
 
 import org.immutables.value.Value;
 
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import java.time.Duration;
 import java.util.Optional;
@@ -35,13 +36,19 @@ import static reactor.netty.resources.ConnectionProvider.DEFAULT_POOL_ACQUIRE_TI
 @Value.Immutable
 public interface ConnectionConfig {
 
-    Optional<String> getUser();
+    /**
+     * @return max number of connections
+     */
+    int getMaxConnections();
 
-    @Value.Default
-    default String getPassword() {
-        return "";
-    }
+    /**
+     * @return the authenticationMethod to use
+     */
+    Optional<AuthenticationMethod> getAuthenticationMethod();
 
+    /**
+     * @return use SSL connection
+     */
     @Value.Default
     default boolean getUseSsl() {
         return false;
@@ -51,21 +58,38 @@ public interface ConnectionConfig {
 
     ContentType getContentType();
 
+    /**
+     * @return ArangoDB host
+     */
     HostDescription getHost();
 
     /**
-     * @return connection timeout in ms
+     * @return connect, request and pool acquisition timeout timeout (millisecond)
      */
     @Value.Default
     default int getTimeout() {
         return (int) DEFAULT_POOL_ACQUIRE_TIMEOUT;
     }
 
+    /**
+     * @return the {@link Duration} after which the channel will be closed (resolution: ms), if {@code null} there is no
+     * max idle time
+     */
+    @Nullable
+    Duration getTtl();
+
+    /**
+     * @return VelocyStream Chunk content-size (bytes), used by VstConnection only
+     */
     @Value.Default
-    default Duration getTtl() {
-        return Duration.ofSeconds(30);
+    default int getChunksize() {
+        return 30_000;
     }
 
+    /**
+     * @return whether the connection should resend the received cookies and honour the related maxAge, used by
+     * HttpConnection only
+     */
     @Value.Default
     default boolean getResendCookies() {
         return true;
