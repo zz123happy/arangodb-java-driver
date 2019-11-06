@@ -227,13 +227,11 @@ class HttpConnection implements ArangoConnection {
     private Mono<ArangoResponse> buildResponse(HttpClientResponse resp, ByteBufMono bytes) {
         return bytes
                 .switchIfEmpty(Mono.just(Unpooled.EMPTY_BUFFER))
-                .map(byteBuf -> {
-                    final ArangoResponse response = new ArangoResponse();
-                    response.setResponseCode(resp.status().code());
-                    resp.responseHeaders().forEach(it -> response.getMeta().put(it.getKey(), it.getValue()));
-                    response.setBody(IOUtils.copyOf(byteBuf));
-                    return response;
-                })
+                .map(byteBuf -> (ArangoResponse) ArangoResponse.builder()
+                        .responseCode(resp.status().code())
+                        .putAllMeta(resp.responseHeaders().entries().stream().collect(Collectors.toMap(Entry::getKey, Entry::getValue)))
+                        .body(IOUtils.copyOf(byteBuf))
+                        .build())
                 .publishOn(scheduler)
                 .doOnNext(it -> saveCookies(resp));
     }

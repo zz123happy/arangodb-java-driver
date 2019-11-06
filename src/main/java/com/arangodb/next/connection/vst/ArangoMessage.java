@@ -23,13 +23,16 @@ package com.arangodb.next.connection.vst;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.connection.IOUtils;
+import com.arangodb.next.connection.ImmutableArangoResponse;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
 import io.netty.buffer.ByteBuf;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static com.arangodb.next.ArangoDefaults.HEADER_SIZE;
 
@@ -37,6 +40,9 @@ import static com.arangodb.next.ArangoDefaults.HEADER_SIZE;
  * @author Mark Vollmary
  * @author Michele Rastelli
  */
+// TODO: leave only 2 public methods:
+// - ArangoResponse decodeResponse(byte[] buffer)
+// - ByteBuf encodeRequest(ArangoRequest request)
 class ArangoMessage {
 
     private final long id;
@@ -44,12 +50,10 @@ class ArangoMessage {
 
     static ArangoResponse fromBuffer(byte[] buffer) {
         VPackSlice head = new VPackSlice(buffer);
-        ArangoResponse response = deserializeArangoResponseHead(head);
         final int headSize = head.getByteSize();
         ByteBuf body = IOUtils.createBuffer(buffer.length - headSize);
         body.writeBytes(buffer, headSize, buffer.length - headSize);
-        response.setBody(body);
-        return response;
+        return buildArangoResponse(head, body);
     }
 
     private static ArangoMessage fromRequest(long id, ArangoRequest request) {
@@ -138,15 +142,22 @@ class ArangoMessage {
         return builder.slice();
     }
 
-    private static ArangoResponse deserializeArangoResponseHead(VPackSlice vpack){
-        final ArangoResponse response = new ArangoResponse();
-        response.setVersion(vpack.get(0).getAsInt());
-        response.setType(vpack.get(1).getAsInt());
-        response.setResponseCode(vpack.get(2).getAsInt());
+    private static ArangoResponse buildArangoResponse(VPackSlice vpack, ByteBuf body) {
+        ImmutableArangoResponse.Builder builder = ArangoResponse.builder()
+                .body(body)
+                .version(vpack.get(0).getAsInt())
+                .type(vpack.get(1).getAsInt())
+                .responseCode(vpack.get(2).getAsInt());
+
         if (vpack.size() > 3) {
-//            final Map<String, Object> map = new VPack.Builder().build().deserialize(builder.slice(), Map.class);
-//            response.setMeta(context.deserialize(vpack.get(3), Map.class));
+            Iterator<Map.Entry<String, VPackSlice>> metaIterator = vpack.get(3).objectIterator();
+            while (metaIterator.hasNext()){
+                Map.Entry<String, VPackSlice> meta = metaIterator.next();
+                builder.putMeta(meta.getKey(), meta.getValue().getAsString());
+            }
         }
-        return response;
+
+        return builder.build();
     }
+
 }

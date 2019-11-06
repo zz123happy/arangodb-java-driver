@@ -22,6 +22,7 @@ package com.arangodb.next.connection.vst;
 
 
 import com.arangodb.next.connection.ArangoRequest;
+import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
@@ -40,7 +41,35 @@ class InternalSerdeTest {
 
     @Test
     void deserializeArangoResponse() {
-        // TODO
+        ArangoResponse response = ArangoResponse.builder()
+                .version(1)
+                .type(2)
+                .responseCode(200)
+                .putMeta("metaKey", "metaValue")
+                .body(Unpooled.EMPTY_BUFFER)
+                .build();
+
+        final VPackBuilder builder = new VPackBuilder();
+        builder.add(ValueType.ARRAY);
+        builder.add(response.getVersion());
+        builder.add(response.getType());
+        builder.add(response.getResponseCode());
+        builder.add(ValueType.OBJECT);
+        response.getMeta().forEach(builder::add);
+        builder.close();
+        builder.close();
+
+        final VPackSlice vpack = builder.slice();
+        Map.Entry<String, VPackSlice> metaEntry = vpack.get(3).objectIterator().next();
+        ArangoResponse deserializedResponse = ArangoResponse.builder()
+                .body(Unpooled.EMPTY_BUFFER)
+                .version(vpack.get(0).getAsInt())
+                .type(vpack.get(1).getAsInt())
+                .responseCode(vpack.get(2).getAsInt())
+                .putMeta(metaEntry.getKey(), metaEntry.getValue().getAsString())
+                .build();
+
+        assertThat(deserializedResponse).isEqualTo(response);
     }
 
     @Test
