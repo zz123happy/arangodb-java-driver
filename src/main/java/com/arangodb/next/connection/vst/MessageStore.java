@@ -22,81 +22,68 @@ package com.arangodb.next.connection.vst;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoProcessor;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.FutureTask;
 
 /**
  * @author Mark Vollmary
+ * @author Michele Rastelli
  */
-public class MessageStore {
+class MessageStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageStore.class);
 
-    private final Map<Long, FutureTask<Message>> task;
-    private final Map<Long, Message> response;
-    private final Map<Long, Throwable> error;
+    private final Map<Long, MonoProcessor<ArangoMessage>> pendingRequests = new HashMap<>();
 
-    public MessageStore() {
-        super();
-        task = new ConcurrentHashMap<>();
-        response = new ConcurrentHashMap<>();
-        error = new ConcurrentHashMap<>();
-    }
-
-    public void storeMessage(final long messageId, final FutureTask<Message> future) {
-        task.put(messageId, future);
-    }
-
-    public void consume(final Message message) {
-        final FutureTask<Message> future = task.remove(message.getId());
-        if (future != null) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Received Message (id=%s, head=%s, body=%s)", message.getId(),
-                        message.getHead(), message.getBody() != null ? message.getBody() : "{}"));
-            }
-            response.put(message.getId(), message);
-            future.run();
+    /**
+     * Adds a pending request to the store
+     *
+     * @param messageId id of the sent message
+     * @return a {@link Mono} that will be resolved when the response to the related message is received
+     */
+    Mono<ArangoMessage> add(long messageId) {
+        if (pendingRequests.containsKey(messageId)) {
+            throw new IllegalStateException("Key already present: " + messageId);
         }
+        final MonoProcessor<ArangoMessage> response = MonoProcessor.create();
+        pendingRequests.put(messageId, response);
+        return response;
     }
 
-    public Message get(final long messageId) {
-        final Message result = response.remove(messageId);
-        if (result == null) {
-            final Throwable t = error.remove(messageId);
-            // FIXME
-            if (t != null) {
-                throw new RuntimeException(t);
-            }
+    /**
+     * Resolves the pending request related to the message
+     *
+     * @param message the received response
+     */
+    void resolve(final ArangoMessage message) {
+        LOGGER.debug("Received Message (id={})", message.getId());
+        final MonoProcessor<ArangoMessage> future = pendingRequests.remove(message.getId());
+        if (future == null) {
+            throw new IllegalStateException("No pending request found for received message: " + message.getId());
         }
-        return result;
+        future.onNext(message);
     }
 
-    public void cancel(final long messageId) {
-        final FutureTask<Message> future = task.remove(messageId);
+    // TODO: check if this is really necessary, atm it should be only used for the reply to the authentication request?!
+    void cancel(long messageId) {
+        final MonoProcessor<ArangoMessage> future = pendingRequests.remove(messageId);
         if (future != null) {
             LOGGER.error(String.format("Cancel Message unexpected (id=%s).", messageId));
-            future.cancel(true);
+            future.onError(new RuntimeException("Cancelled!"));
         }
     }
 
-    public void clear(final Throwable t) {
-        if (!task.isEmpty()) {
-            LOGGER.error(t.getMessage(), t);
-        }
-        for (final Entry<Long, FutureTask<Message>> entry : task.entrySet()) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Exceptionally complete Message (id=%s).", entry.getKey()));
-            }
-            error.put(entry.getKey(), t);
-            entry.getValue().run();
-        }
-        task.clear();
+    /**
+     * Completes exceptionally all the pending requests
+     *
+     * @param t cause
+     */
+    void clear(final Throwable t) {
+        pendingRequests.values().forEach(future -> future.onError(t));
+        pendingRequests.clear();
     }
 
-    public boolean isEmpty() {
-        return task.isEmpty();
-    }
 }

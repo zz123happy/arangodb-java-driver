@@ -30,8 +30,8 @@ public interface ArangoConnection {
 
     /**
      * Note: the consumer is responsible to call release() on Response body
-     * @param request
-     * @return
+     * @param request to send
+     * @return response from the server
      */
     Mono<ArangoResponse> execute(final ArangoRequest request);
 

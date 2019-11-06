@@ -54,7 +54,7 @@ import static io.netty.handler.codec.http.HttpHeaderNames.*;
  * @author Mark Vollmary
  */
 
-public class HttpConnection implements ArangoConnection {
+class HttpConnection implements ArangoConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpConnection.class);
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=UTF-8";
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";

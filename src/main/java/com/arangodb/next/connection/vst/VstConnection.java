@@ -20,9 +20,7 @@
 
 package com.arangodb.next.connection.vst;
 
-import com.arangodb.next.connection.HostDescription;
-import com.arangodb.next.connection.IOUtils;
-import com.arangodb.velocypack.VPackSlice;
+import com.arangodb.next.connection.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.JdkSslContext;
@@ -32,53 +30,41 @@ import reactor.core.publisher.Mono;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.TcpClient;
 
-import javax.net.ssl.SSLContext;
 import java.io.IOException;
-import java.time.Duration;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.arangodb.next.ArangoDefaults.HEADER_SIZE;
 import static io.netty.buffer.Unpooled.wrappedBuffer;
 import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
-import static reactor.netty.resources.ConnectionProvider.DEFAULT_POOL_ACQUIRE_TIMEOUT;
 
 /**
  * @author Mark Vollmary
  * @author Michele Rastelli
  */
-public abstract class VstConnection {
+class VstConnection implements ArangoConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(VstConnection.class);
     private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes();
 
-    protected final MessageStore messageStore;
-
-    protected final Integer timeout;
-    private final Long ttl;
-    private final Boolean useSsl;
-    private final SSLContext sslContext;
-
-    private final HostDescription host;
+    private final ConnectionConfig config;
 
     private final HashMap<Long, Long> sendTimestamps = new HashMap<>();
 
     private final ConnectionProvider connectionProvider;
+    private final MessageStore messageStore;
 
     private final String connectionName;
     private final ArangoTcpClient arangoTcpClient;
 
-    protected VstConnection(final HostDescription host, final Integer timeout, final Long ttl, final Boolean useSsl,
-                            final SSLContext sslContext, final MessageStore messageStore) {
-        super();
-        this.host = host;
-        this.timeout = timeout;
-        this.ttl = ttl;
-        this.useSsl = useSsl;
-        this.sslContext = sslContext;
-        this.messageStore = messageStore;
+    private final AtomicLong mId = new AtomicLong();
 
+    VstConnection(final ConnectionConfig config) {
+        super();
+        this.config = config;
+
+        this.messageStore = new MessageStore();
         this.connectionProvider = initConnectionProvider();
 
         connectionName = "connection_" + System.currentTimeMillis() + "_" + Math.random();
@@ -91,19 +77,16 @@ public abstract class VstConnection {
         return ConnectionProvider.fixed(
                 "tcp",
                 1,
-                getAcquireTimeout(),
-                ttl != null ? Duration.ofMillis(ttl) : null);
-    }
-
-    private long getAcquireTimeout() {
-        return timeout != null && timeout >= 0 ? timeout : DEFAULT_POOL_ACQUIRE_TIMEOUT;
+                config.getTimeout(),
+                config.getTtl()
+        );
     }
 
     public boolean isOpen() {
         return arangoTcpClient.isActive();
     }
 
-    public synchronized void open() throws IOException {
+    public void open() throws IOException {
         if (isOpen()) {
             return;
         }
@@ -118,46 +101,16 @@ public abstract class VstConnection {
         }
     }
 
-    public synchronized void close() {
-        arangoTcpClient.disconnect();
+    @Override
+    public Mono<ArangoResponse> execute(ArangoRequest request) {
+        final long id = mId.incrementAndGet();
+        ArangoMessage message = ArangoMessage.fromRequest(id, request);
+        arangoTcpClient.send(message.writeChunked(config.getChunksize()));
+        return messageStore.add(id);
     }
 
-    protected synchronized void writeIntern(final Message message, final Collection<Chunk> chunks) {
-        final ByteBuf messageBuffer = IOUtils.createBuffer();
-        messageBuffer.writeBytes(message.getHead().getBuffer(), 0, message.getHead().getByteSize());
-        final VPackSlice body = message.getBody();
-        if (body != null) {
-            messageBuffer.writeBytes(body.getBuffer(), 0, message.getBody().getByteSize());
-        }
-
-        final ByteBuf out = IOUtils.createBuffer();
-
-        for (final Chunk chunk : chunks) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Send chunk %s:%s from message %s", chunk.getChunk(),
-                        chunk.isFirstChunk() ? 1 : 0, chunk.getMessageId()));
-                sendTimestamps.put(chunk.getMessageId(), System.currentTimeMillis());
-            }
-
-            final int length = chunk.getContentLength() + HEADER_SIZE;
-
-            out.writeIntLE(length);
-            out.writeIntLE(chunk.getChunkX());
-            out.writeLongLE(chunk.getMessageId());
-            out.writeLongLE(chunk.getMessageLength());
-
-            final int contentOffset = chunk.getContentOffset();
-            final int contentLength = chunk.getContentLength();
-
-            out.writeBytes(messageBuffer, contentOffset, contentLength);
-        }
-
-        messageBuffer.release();
-        arangoTcpClient.send(out);
-    }
-
-    public String getConnectionName() {
-        return this.connectionName;
+    public Mono<Void> close() {
+        return arangoTcpClient.disconnect();
     }
 
     private class ArangoTcpClient {
@@ -177,25 +130,22 @@ public abstract class VstConnection {
                     .subscribe();
         }
 
-        private TcpClient applyConnectionTimeout(TcpClient tcpClient) {
-            return timeout != null && timeout >= 0 ? tcpClient.option(CONNECT_TIMEOUT_MILLIS, timeout) : tcpClient;
-        }
-
         private TcpClient applySslContext(TcpClient httpClient) {
-            if (Boolean.TRUE == useSsl && sslContext != null) {
-                //noinspection deprecation
-                return httpClient.secure(spec -> spec.sslContext(new JdkSslContext(sslContext, true, ClientAuth.NONE)));
-            } else {
-                return httpClient;
-            }
+            return config.getSslContext()
+                    .filter(v -> config.getUseSsl())
+                    .map(sslContext ->
+                            httpClient.secure(spec ->
+                                    spec.sslContext(new JdkSslContext(sslContext, true, ClientAuth.NONE))))
+                    .orElse(httpClient);
         }
 
         ArangoTcpClient() {
             chunkStore = new ChunkStore(messageStore);
 
-            tcpClient = applySslContext(applyConnectionTimeout(TcpClient.create(connectionProvider)))
-                    .host(host.getHost())
-                    .port(host.getPort())
+            tcpClient = applySslContext(TcpClient.create(connectionProvider))
+                    .option(CONNECT_TIMEOUT_MILLIS, config.getTimeout())
+                    .host(config.getHost().getHost())
+                    .port(config.getHost().getPort())
                     .doOnDisconnected(c -> finalize(new IOException("Connection closed!")))
                     .handle((i, o) -> {
                         i.receive()
@@ -286,8 +236,9 @@ public abstract class VstConnection {
                     .subscribe();
         }
 
-        void disconnect() {
+        Mono<Void> disconnect() {
             connection.dispose();
+            return connection.onDispose();
         }
 
         boolean isActive() {
