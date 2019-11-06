@@ -44,7 +44,7 @@ class HttpConnectionTest {
             .build();
 
     private String body = "{\"message\": \"Hello World!\"}";
-    private Request request = Request.builder()
+    private ArangoRequest request = ArangoRequest.builder()
             .database("database")
             .path("/path")
             .putHeaderParam("headerParamKey", "headerParamValue")
@@ -61,7 +61,7 @@ class HttpConnectionTest {
     @Test
     void execute() {
         HttpConnection connection = new HttpConnection(config);
-        Response response = connection.execute(request).block();
+        ArangoResponse response = connection.execute(request).block();
 
         // authorization
         assertThat(response).isNotNull();
@@ -106,7 +106,7 @@ class HttpConnectionTest {
         builder.close();
         final VPackSlice slice = builder.slice();
 
-        Response response = connection.execute(Request.builder().from(request)
+        ArangoResponse response = connection.execute(ArangoRequest.builder().from(request)
                 .body(Unpooled.wrappedBuffer(slice.getBuffer()))
                 .build()).block();
 
@@ -129,7 +129,7 @@ class HttpConnectionTest {
                 .authenticationMethod(AuthenticationMethod.ofBasic("user", "password"))
                 .build());
 
-        Response response = connection.execute(Request.builder().from(request).body(IOUtils.createBuffer()).build()).block();
+        ArangoResponse response = connection.execute(ArangoRequest.builder().from(request).body(IOUtils.createBuffer()).build()).block();
 
         // body
         assertThat(response).isNotNull();
@@ -143,7 +143,7 @@ class HttpConnectionTest {
                 .authenticationMethod(AuthenticationMethod.ofBasic("user", "password"))
                 .build());
 
-        Response response = connection.execute(request).block();
+        ArangoResponse response = connection.execute(request).block();
 
         // authorization
         assertThat(response).isNotNull();

@@ -30,16 +30,18 @@ import java.util.Map;
  * @author Mark Vollmary
  *
  */
-public class Response {
+public class ArangoResponse {
 
 	private int version = 1;
 	private int type = 2;
 	private int responseCode;
 	private Map<String, String> meta;
+
+	// TODO: refactor to Publisher<ByteBuf>
 	@Expose(deserialize = false)
 	private ByteBuf body = null;
 
-	public Response() {
+	public ArangoResponse() {
 		super();
         meta = new HashMap<>();
 	}

@@ -33,7 +33,7 @@ public interface ArangoConnection {
      * @param request
      * @return
      */
-    Mono<Response> execute(final Request request);
+    Mono<ArangoResponse> execute(final ArangoRequest request);
 
     Mono<Void> close();
 

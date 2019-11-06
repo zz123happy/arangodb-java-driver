@@ -30,10 +30,10 @@ import java.util.Map;
  * @author Michele Rastelli
  */
 @Value.Immutable
-public interface Request {
+public interface ArangoRequest {
 
-    static ImmutableRequest.Builder builder() {
-        return ImmutableRequest.builder();
+    static ImmutableArangoRequest.Builder builder() {
+        return ImmutableArangoRequest.builder();
     }
 
     default int getVersion() {
@@ -54,6 +54,7 @@ public interface Request {
 
     Map<String, String> getHeaderParam();
 
+    // TODO: refactor to Publisher<ByteBuf>
     ByteBuf getBody();
 
 }

@@ -109,7 +109,7 @@ public class HttpConnection implements ArangoConnection {
         return connectionProvider.disposeLater();
     }
 
-    private static String buildUrl(final Request request) {
+    private static String buildUrl(final ArangoRequest request) {
         final StringBuilder sb = new StringBuilder();
         final String database = request.getDatabase();
         if (database != null && !database.isEmpty()) {
@@ -157,7 +157,7 @@ public class HttpConnection implements ArangoConnection {
         }
     }
 
-    private HttpClient createHttpClient(final Request request, final int bodyLength) {
+    private HttpClient createHttpClient(final ArangoRequest request, final int bodyLength) {
         return addCookies(client)
                 .headers(headers -> {
                     headers.set(CONTENT_LENGTH, bodyLength);
@@ -176,7 +176,7 @@ public class HttpConnection implements ArangoConnection {
     }
 
     @Override
-    public Mono<Response> execute(final Request request) {
+    public Mono<ArangoResponse> execute(final ArangoRequest request) {
         final String url = buildUrl(request);
         return Mono.defer(() ->
                 // this block runs on the single scheduler executor, so that cookies reads and writes are
@@ -190,7 +190,7 @@ public class HttpConnection implements ArangoConnection {
     }
 
 
-    private static void addHeaders(final Request request, final HttpHeaders headers) {
+    private static void addHeaders(final ArangoRequest request, final HttpHeaders headers) {
         for (final Entry<String, String> header : request.getHeaderParam().entrySet()) {
             headers.add(header.getKey(), header.getValue());
         }
@@ -224,11 +224,11 @@ public class HttpConnection implements ArangoConnection {
         }
     }
 
-    private Mono<Response> buildResponse(HttpClientResponse resp, ByteBufMono bytes) {
+    private Mono<ArangoResponse> buildResponse(HttpClientResponse resp, ByteBufMono bytes) {
         return bytes
                 .switchIfEmpty(Mono.just(Unpooled.EMPTY_BUFFER))
                 .map(byteBuf -> {
-                    final Response response = new Response();
+                    final ArangoResponse response = new ArangoResponse();
                     response.setResponseCode(resp.status().code());
                     resp.responseHeaders().forEach(it -> response.getMeta().put(it.getKey(), it.getValue()));
                     response.setBody(IOUtils.copyOf(byteBuf));
