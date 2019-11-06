@@ -21,6 +21,7 @@
 package com.arangodb.next.connection.vst;
 
 import com.arangodb.next.connection.ArangoRequest;
+import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.connection.IOUtils;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
@@ -41,7 +42,17 @@ class ArangoMessage {
     private final long id;
     private final ByteBuf payload;
 
-    static ArangoMessage fromRequest(long id, ArangoRequest request){
+    static ArangoResponse fromBuffer(byte[] buffer) {
+        VPackSlice head = new VPackSlice(buffer);
+        ArangoResponse response = deserializeArangoResponseHead(head);
+        final int headSize = head.getByteSize();
+        ByteBuf body = IOUtils.createBuffer(buffer.length - headSize);
+        body.writeBytes(buffer, headSize, buffer.length - headSize);
+        response.setBody(body);
+        return response;
+    }
+
+    private static ArangoMessage fromRequest(long id, ArangoRequest request) {
         VPackSlice headSlice = serializeArangoRequestHead(request);
         int headSize = headSlice.getByteSize();
         ByteBuf payload = IOUtils.createBuffer(headSize + request.getBody().readableBytes());
@@ -51,21 +62,26 @@ class ArangoMessage {
         return new ArangoMessage(id, payload);
     }
 
-   private ArangoMessage(final long id, final ByteBuf payload) {
+    private ArangoMessage(final long id, final ByteBuf payload) {
         super();
         this.id = id;
         this.payload = payload;
     }
 
-    long getId() {
+    private long getId() {
         return id;
     }
 
-    ByteBuf getPayload() {
+    private ByteBuf getPayload() {
         return payload;
     }
 
-    ByteBuf writeChunked(int chunkSize) {
+    static ByteBuf writeChunked(long id, ArangoRequest request, int chunkSize) {
+        ArangoMessage message = fromRequest(id, request);
+        return message.writeChunked(chunkSize);
+    }
+
+    private ByteBuf writeChunked(int chunkSize) {
         final ByteBuf out = IOUtils.createBuffer();
 
         for (final Chunk chunk : buildChunks(chunkSize)) {
@@ -122,4 +138,15 @@ class ArangoMessage {
         return builder.slice();
     }
 
+    private static ArangoResponse deserializeArangoResponseHead(VPackSlice vpack){
+        final ArangoResponse response = new ArangoResponse();
+        response.setVersion(vpack.get(0).getAsInt());
+        response.setType(vpack.get(1).getAsInt());
+        response.setResponseCode(vpack.get(2).getAsInt());
+        if (vpack.size() > 3) {
+//            final Map<String, Object> map = new VPack.Builder().build().deserialize(builder.slice(), Map.class);
+//            response.setMeta(context.deserialize(vpack.get(3), Map.class));
+        }
+        return response;
+    }
 }

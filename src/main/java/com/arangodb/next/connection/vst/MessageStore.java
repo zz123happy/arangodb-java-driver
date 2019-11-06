@@ -20,6 +20,7 @@
 
 package com.arangodb.next.connection.vst;
 
+import com.arangodb.next.connection.ArangoResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -36,40 +37,41 @@ class MessageStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageStore.class);
 
-    private final Map<Long, MonoProcessor<ArangoMessage>> pendingRequests = new HashMap<>();
+    private final Map<Long, MonoProcessor<ArangoResponse>> pendingRequests = new HashMap<>();
 
     /**
      * Adds a pending request to the store
      *
      * @param messageId id of the sent message
-     * @return a {@link Mono} that will be resolved when the response to the related message is received
+     * @return a {@link Mono} that will be resolved when the related response is received
      */
-    Mono<ArangoMessage> add(long messageId) {
+    Mono<ArangoResponse> add(long messageId) {
         if (pendingRequests.containsKey(messageId)) {
             throw new IllegalStateException("Key already present: " + messageId);
         }
-        final MonoProcessor<ArangoMessage> response = MonoProcessor.create();
+        final MonoProcessor<ArangoResponse> response = MonoProcessor.create();
         pendingRequests.put(messageId, response);
         return response;
     }
 
     /**
-     * Resolves the pending request related to the message
+     * Resolves the pending request related to the messageId
      *
-     * @param message the received response
+     * @param messageId id of the received message
+     * @param response the received response
      */
-    void resolve(final ArangoMessage message) {
-        LOGGER.debug("Received Message (id={})", message.getId());
-        final MonoProcessor<ArangoMessage> future = pendingRequests.remove(message.getId());
+    void resolve(long messageId, final ArangoResponse response) {
+        LOGGER.debug("Received Message (id={})", messageId);
+        final MonoProcessor<ArangoResponse> future = pendingRequests.remove(messageId);
         if (future == null) {
-            throw new IllegalStateException("No pending request found for received message: " + message.getId());
+            throw new IllegalStateException("No pending request found for received message: " + messageId);
         }
-        future.onNext(message);
+        future.onNext(response);
     }
 
     // TODO: check if this is really necessary, atm it should be only used for the reply to the authentication request?!
     void cancel(long messageId) {
-        final MonoProcessor<ArangoMessage> future = pendingRequests.remove(messageId);
+        final MonoProcessor<ArangoResponse> future = pendingRequests.remove(messageId);
         if (future != null) {
             LOGGER.error(String.format("Cancel Message unexpected (id=%s).", messageId));
             future.onError(new RuntimeException("Cancelled!"));

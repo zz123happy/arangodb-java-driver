@@ -21,9 +21,7 @@
 package com.arangodb.next.connection.vst;
 
 import com.arangodb.next.connection.IOUtils;
-import com.arangodb.velocypack.VPackSlice;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCounted;
 
 import java.nio.BufferUnderflowException;
@@ -65,8 +63,10 @@ public class ChunkStore {
     private void checkCompleteness(final long messageId, final ByteBuf chunkBuffer)
             throws BufferUnderflowException, IndexOutOfBoundsException {
         if (chunkBuffer.readableBytes() == chunkBuffer.capacity()) {
-            ArangoMessage message = new ArangoMessage(messageId, chunkBuffer);
-            messageStore.resolve(message);
+            byte[] bytes = new byte[chunkBuffer.readableBytes()];
+            chunkBuffer.readBytes(bytes);
+            chunkBuffer.release();
+            messageStore.resolve(messageId, ArangoMessage.fromBuffer(bytes));
             data.remove(messageId);
         }
     }

@@ -39,6 +39,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InternalSerdeTest {
 
     @Test
+    void deserializeArangoResponse() {
+        // TODO
+    }
+
+    @Test
     void serializeArangoRequest() {
         ArangoRequest request = ArangoRequest.builder()
                 .database("database")
