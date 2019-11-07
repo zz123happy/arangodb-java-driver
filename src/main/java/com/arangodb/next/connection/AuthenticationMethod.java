@@ -20,11 +20,12 @@
 
 package com.arangodb.next.connection;
 
+import com.arangodb.velocypack.VPackBuilder;
+import com.arangodb.velocypack.ValueType;
+import io.netty.buffer.ByteBuf;
 import org.immutables.value.Value;
 
-import java.util.Arrays;
 import java.util.Base64;
-import java.util.List;
 
 /**
  * @author Michele Rastelli
@@ -33,7 +34,7 @@ public interface AuthenticationMethod {
 
     String getHttpAuthorizationHeader();
 
-    List<Object> getVstAuthenticationMessage();
+    ByteBuf getVstAuthenticationMessage();
 
     static AuthenticationMethod ofJwt(final String jwt) {
         return ImmutableJwtAuthenticationMethod.of(jwt);
@@ -43,6 +44,9 @@ public interface AuthenticationMethod {
         return ImmutableBasicAuthenticationMethod.of(user, password);
     }
 
+    /**
+     * @see <a href="https://github.com/arangodb/velocystream#authentication">API
+     */
     @Value.Immutable(builder = false)
     abstract class JwtAuthenticationMethod implements AuthenticationMethod {
 
@@ -55,13 +59,15 @@ public interface AuthenticationMethod {
         }
 
         @Override
-        public List<Object> getVstAuthenticationMessage() {
-            return Arrays.asList(
-                    1,
-                    1000,
-                    "jwt",
-                    getJwt()
-            );
+        public ByteBuf getVstAuthenticationMessage() {
+            final VPackBuilder builder = new VPackBuilder();
+            builder.add(ValueType.ARRAY);
+            builder.add(1);
+            builder.add(1000);
+            builder.add("jwt");
+            builder.add(getJwt());
+            builder.close();
+            return VPackUtils.extractBuffer(builder.slice());
         }
 
     }
@@ -83,14 +89,16 @@ public interface AuthenticationMethod {
         }
 
         @Override
-        public List<Object> getVstAuthenticationMessage() {
-            return Arrays.asList(
-                    1,
-                    1000,
-                    "plain",
-                    getUser(),
-                    getPassword()
-            );
+        public ByteBuf getVstAuthenticationMessage() {
+            final VPackBuilder builder = new VPackBuilder();
+            builder.add(ValueType.ARRAY);
+            builder.add(1);
+            builder.add(1000);
+            builder.add("plain");
+            builder.add(getUser());
+            builder.add(getPassword());
+            builder.close();
+            return VPackUtils.extractBuffer(builder.slice());
         }
 
     }

@@ -38,19 +38,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VstConnectionTest {
 
     private ConnectionConfig config = ConnectionConfig.builder()
-            .host(HostDescription.of("localhost", 9000))
-            .authenticationMethod(AuthenticationMethod.ofBasic("user", "password"))
+            .host(HostDescription.of("localhost", 8529))
+            .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
             .contentType(ContentType.VPACK)
             .build();
 
-    private String body = "{\"message\": \"Hello World!\"}";
     private ArangoRequest request = ArangoRequest.builder()
-            .database("database")
-            .path("/path")
-            .putHeaderParam("headerParamKey", "headerParamValue")
-            .putQueryParam("queryParamKey", "queryParamValue")
-            .requestType(RequestType.POST)
-            .body(Unpooled.wrappedBuffer(body.getBytes()))
+            .database("_system")
+            .path("/_api/version")
+            .requestType(RequestType.GET)
+            .body(Unpooled.EMPTY_BUFFER)
             .build();
 
     @BeforeAll
@@ -132,6 +129,8 @@ class VstConnectionTest {
 
         // body
         assertThat(response).isNotNull();
+
+        System.out.println(new VPackSlice(IOUtilsTest.getByteArray(response.getBody())));
         assertThat(response.getBody().readableBytes()).isEqualTo(0);
         response.getBody().release();
     }
