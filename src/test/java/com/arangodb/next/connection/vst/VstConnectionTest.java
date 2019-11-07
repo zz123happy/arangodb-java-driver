@@ -122,9 +122,7 @@ class VstConnectionTest {
 
     @Test
     void executeEmptyBody() {
-        VstConnection connection = new VstConnection(config);
-        connection.initialize().block();
-
+        ArangoConnection connection = new VstConnection(config).initialize().block();
         ArangoResponse response = connection.execute(ArangoRequest.builder().from(request).body(IOUtils.createBuffer()).build()).block();
 
         // body
