@@ -46,20 +46,16 @@ class RequestConverter {
      */
     static ByteBuf encodeRequest(long id, ArangoRequest request, int chunkSize) {
         ByteBuf payload = createVstPayload(request);
-        return writeChunked(id, payload, chunkSize);
+        return encodeBuffer(id, payload, chunkSize);
     }
 
-    private static ByteBuf createVstPayload(ArangoRequest request) {
-        VPackSlice headSlice = serializeArangoRequestHead(request);
-        int headSize = headSlice.getByteSize();
-        ByteBuf payload = IOUtils.createBuffer(headSize + request.getBody().readableBytes());
-        payload.writeBytes(headSlice.getBuffer(), 0, headSize);
-        payload.writeBytes(request.getBody());
-        request.getBody().release();
-        return payload;
-    }
-
-    private static ByteBuf writeChunked(long id, ByteBuf payload, int chunkSize) {
+    /**
+     * @param id id of the VST message id
+     * @param payload request payload, it will be released before returning
+     * @param chunkSize VST chunkSize
+     * @return a buffer ready to be sent following the VST 1.1 spec
+     */
+    static ByteBuf encodeBuffer(long id, ByteBuf payload, int chunkSize) {
         final ByteBuf out = IOUtils.createBuffer();
 
         for (final Chunk chunk : buildChunks(id, payload, chunkSize)) {
@@ -79,6 +75,16 @@ class RequestConverter {
 
         payload.release();
         return out;
+    }
+
+    private static ByteBuf createVstPayload(ArangoRequest request) {
+        VPackSlice headSlice = serializeArangoRequestHead(request);
+        int headSize = headSlice.getByteSize();
+        ByteBuf payload = IOUtils.createBuffer(headSize + request.getBody().readableBytes());
+        payload.writeBytes(headSlice.getBuffer(), 0, headSize);
+        payload.writeBytes(request.getBody());
+        request.getBody().release();
+        return payload;
     }
 
     private static List<Chunk> buildChunks(long id, ByteBuf payload, int chunkSize) {

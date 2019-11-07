@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VstConnectionTest {
 
     private ConnectionConfig config = ConnectionConfig.builder()
-            .host(HostDescription.of("localhost", 8529))
+            .host(HostDescription.of("coordinator1", 8529))
             .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
             .contentType(ContentType.VPACK)
             .build();

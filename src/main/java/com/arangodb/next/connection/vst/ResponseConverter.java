@@ -1,4 +1,4 @@
-package com.arangodb.next.connection.vst;/*
+/*
  * DISCLAIMER
  *
  * Copyright 2016 ArangoDB GmbH, Cologne, Germany
@@ -18,6 +18,8 @@ package com.arangodb.next.connection.vst;/*
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
+
+package com.arangodb.next.connection.vst;
 
 import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.connection.IOUtils;

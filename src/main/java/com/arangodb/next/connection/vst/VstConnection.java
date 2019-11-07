@@ -84,8 +84,11 @@ class VstConnection implements ArangoConnection {
                 })
                 .doOnConnected(c -> {
                     connection = c;
-                    readyConnection.onNext(this);
                     send(wrappedBuffer(PROTOCOL_HEADER));
+                    authenticate()
+                            .doOnSuccess((v) -> readyConnection.onNext(this))
+                            .doOnError(this::handleError)
+                            .subscribe();
                 });
 
     }
@@ -105,11 +108,31 @@ class VstConnection implements ArangoConnection {
         return readyConnection;
     }
 
+    private Mono<Void> authenticate() {
+        if (config.getAuthenticationMethod().isPresent()) {
+            AuthenticationMethod authenticationMethod = config.getAuthenticationMethod().get();
+            final long id = mId.incrementAndGet();
+            return execute(id, RequestConverter.encodeBuffer(id, authenticationMethod.getVstAuthenticationMessage(), config.getChunksize()))
+                    .doOnNext(response -> {
+                        if(response.getResponseCode() != 200){
+                            throw new RuntimeException("Authentication failure!");
+                        }
+                    })
+                    .then();
+        } else {
+            return Mono.empty();
+        }
+    }
+
+    private Mono<ArangoResponse> execute(long id, ByteBuf buf) {
+        send(buf);
+        return messageStore.add(id);
+    }
+
     @Override
     public Mono<ArangoResponse> execute(ArangoRequest request) {
         final long id = mId.incrementAndGet();
-        send(RequestConverter.encodeRequest(id, request, config.getChunksize()));
-        return messageStore.add(id);
+        return execute(id, RequestConverter.encodeRequest(id, request, config.getChunksize()));
     }
 
     void send(ByteBuf buf) {

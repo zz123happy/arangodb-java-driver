@@ -30,6 +30,8 @@ import java.util.concurrent.CompletableFuture;
  */
 public class EchoTcpServer {
 
+    private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes();
+
     public CompletableFuture<Void> start() {
         CompletableFuture<Void> done = new CompletableFuture<>();
         new Thread(() -> TcpServer.create()
@@ -37,7 +39,7 @@ public class EchoTcpServer {
                 .port(9000)
                 .doOnBound((c) -> done.complete(null))
                 .handle((inbound, outbound) -> outbound.sendByteArray(inbound.receive().asByteArray()
-                        .filter(bytes -> !Arrays.equals(bytes, "VST/1.1\r\n\r\n".getBytes()))).neverComplete())
+                        .filter(bytes -> !Arrays.equals(bytes, PROTOCOL_HEADER))).neverComplete())
                         .bindNow().onDispose().block()).start();
 
         return done;
