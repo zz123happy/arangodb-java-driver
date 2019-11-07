@@ -186,6 +186,7 @@ class HttpConnection implements ArangoConnection {
                         .send(Mono.just(request.getBody()))
                         .responseSingle(this::buildResponse))
                 .subscribeOn(scheduler)
+                .doOnError(e -> close().subscribe())
                 .timeout(Duration.ofMillis(config.getTimeout()));
     }
 
