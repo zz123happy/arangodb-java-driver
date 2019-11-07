@@ -36,9 +36,15 @@ public interface ArangoResponse {
         return ImmutableArangoResponse.builder();
     }
 
-    int getVersion();
+    @Value.Default
+    default int getVersion() {
+        return 1;
+    }
 
-    int getType();
+    @Value.Default
+    default int getType() {
+        return 2;
+    }
 
     int getResponseCode();
 
