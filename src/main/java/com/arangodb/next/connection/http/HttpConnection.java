@@ -176,6 +176,11 @@ class HttpConnection implements ArangoConnection {
     }
 
     @Override
+    public Mono<ArangoConnection> initialize() {
+        return Mono.just(this);
+    }
+
+    @Override
     public Mono<ArangoResponse> execute(final ArangoRequest request) {
         final String url = buildUrl(request);
         return Mono.defer(() ->

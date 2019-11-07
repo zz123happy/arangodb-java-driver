@@ -82,23 +82,12 @@ class VstConnection implements ArangoConnection {
         );
     }
 
-    public boolean isOpen() {
-        return arangoTcpClient.isActive();
-    }
-
-    public void open() throws IOException {
-        if (isOpen()) {
-            return;
-        }
+    @Override
+    public Mono<ArangoConnection> initialize() {
         new Thread(arangoTcpClient::connect).start();
-        // wait for connection
-        try {
-            arangoTcpClient.getConnectedFuture().get();
-        } catch (InterruptedException e) {
-            close();
-        } catch (ExecutionException e) {
-            throw new IOException(e.getCause());
-        }
+        return Mono
+                .fromFuture(arangoTcpClient.getConnectedFuture())
+                .map(v -> this);
     }
 
     @Override

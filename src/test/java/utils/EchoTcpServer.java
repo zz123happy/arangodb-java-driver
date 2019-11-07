@@ -22,12 +22,13 @@ package utils;
 
 import reactor.netty.tcp.TcpServer;
 
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Michele Rastelli
  */
-class EchoTcpServer {
+public class EchoTcpServer {
 
     public CompletableFuture<Void> start() {
         CompletableFuture<Void> done = new CompletableFuture<>();
@@ -35,8 +36,9 @@ class EchoTcpServer {
                 .host("0.0.0.0")
                 .port(9000)
                 .doOnBound((c) -> done.complete(null))
-                .handle((inbound, outbound) -> outbound.sendByteArray(inbound.receive().asByteArray()).neverComplete())
-                .bindNow().onDispose().block()).start();
+                .handle((inbound, outbound) -> outbound.sendByteArray(inbound.receive().asByteArray()
+                        .filter(bytes -> !Arrays.equals(bytes, "VST/1.1\r\n\r\n".getBytes()))).neverComplete())
+                        .bindNow().onDispose().block()).start();
 
         return done;
     }

@@ -29,6 +29,12 @@ import reactor.core.publisher.Mono;
 public interface ArangoConnection {
 
     /**
+     * Initializes the connection asynchronously, eg. establishing the tcp connection and performing the authentication
+     * @return the connection ready to be used
+     */
+    Mono<ArangoConnection> initialize();
+
+    /**
      * Note: the consumer is responsible to call release() on Response body
      * @param request to send
      * @return response from the server
