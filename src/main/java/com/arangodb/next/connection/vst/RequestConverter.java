@@ -21,18 +21,14 @@
 package com.arangodb.next.connection.vst;
 
 import com.arangodb.next.connection.ArangoRequest;
-import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.connection.IOUtils;
-import com.arangodb.next.connection.ImmutableArangoResponse;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
 import io.netty.buffer.ByteBuf;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import static com.arangodb.next.ArangoDefaults.HEADER_SIZE;
 
@@ -40,55 +36,33 @@ import static com.arangodb.next.ArangoDefaults.HEADER_SIZE;
  * @author Mark Vollmary
  * @author Michele Rastelli
  */
-// TODO: leave only 2 public methods:
-// - ArangoResponse decodeResponse(byte[] buffer)
-// - ByteBuf encodeRequest(ArangoRequest request)
-class ArangoMessage {
+class RequestConverter {
 
-    private final long id;
-    private final ByteBuf payload;
-
-    static ArangoResponse fromBuffer(byte[] buffer) {
-        VPackSlice head = new VPackSlice(buffer);
-        final int headSize = head.getByteSize();
-        ByteBuf body = IOUtils.createBuffer(buffer.length - headSize);
-        body.writeBytes(buffer, headSize, buffer.length - headSize);
-        return buildArangoResponse(head, body);
+    /**
+     * @param id id of the VST message id
+     * @param request ArangoDB request
+     * @param chunkSize VST chunkSize
+     * @return a buffer ready to be sent following the VST 1.1 spec
+     */
+    static ByteBuf encodeRequest(long id, ArangoRequest request, int chunkSize) {
+        ByteBuf payload = createVstPayload(request);
+        return writeChunked(id, payload, chunkSize);
     }
 
-    private static ArangoMessage fromRequest(long id, ArangoRequest request) {
+    private static ByteBuf createVstPayload(ArangoRequest request) {
         VPackSlice headSlice = serializeArangoRequestHead(request);
         int headSize = headSlice.getByteSize();
         ByteBuf payload = IOUtils.createBuffer(headSize + request.getBody().readableBytes());
         payload.writeBytes(headSlice.getBuffer(), 0, headSize);
         payload.writeBytes(request.getBody());
         request.getBody().release();
-        return new ArangoMessage(id, payload);
-    }
-
-    private ArangoMessage(final long id, final ByteBuf payload) {
-        super();
-        this.id = id;
-        this.payload = payload;
-    }
-
-    private long getId() {
-        return id;
-    }
-
-    private ByteBuf getPayload() {
         return payload;
     }
 
-    static ByteBuf writeChunked(long id, ArangoRequest request, int chunkSize) {
-        ArangoMessage message = fromRequest(id, request);
-        return message.writeChunked(chunkSize);
-    }
-
-    private ByteBuf writeChunked(int chunkSize) {
+    private static ByteBuf writeChunked(long id, ByteBuf payload, int chunkSize) {
         final ByteBuf out = IOUtils.createBuffer();
 
-        for (final Chunk chunk : buildChunks(chunkSize)) {
+        for (final Chunk chunk : buildChunks(id, payload, chunkSize)) {
 
             final int length = chunk.getContentLength() + HEADER_SIZE;
 
@@ -107,7 +81,7 @@ class ArangoMessage {
         return out;
     }
 
-    private List<Chunk> buildChunks(int chunkSize) {
+    private static List<Chunk> buildChunks(long id, ByteBuf payload, int chunkSize) {
         final List<Chunk> chunks = new ArrayList<>();
         int size = payload.readableBytes();
         final int totalSize = size;
@@ -140,24 +114,6 @@ class ArangoMessage {
         builder.close();
         builder.close();
         return builder.slice();
-    }
-
-    private static ArangoResponse buildArangoResponse(VPackSlice vpack, ByteBuf body) {
-        ImmutableArangoResponse.Builder builder = ArangoResponse.builder()
-                .body(body)
-                .version(vpack.get(0).getAsInt())
-                .type(vpack.get(1).getAsInt())
-                .responseCode(vpack.get(2).getAsInt());
-
-        if (vpack.size() > 3) {
-            Iterator<Map.Entry<String, VPackSlice>> metaIterator = vpack.get(3).objectIterator();
-            while (metaIterator.hasNext()){
-                Map.Entry<String, VPackSlice> meta = metaIterator.next();
-                builder.putMeta(meta.getKey(), meta.getValue().getAsString());
-            }
-        }
-
-        return builder.build();
     }
 
 }

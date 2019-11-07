@@ -28,6 +28,7 @@ import java.util.Map;
 
 /**
  * @author Michele Rastelli
+ * @see <a href="https://github.com/arangodb/velocystream#request--response">API
  */
 @Value.Immutable
 public interface ArangoRequest {

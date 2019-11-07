@@ -104,7 +104,7 @@ class VstConnection implements ArangoConnection {
     @Override
     public Mono<ArangoResponse> execute(ArangoRequest request) {
         final long id = mId.incrementAndGet();
-        arangoTcpClient.send(ArangoMessage.writeChunked(id, request, config.getChunksize()));
+        arangoTcpClient.send(RequestConverter.encodeRequest(id, request, config.getChunksize()));
         return messageStore.add(id);
     }
 

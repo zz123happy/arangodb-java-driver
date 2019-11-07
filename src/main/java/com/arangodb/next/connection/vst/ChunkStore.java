@@ -66,7 +66,7 @@ public class ChunkStore {
             byte[] bytes = new byte[chunkBuffer.readableBytes()];
             chunkBuffer.readBytes(bytes);
             chunkBuffer.release();
-            messageStore.resolve(messageId, ArangoMessage.fromBuffer(bytes));
+            messageStore.resolve(messageId, ResponseConverter.decodeResponse(bytes));
             data.remove(messageId);
         }
     }
