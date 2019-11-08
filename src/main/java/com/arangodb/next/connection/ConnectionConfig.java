@@ -63,7 +63,10 @@ public interface ConnectionConfig {
 
     Optional<SSLContext> getSslContext();
 
-    ContentType getContentType();
+    @Value.Default
+    default ContentType getContentType() {
+        return ContentType.VPACK;
+    }
 
     /**
      * @return ArangoDB host

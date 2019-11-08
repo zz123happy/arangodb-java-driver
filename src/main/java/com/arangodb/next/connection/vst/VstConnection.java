@@ -42,7 +42,7 @@ import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
  * @author Mark Vollmary
  * @author Michele Rastelli
  */
-class VstConnection implements ArangoConnection {
+public class VstConnection implements ArangoConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(VstConnection.class);
     private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes();
 
@@ -60,7 +60,7 @@ class VstConnection implements ArangoConnection {
     private ByteBuf chunkContentBuffer = IOUtils.createBuffer();
     private final ChunkStore chunkStore;
 
-    VstConnection(final ConnectionConfig config) {
+    public VstConnection(final ConnectionConfig config) {
         this.config = config;
 
         messageStore = new MessageStore();

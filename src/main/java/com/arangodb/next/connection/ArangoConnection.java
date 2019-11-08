@@ -20,6 +20,8 @@
 
 package com.arangodb.next.connection;
 
+import com.arangodb.next.connection.http.HttpConnection;
+import com.arangodb.next.connection.vst.VstConnection;
 import reactor.core.publisher.Mono;
 
 
@@ -29,13 +31,31 @@ import reactor.core.publisher.Mono;
 public interface ArangoConnection {
 
     /**
+     * @param protocol communication protocol
+     * @param config connection config
+     * @return a Mono which will produce a new connection already initialized
+     */
+    static Mono<ArangoConnection> create(final ArangoProtocol protocol, final ConnectionConfig config) {
+        switch (protocol) {
+            case VST:
+                return new VstConnection(config).initialize();
+            case HTTP:
+                return new HttpConnection(config).initialize();
+            default:
+                throw new IllegalArgumentException(String.valueOf(protocol));
+        }
+    }
+
+    /**
      * Initializes the connection asynchronously, eg. establishing the tcp connection and performing the authentication
+     *
      * @return the connection ready to be used
      */
     Mono<ArangoConnection> initialize();
 
     /**
      * Note: the consumer is responsible to call release() on Response body
+     *
      * @param request to send
      * @return response from the server
      */
