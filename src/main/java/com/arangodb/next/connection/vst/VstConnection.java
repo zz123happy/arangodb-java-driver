@@ -59,6 +59,8 @@ public class VstConnection implements ArangoConnection {
     private ByteBuf chunkHeaderBuffer = IOUtils.createBuffer();
     private ByteBuf chunkContentBuffer = IOUtils.createBuffer();
     private final ChunkStore chunkStore;
+    private volatile Throwable failureCause;
+
 
     public VstConnection(final ConnectionConfig config) {
         this.config = config;
@@ -125,9 +127,13 @@ public class VstConnection implements ArangoConnection {
     }
 
     private Mono<ArangoResponse> execute(long id, ByteBuf buf) {
-        Mono<ArangoResponse> responseMono = messageStore.add(id);
-        send(buf);
-        return responseMono;
+        if (failureCause != null) {
+            return Mono.error(failureCause);
+        } else {
+            Mono<ArangoResponse> responseMono = messageStore.add(id);
+            send(buf);
+            return responseMono;
+        }
     }
 
     @Override
@@ -160,11 +166,14 @@ public class VstConnection implements ArangoConnection {
     }
 
     private void finalize(final Throwable t) {
-        readyConnection.onError(t);
+        failureCause = t;
         chunkStore.clear();
         messageStore.clear(t);
         chunkHeaderBuffer.release();
         chunkContentBuffer.release();
+        if (!readyConnection.isTerminated()) {
+            readyConnection.onError(t);
+        }
     }
 
     private void readBytes(ByteBuf bbIn, ByteBuf out, int len) {

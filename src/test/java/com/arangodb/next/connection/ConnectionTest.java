@@ -30,6 +30,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 import java.util.stream.Stream;
@@ -40,6 +42,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Michele Rastelli
  */
 class ConnectionTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionTest.class);
 
     private static final String JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEuNTczMjE3ODk4MjM1NTAzNGUrNiwiZXhwIjoxNTc1ODA5ODk4LCJpc3MiOiJhcmFuZ29kYiIsInByZWZlcnJlZF91c2VybmFtZSI6InJvb3QifQ==.SYc7_Vffkmd8zajJ_7_9DZG0GUcolXdgqtEAX0M0ECQ=";
 
@@ -142,6 +146,7 @@ class ConnectionTest {
                     new VPackSlice(IOUtilsTest.getByteArray(v.getBody()));
                     v.getBody().release();
                 }))
+                .onErrorContinue((throwable, o) -> LOGGER.info(throwable.getClass().getSimpleName() + " while processing: {}", o))
                 .then().block();
     }
 
