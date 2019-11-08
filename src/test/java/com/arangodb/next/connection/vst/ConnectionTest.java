@@ -65,75 +65,22 @@ class ConnectionTest {
             .body(Unpooled.EMPTY_BUFFER)
             .build();
 
-    @BeforeAll
-    static void setup() {
-        new EchoTcpServer().start().join();
+    @Test
+    void getVersion() {
+        ArangoResponse response = new VstConnection(config).initialize()
+                .flatMap(connection -> connection.execute(ArangoRequest.builder().from(request).body(IOUtils.createBuffer()).build()))
+                .block();
+
+        assertThat(response).isNotNull();
+        assertThat(response.getVersion()).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(2);
+        assertThat(response.getResponseCode()).isEqualTo(200);
+
+        VPackSlice responseBodySlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
+        assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
+        response.getBody().release();
     }
 
-//    @Test
-//    void execute() {
-//        HttpConnection connection = new HttpConnection(config);
-//        ArangoResponse response = connection.execute(request).block();
-//
-//        // authorization
-//        assertThat(response).isNotNull();
-//        assertThat(response.getMeta()).containsKey("authorization");
-//        assertThat(response.getMeta().get("authorization")).isEqualTo("Bearer token");
-//
-//        // body
-//        String receivedString = new String(IOUtilsTest.getByteArray(response.getBody()));
-//        response.getBody().release();
-//
-//        assertThat(receivedString).isEqualTo(body);
-//
-//        // headers
-//        assertThat(response.getMeta()).containsKey("headerParamKey");
-//        assertThat(response.getMeta().get("headerParamKey")).isEqualTo("headerParamValue");
-//
-//        // accept header
-//        assertThat(response.getMeta()).containsKey("accept");
-//        assertThat(response.getMeta().get("accept")).isEqualTo("application/json");
-//
-//        // uri & params
-//        assertThat(response.getMeta()).containsKey("uri");
-//        assertThat(response.getMeta().get("uri")).isEqualTo("/_db/database/path?queryParamKey=queryParamValue");
-//
-//        // host
-//        assertThat(response.getMeta()).containsKey("host");
-//        assertThat(response.getMeta().get("host")).isEqualTo("localhost:9000");
-//
-//        // reponseCode
-//        assertThat(response.getResponseCode()).isEqualTo(200);
-//    }
-
-//    @Test
-//    void executeVPack() {
-//        HttpConnection connection = new HttpConnection(ConnectionConfig.builder().from(config)
-//                .contentType(ContentType.VPACK)
-//                .build());
-//
-//        final VPackBuilder builder = new VPackBuilder();
-//        builder.add(ValueType.OBJECT);
-//        builder.add("message", "Hello World!");
-//        builder.close();
-//        final VPackSlice slice = builder.slice();
-//
-//        ArangoResponse response = connection.execute(ArangoRequest.builder().from(request)
-//                .body(Unpooled.wrappedBuffer(slice.getBuffer()))
-//                .build()).block();
-//
-//        // body
-//        assertThat(response).isNotNull();
-//        VPackSlice receivedSlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
-//        response.getBody().release();
-//
-//        assertThat(receivedSlice).isEqualTo(slice);
-//        assertThat(receivedSlice.get("message").getAsString()).isEqualTo("Hello World!");
-//
-//        // accept header
-//        assertThat(response.getMeta()).containsKey("accept");
-//        assertThat(response.getMeta().get("accept")).isEqualTo("application/x-velocypack");
-//    }
 
     @Test
     @Disabled
@@ -147,21 +94,5 @@ class ConnectionTest {
                 })
                 .then().block();
     }
-
-//    @Test
-//    void executeBasicAuthentication() {
-//        HttpConnection connection = new HttpConnection(ConnectionConfig.builder().from(config)
-//                .authenticationMethod(AuthenticationMethod.ofBasic("user", "password"))
-//                .build());
-//
-//        ArangoResponse response = connection.execute(request).block();
-//
-//        // authorization
-//        assertThat(response).isNotNull();
-//        assertThat(response.getMeta()).containsKey("authorization");
-//        assertThat(response.getMeta().get("authorization")).isEqualTo("Basic dXNlcjpwYXNzd29yZA==");
-//
-//        response.getBody().release();
-//    }
 
 }
