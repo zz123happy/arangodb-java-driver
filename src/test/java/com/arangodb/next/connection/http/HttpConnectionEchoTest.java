@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Michele Rastelli
  */
-class HttpConnectionTest {
+class HttpConnectionEchoTest {
 
     private ConnectionConfig config = ConnectionConfig.builder()
             .host(HostDescription.of("localhost", 9000))

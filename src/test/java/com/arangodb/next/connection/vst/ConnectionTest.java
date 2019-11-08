@@ -26,19 +26,34 @@ import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 import utils.EchoHttpServer;
 import utils.EchoTcpServer;
+
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
+ * TODO: run authentication tests against the following matrix:
+ * - server:
+ * - - ARANGO_NO_AUTH
+ * - - ARANGO_ROOT_PASSWORD
+ * - authenticationMethod:
+ * - - basic
+ * - - jwt
+ * - connection:
+ * - - http
+ * - - vst
+ *
  * @author Michele Rastelli
  */
-class VstConnectionTest {
+class ConnectionTest {
 
     private ConnectionConfig config = ConnectionConfig.builder()
-            .host(HostDescription.of("coordinator1", 8529))
+            .host(HostDescription.of("172.28.3.1", 8529))
             .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
             .contentType(ContentType.VPACK)
             .build();
@@ -121,16 +136,16 @@ class VstConnectionTest {
 //    }
 
     @Test
-    void executeEmptyBody() {
+    @Disabled
+    void inifiniteParallelLoop() {
         ArangoConnection connection = new VstConnection(config).initialize().block();
-        ArangoResponse response = connection.execute(ArangoRequest.builder().from(request).body(IOUtils.createBuffer()).build()).block();
-
-        // body
-        assertThat(response).isNotNull();
-
-        System.out.println(new VPackSlice(IOUtilsTest.getByteArray(response.getBody())));
-        assertThat(response.getBody().readableBytes()).isEqualTo(0);
-        response.getBody().release();
+        Flux.fromStream(Stream.iterate(0, i -> i + 1))
+                .flatMap(i -> connection.execute(ArangoRequest.builder().from(request).body(IOUtils.createBuffer()).build()))
+                .doOnNext(v -> {
+                    new VPackSlice(IOUtilsTest.getByteArray(v.getBody()));
+                    v.getBody().release();
+                })
+                .then().block();
     }
 
 //    @Test

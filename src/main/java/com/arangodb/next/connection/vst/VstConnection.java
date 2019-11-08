@@ -114,7 +114,7 @@ class VstConnection implements ArangoConnection {
             final long id = mId.incrementAndGet();
             return execute(id, RequestConverter.encodeBuffer(id, authenticationMethod.getVstAuthenticationMessage(), config.getChunksize()))
                     .doOnNext(response -> {
-                        if(response.getResponseCode() != 200){
+                        if (response.getResponseCode() != 200) {
                             throw new RuntimeException("Authentication failure!");
                         }
                     })
@@ -125,8 +125,9 @@ class VstConnection implements ArangoConnection {
     }
 
     private Mono<ArangoResponse> execute(long id, ByteBuf buf) {
+        Mono<ArangoResponse> responseMono = messageStore.add(id);
         send(buf);
-        return messageStore.add(id);
+        return responseMono;
     }
 
     @Override
