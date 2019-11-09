@@ -45,6 +45,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
@@ -68,11 +69,11 @@ public class HttpConnection implements ArangoConnection {
 
     public HttpConnection(final ConnectionConfig config) {
         this.config = config;
-        connectionProvider = getConnectionProvider();
+        connectionProvider = createConnectionProvider();
         client = getClient();
     }
 
-    private ConnectionProvider getConnectionProvider() {
+    private ConnectionProvider createConnectionProvider() {
         return ConnectionProvider.fixed(
                 "http",
                 1,  // FIXME: connection pooling should happen here, inside HttpConnection
@@ -183,18 +184,25 @@ public class HttpConnection implements ArangoConnection {
     @Override
     public Mono<ArangoResponse> execute(final ArangoRequest request) {
         final String url = buildUrl(request);
-        return Mono.defer(() ->
-                // this block runs on the single scheduler executor, so that cookies reads and writes are
-                // always performed by the same thread, thus w/o need for concurrency management
+        return runOnScheduler(() ->
                 createHttpClient(request, request.getBody().readableBytes())
                         .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
                         .send(Mono.just(request.getBody()))
                         .responseSingle(this::buildResponse))
-                .subscribeOn(scheduler)
                 .doOnError(e -> close().subscribe())
                 .timeout(Duration.ofMillis(config.getTimeout()));
     }
 
+    /**
+     * Executes the provided task in the scheduler.
+     *
+     * @param task task to execute
+     * @param <T>  type returned
+     * @return the supplied mono
+     */
+    private <T> Mono<T> runOnScheduler(Supplier<Mono<T>> task) {
+        return Mono.defer(task).subscribeOn(scheduler);
+    }
 
     private static void addHeaders(final ArangoRequest request, final HttpHeaders headers) {
         for (final Entry<String, String> header : request.getHeaderParam().entrySet()) {

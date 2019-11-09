@@ -26,13 +26,16 @@ import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.JdkSslContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoProcessor;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.TcpClient;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 import static com.arangodb.next.ArangoDefaults.HEADER_SIZE;
 import static io.netty.buffer.Unpooled.wrappedBuffer;
@@ -50,9 +53,10 @@ public class VstConnection implements ArangoConnection {
 
     private final MessageStore messageStore;
 
-    private final AtomicLong mId = new AtomicLong();
-    private volatile reactor.netty.Connection connection;
+    private long mId = 0L;
+    private reactor.netty.Connection connection;
     private final MonoProcessor<ArangoConnection> readyConnection = MonoProcessor.create();
+    private final Scheduler scheduler = Schedulers.single();
 
     private TcpClient tcpClient;
     private Chunk chunk;
@@ -69,11 +73,11 @@ public class VstConnection implements ArangoConnection {
 
         chunkStore = new ChunkStore(messageStore);
 
-        tcpClient = applySslContext(TcpClient.create(initConnectionProvider()))
+        tcpClient = applySslContext(TcpClient.create(createConnectionProvider()))
                 .option(CONNECT_TIMEOUT_MILLIS, config.getTimeout())
                 .host(config.getHost().getHost())
                 .port(config.getHost().getPort())
-                .doOnDisconnected(c -> finalize(new IOException("Connection closed!")))
+                .doOnDisconnected(c -> runOnScheduler(() -> finalize(new IOException("Connection closed!"))))
                 .handle((i, o) -> {
                     i.receive()
                             .doOnNext(x -> {
@@ -84,21 +88,20 @@ public class VstConnection implements ArangoConnection {
                             .subscribe();
                     return Mono.never();
                 })
-                .doOnConnected(c -> {
+                .doOnConnected(c -> subscribeOnScheduler(() -> {
                     connection = c;
                     send(wrappedBuffer(PROTOCOL_HEADER));
-                    authenticate()
+                    return authenticate()
                             .doOnSuccess((v) -> readyConnection.onNext(this))
-                            .doOnError(this::handleError)
-                            .subscribe();
-                });
+                            .doOnError(this::handleError);
+                }).subscribe());
 
     }
 
-    private ConnectionProvider initConnectionProvider() {
+    private ConnectionProvider createConnectionProvider() {
         return ConnectionProvider.fixed(
                 "tcp",
-                1,
+                1,  // TODO: test with more connections
                 config.getTimeout(),
                 config.getTtl()
         );
@@ -113,14 +116,16 @@ public class VstConnection implements ArangoConnection {
     private Mono<Void> authenticate() {
         if (config.getAuthenticationMethod().isPresent()) {
             AuthenticationMethod authenticationMethod = config.getAuthenticationMethod().get();
-            final long id = mId.incrementAndGet();
-            return execute(id, RequestConverter.encodeBuffer(id, authenticationMethod.getVstAuthenticationMessage(), config.getChunksize()))
-                    .doOnNext(response -> {
-                        if (response.getResponseCode() != 200) {
-                            throw new RuntimeException("Authentication failure!");
-                        }
-                    })
-                    .then();
+            return subscribeOnScheduler(() -> {
+                final long id = mId++;
+                return execute(id, RequestConverter.encodeBuffer(id, authenticationMethod.getVstAuthenticationMessage(), config.getChunksize()))
+                        .doOnNext(response -> {
+                            if (response.getResponseCode() != 200) {
+                                throw new RuntimeException("Authentication failure!");
+                            }
+                        })
+                        .then();
+            });
         } else {
             return Mono.empty();
         }
@@ -136,13 +141,30 @@ public class VstConnection implements ArangoConnection {
         }
     }
 
-    @Override
-    public Mono<ArangoResponse> execute(ArangoRequest request) {
-        final long id = mId.incrementAndGet();
-        return execute(id, RequestConverter.encodeRequest(id, request, config.getChunksize()));
+    /**
+     * Executes the provided task in the scheduler.
+     *
+     * @param task task to execute
+     * @param <T>  type returned
+     * @return the supplied mono
+     */
+    private <T> Mono<T> subscribeOnScheduler(Supplier<Mono<T>> task) {
+        return Mono.defer(task).subscribeOn(scheduler);
     }
 
-    void send(ByteBuf buf) {
+    private Disposable runOnScheduler(Runnable task) {
+        return scheduler.schedule(task);
+    }
+
+    @Override
+    public Mono<ArangoResponse> execute(ArangoRequest request) {
+        return subscribeOnScheduler(() -> {
+            final long id = mId++;
+            return execute(id, RequestConverter.encodeRequest(id, request, config.getChunksize()));
+        });
+    }
+
+    private void send(ByteBuf buf) {
         connection.outbound()
                 .send(Mono.just(buf))
                 .then()
@@ -219,7 +241,11 @@ public class VstConnection implements ArangoConnection {
     }
 
     private void readContent() {
-        chunkStore.storeChunk(chunk, chunkContentBuffer);
+        // create defensive copies to be forwarded to the scheduler thread
+        Chunk chunkCopy = chunk.copy();
+        ByteBuf chunkContentBufferCopy = IOUtils.copyOf(chunkContentBuffer);
+        runOnScheduler(() -> chunkStore.storeChunk(chunkCopy, chunkContentBufferCopy));
+
         chunkHeaderBuffer.clear();
         chunkContentBuffer.clear();
         chunk = null;
@@ -234,11 +260,14 @@ public class VstConnection implements ArangoConnection {
 
     @Override
     public Mono<Void> close() {
-        connection.dispose();
-        return connection.onDispose();
+        return subscribeOnScheduler(() -> {
+            connection.dispose();
+            return connection.onDispose();
+        });
     }
 
     boolean isActive() {
+        // TODO: runOnScheduler
         return connection != null && connection.channel().isActive();
     }
 

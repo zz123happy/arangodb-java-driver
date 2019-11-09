@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoProcessor;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Mark Vollmary
@@ -37,8 +37,7 @@ class MessageStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageStore.class);
 
-    // FIXME: execute maps operations from the same thread and make this a simple HashMap
-    private final Map<Long, MonoProcessor<ArangoResponse>> pendingRequests = new ConcurrentHashMap<>();
+    private final Map<Long, MonoProcessor<ArangoResponse>> pendingRequests = new HashMap<>();
 
     /**
      * Adds a pending request to the store

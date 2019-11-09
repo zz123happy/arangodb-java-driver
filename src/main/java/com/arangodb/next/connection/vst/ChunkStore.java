@@ -32,18 +32,18 @@ import java.util.Map;
  * @author Mark Vollmary
  * @author Michele Rastelli
  */
-public class ChunkStore {
+class ChunkStore {
 
     private final MessageStore messageStore;
     private final Map<Long, ByteBuf> data;
 
-    public ChunkStore(final MessageStore messageStore) {
+    ChunkStore(final MessageStore messageStore) {
         super();
         this.messageStore = messageStore;
         data = new HashMap<>();
     }
 
-    public void storeChunk(final Chunk chunk, final ByteBuf inBuf) throws BufferUnderflowException, IndexOutOfBoundsException {
+    void storeChunk(final Chunk chunk, final ByteBuf inBuf) throws BufferUnderflowException, IndexOutOfBoundsException {
         final long messageId = chunk.getMessageId();
         ByteBuf chunkBuffer = data.get(messageId);
         if (chunkBuffer == null) {
@@ -57,6 +57,7 @@ public class ChunkStore {
         }
 
         chunkBuffer.writeBytes(inBuf);
+        inBuf.release();
         checkCompleteness(messageId, chunkBuffer);
     }
 
@@ -71,7 +72,7 @@ public class ChunkStore {
         }
     }
 
-    public void clear() {
+    void clear() {
         data.values().forEach(ReferenceCounted::release);
         data.clear();
     }
