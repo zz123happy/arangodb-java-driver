@@ -53,19 +53,23 @@ import static io.netty.handler.codec.http.HttpHeaderNames.*;
 
 /**
  * @author Mark Vollmary
+ * @author Michele Rastelli
  */
 
 public class HttpConnection implements ArangoConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpConnection.class);
+    private static final String THREAD_PREFIX = "arango-http";
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=UTF-8";
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";
 
-    private final Scheduler scheduler = Schedulers.single();
-    private final Map<Cookie, Long> cookies = new HashMap<>();
+    private final Scheduler scheduler = Schedulers.newSingle(THREAD_PREFIX);
 
     private final ConnectionConfig config;
-    private ConnectionProvider connectionProvider;
+    private final ConnectionProvider connectionProvider;
     private final HttpClient client;
+
+    // state managed by scheduler thread arango-http-X
+    private final Map<Cookie, Long> cookies = new HashMap<>();
 
     public HttpConnection(final ConnectionConfig config) {
         this.config = config;
@@ -211,6 +215,8 @@ public class HttpConnection implements ArangoConnection {
     }
 
     private void removeExpiredCookies() {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+
         long now = new Date().getTime();
         boolean removed = cookies.entrySet().removeIf(entry -> entry.getKey().maxAge() >= 0 && entry.getValue() + entry.getKey().maxAge() * 1000 < now);
         if (removed) {
@@ -219,6 +225,8 @@ public class HttpConnection implements ArangoConnection {
     }
 
     private HttpClient addCookies(final HttpClient httpClient) {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+
         removeExpiredCookies();
         HttpClient c = httpClient;
         for (Cookie cookie : cookies.keySet()) {
@@ -229,6 +237,8 @@ public class HttpConnection implements ArangoConnection {
     }
 
     private void saveCookies(HttpClientResponse resp) {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+
         if (config.getResendCookies()) {
             resp.cookies().values().stream().flatMap(Collection::stream)
                     .forEach(cookie -> {

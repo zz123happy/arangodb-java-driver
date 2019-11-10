@@ -47,31 +47,32 @@ import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
  */
 public class VstConnection implements ArangoConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(VstConnection.class);
+    private static final String THREAD_PREFIX = "arango-vst";
     private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes();
 
     private final ConnectionConfig config;
-
     private final MessageStore messageStore;
+    private final ChunkStore chunkStore;
+    private final MonoProcessor<ArangoConnection> readyConnection;
+    private final Scheduler scheduler;
+    private final TcpClient tcpClient;
 
+    // state managed by scheduler thread arango-vst-X
     private long mId = 0L;
+    private Throwable failureCause;
     private reactor.netty.Connection connection;
-    private final MonoProcessor<ArangoConnection> readyConnection = MonoProcessor.create();
-    private final Scheduler scheduler = Schedulers.single();
 
-    private TcpClient tcpClient;
+    // state managed by epoll tcp thread
     private Chunk chunk;
     private ByteBuf chunkHeaderBuffer = IOUtils.createBuffer();
     private ByteBuf chunkContentBuffer = IOUtils.createBuffer();
-    private final ChunkStore chunkStore;
-    private volatile Throwable failureCause;
-
 
     public VstConnection(final ConnectionConfig config) {
         this.config = config;
-
         messageStore = new MessageStore();
-
         chunkStore = new ChunkStore(messageStore);
+        readyConnection = MonoProcessor.create();
+        scheduler = Schedulers.newSingle(THREAD_PREFIX);
 
         tcpClient = applySslContext(TcpClient.create(createConnectionProvider()))
                 .option(CONNECT_TIMEOUT_MILLIS, config.getTimeout())
@@ -89,13 +90,15 @@ public class VstConnection implements ArangoConnection {
                     return Mono.never();
                 })
                 .doOnConnected(c -> subscribeOnScheduler(() -> {
-                    connection = c;
-                    send(wrappedBuffer(PROTOCOL_HEADER));
-                    return authenticate()
-                            .doOnSuccess((v) -> readyConnection.onNext(this))
-                            .doOnError(this::handleError);
-                }).subscribe());
-
+                            assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+                            connection = c;
+                            send(wrappedBuffer(PROTOCOL_HEADER));
+                            return authenticate();
+                        })
+                                .doOnSuccess((v) -> readyConnection.onNext(this))
+                                .doOnError(this::handleError)
+                                .subscribe()
+                );
     }
 
     private ConnectionProvider createConnectionProvider() {
@@ -114,24 +117,26 @@ public class VstConnection implements ArangoConnection {
     }
 
     private Mono<Void> authenticate() {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+
         if (config.getAuthenticationMethod().isPresent()) {
             AuthenticationMethod authenticationMethod = config.getAuthenticationMethod().get();
-            return subscribeOnScheduler(() -> {
-                final long id = mId++;
-                return execute(id, RequestConverter.encodeBuffer(id, authenticationMethod.getVstAuthenticationMessage(), config.getChunksize()))
-                        .doOnNext(response -> {
-                            if (response.getResponseCode() != 200) {
-                                throw new RuntimeException("Authentication failure!");
-                            }
-                        })
-                        .then();
-            });
+            final long id = mId++;
+            return execute(id, RequestConverter.encodeBuffer(id, authenticationMethod.getVstAuthenticationMessage(), config.getChunksize()))
+                    .doOnNext(response -> {
+                        if (response.getResponseCode() != 200) {
+                            throw new RuntimeException("Authentication failure!");
+                        }
+                    })
+                    .then();
         } else {
             return Mono.empty();
         }
     }
 
     private Mono<ArangoResponse> execute(long id, ByteBuf buf) {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+
         if (failureCause != null) {
             return Mono.error(failureCause);
         } else {
@@ -159,12 +164,14 @@ public class VstConnection implements ArangoConnection {
     @Override
     public Mono<ArangoResponse> execute(ArangoRequest request) {
         return subscribeOnScheduler(() -> {
+            assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
             final long id = mId++;
             return execute(id, RequestConverter.encodeRequest(id, request, config.getChunksize()));
         });
     }
 
     private void send(ByteBuf buf) {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
         connection.outbound()
                 .send(Mono.just(buf))
                 .then()
@@ -188,6 +195,8 @@ public class VstConnection implements ArangoConnection {
     }
 
     private void finalize(final Throwable t) {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+
         failureCause = t;
         chunkStore.clear();
         messageStore.clear(t);
@@ -251,24 +260,25 @@ public class VstConnection implements ArangoConnection {
         chunk = null;
     }
 
-    void connect() {
+    private void connect() {
         tcpClient
                 .connect()
-                .doOnError(this::handleError)
+                .doOnError(t -> runOnScheduler(() -> handleError(t)))
                 .subscribe();
     }
 
     @Override
     public Mono<Void> close() {
         return subscribeOnScheduler(() -> {
+            assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
             connection.dispose();
             return connection.onDispose();
         });
     }
 
-    boolean isActive() {
-        // TODO: runOnScheduler
-        return connection != null && connection.channel().isActive();
-    }
+//    boolean isActive() {
+//        // TODO: runOnScheduler
+//        return connection != null && connection.channel().isActive();
+//    }
 
 }
