@@ -45,7 +45,7 @@ class ConnectionTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionTest.class);
 
-    private static final String JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEuNTczMzE1ODg4Mzc5ODc0ZSs2LCJleHAiOjE1NzU5MDc4ODgsImlzcyI6ImFyYW5nb2RiIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicm9vdCJ9.03Wyk2VxogL2uezS-iNrU26Wyyo0GEHQxXpHhh0Wg0w=";
+    private static final String JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEuNTczNDc2NDM0MDY2NjA4ZSs2LCJleHAiOjE1NzYwNjg0MzQsImlzcyI6ImFyYW5nb2RiIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicm9vdCJ9.h3Vr0d-_6TvSvF_7hVI_SPxiabZKGVXKF4UJj5d1QyE=";
 
     static private Stream<Arguments> protocolAndAuthenticationMethodProvider() {
         return Stream.of(
@@ -128,11 +128,18 @@ class ConnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void parallelLoop(ArangoProtocol protocol) {
-        ArangoConnection.create(protocol, config).flatMapMany(connection -> Flux.range(0, 1000)
+        ArangoConnection.create(protocol, config).flatMapMany(connection -> Flux.range(0, 1_000)
                 .flatMap(i -> connection.execute(getRequest))
-                .doOnNext(v -> {
-                    new VPackSlice(IOUtilsTest.getByteArray(v.getBody()));
-                    v.getBody().release();
+                .doOnNext(response -> {
+                    assertThat(response).isNotNull();
+                    assertThat(response.getVersion()).isEqualTo(1);
+                    assertThat(response.getType()).isEqualTo(2);
+                    assertThat(response.getResponseCode()).isEqualTo(200);
+
+                    VPackSlice responseBodySlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
+                    assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
+
+                    response.getBody().release();
                 }))
                 .then().block();
     }

@@ -47,17 +47,12 @@ class ChunkStore {
         final long messageId = chunk.getMessageId();
         ByteBuf chunkBuffer = data.get(messageId);
         if (chunkBuffer == null) {
-            if (!chunk.isFirstChunk()) {
-                messageStore.cancel(messageId);
-                return;
-            }
             final int length = chunk.getChunk() > 1 ? (int) chunk.getMessageLength() : chunk.getContentLength();
             chunkBuffer = IOUtils.createBuffer(length, length);
             data.put(messageId, chunkBuffer);
         }
 
         chunkBuffer.writeBytes(inBuf);
-        inBuf.release();
         checkCompleteness(messageId, chunkBuffer);
     }
 

@@ -70,16 +70,6 @@ class MessageStore {
         }
     }
 
-    // TODO: check if this is really necessary, atm it should be only used for the reply to the authentication request?!
-    void cancel(long messageId) {
-        LOGGER.debug("Cancelling message: {}", messageId);
-        final MonoProcessor<ArangoResponse> future = pendingRequests.remove(messageId);
-        if (future != null) {
-            LOGGER.error(String.format("Cancel Message unexpected (id=%s).", messageId));
-            future.onError(new RuntimeException("Cancelled!"));
-        }
-    }
-
     /**
      * Completes exceptionally all the pending requests
      *
