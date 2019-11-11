@@ -20,6 +20,7 @@
 
 package com.arangodb.next.connection.vst;
 
+import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.connection.IOUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.ReferenceCounted;
@@ -27,6 +28,7 @@ import io.netty.util.ReferenceCounted;
 import java.nio.BufferUnderflowException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 /**
  * @author Mark Vollmary
@@ -34,13 +36,12 @@ import java.util.Map;
  */
 class ChunkStore {
 
-    private final MessageStore messageStore;
     private final Map<Long, ByteBuf> data;
+    private final BiConsumer<Long, ArangoResponse> callback;
 
-    ChunkStore(final MessageStore messageStore) {
-        super();
-        this.messageStore = messageStore;
+    ChunkStore(BiConsumer<Long, ArangoResponse> callback) {
         data = new HashMap<>();
+        this.callback = callback;
     }
 
     void storeChunk(final Chunk chunk, final ByteBuf inBuf) throws BufferUnderflowException, IndexOutOfBoundsException {
@@ -62,7 +63,7 @@ class ChunkStore {
             byte[] bytes = new byte[chunkBuffer.readableBytes()];
             chunkBuffer.readBytes(bytes);
             chunkBuffer.release();
-            messageStore.resolve(messageId, ResponseConverter.decodeResponse(bytes));
+            callback.accept(messageId, ResponseConverter.decodeResponse(bytes));
             data.remove(messageId);
         }
     }

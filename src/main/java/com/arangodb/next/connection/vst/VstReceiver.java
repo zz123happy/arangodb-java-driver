@@ -21,10 +21,13 @@
 package com.arangodb.next.connection.vst;
 
 
+import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.connection.IOUtils;
 import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.function.BiConsumer;
 
 import static com.arangodb.next.ArangoDefaults.HEADER_SIZE;
 import static com.arangodb.next.connection.vst.VstConnection.THREAD_PREFIX;
@@ -42,8 +45,8 @@ final class VstReceiver {
     private final ByteBuf chunkHeaderBuffer;
     private final ByteBuf chunkContentBuffer;
 
-    VstReceiver(MessageStore messageStore) {
-        chunkStore = new ChunkStore(messageStore);
+    VstReceiver(final BiConsumer<Long, ArangoResponse> callback) {
+        chunkStore = new ChunkStore(callback);
         chunkHeaderBuffer = IOUtils.createBuffer();
         chunkContentBuffer = IOUtils.createBuffer();
     }

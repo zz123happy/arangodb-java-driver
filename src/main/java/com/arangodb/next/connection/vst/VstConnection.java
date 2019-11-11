@@ -28,9 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
+import reactor.netty.Connection;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.TcpClient;
 
@@ -52,7 +52,6 @@ public class VstConnection implements ArangoConnection {
 
     private final ConnectionConfig config;
     private final MessageStore messageStore;
-    private final MonoProcessor<ArangoConnection> readyConnection;
     private final Scheduler scheduler;
     private final TcpClient tcpClient;
     private final VstReceiver vstReceiver;
@@ -65,9 +64,8 @@ public class VstConnection implements ArangoConnection {
     public VstConnection(final ConnectionConfig config) {
         this.config = config;
         messageStore = new MessageStore();
-        readyConnection = MonoProcessor.create();
         scheduler = Schedulers.newSingle(THREAD_PREFIX);
-        vstReceiver = new VstReceiver(messageStore);
+        vstReceiver = new VstReceiver(messageStore::resolve);
 
         tcpClient = applySslContext(TcpClient.create(createConnectionProvider()))
                 .option(CONNECT_TIMEOUT_MILLIS, config.getTimeout())
@@ -81,15 +79,6 @@ public class VstConnection implements ArangoConnection {
                         .publishOn(scheduler)
                         .doOnNext(vstReceiver::handleByteBuf)
                         .then()
-                )
-                .doOnConnected(c -> subscribeOnScheduler(() -> {
-                            assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-                            connection = c;
-                            return send(wrappedBuffer(PROTOCOL_HEADER)).then(authenticate());
-                        })
-                                .doOnSuccess((v) -> readyConnection.onNext(this))
-                                .doOnError(this::handleError)
-                                .subscribe()
                 );
     }
 
@@ -104,8 +93,7 @@ public class VstConnection implements ArangoConnection {
 
     @Override
     public Mono<ArangoConnection> initialize() {
-        new Thread(this::connect).start();
-        return readyConnection;
+        return connect().map(it -> this);
     }
 
     private Mono<Void> authenticate() {
@@ -181,7 +169,7 @@ public class VstConnection implements ArangoConnection {
     private void handleError(final Throwable t) {
         t.printStackTrace();
         finalize(t);
-        close();
+        close().subscribe();
     }
 
     private void finalize(final Throwable t) {
@@ -190,16 +178,20 @@ public class VstConnection implements ArangoConnection {
         vstReceiver.close();
         failureCause = t;
         messageStore.clear(t);
-        if (!readyConnection.isTerminated()) {
-            readyConnection.onError(t);
-        }
     }
 
-    private void connect() {
-        tcpClient
+    private Mono<? extends Connection> connect() {
+        return tcpClient
                 .connect()
-                .doOnError(t -> runOnScheduler(() -> handleError(t)))
-                .subscribe();
+                .publishOn(scheduler)
+                .doOnNext(this::setConnection)
+                .flatMap(c -> send(wrappedBuffer(PROTOCOL_HEADER)).then(authenticate()).thenReturn(c))
+                .doOnError(this::handleError);
+    }
+
+    private void setConnection(Connection connection) {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        this.connection = connection;
     }
 
     @Override
