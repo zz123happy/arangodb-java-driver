@@ -27,10 +27,10 @@ import static org.assertj.core.api.Assertions.*;
 /**
  * @author Michele Rastelli
  */
-public class ImmutablesTest {
+class ImmutablesTest {
 
     @Test
-    public void immutablesTest() {
+    void immutablesTest() {
         MyClass myObj = ImmutableMyClass.builder()
                 .name("yoyo")
                 .addRoles("addr1")

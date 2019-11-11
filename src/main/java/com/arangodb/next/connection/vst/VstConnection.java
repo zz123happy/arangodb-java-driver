@@ -24,9 +24,6 @@ import com.arangodb.next.connection.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.JdkSslContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -46,7 +43,6 @@ import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
  */
 final public class VstConnection implements ArangoConnection {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(VstConnection.class);
     static final String THREAD_PREFIX = "arango-vst";
     private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes();
 
@@ -92,7 +88,7 @@ final public class VstConnection implements ArangoConnection {
         return subscribeOnScheduler(() -> {
             assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
             final long id = mId++;
-            return execute(id, RequestConverter.encodeRequest(id, request, config.getChunksize()));
+            return execute(id, RequestConverter.encodeRequest(id, request, config.getChunkSize()));
         });
     }
 
@@ -120,7 +116,7 @@ final public class VstConnection implements ArangoConnection {
         if (config.getAuthenticationMethod().isPresent()) {
             AuthenticationMethod authenticationMethod = config.getAuthenticationMethod().get();
             final long id = mId++;
-            return execute(id, RequestConverter.encodeBuffer(id, authenticationMethod.getVstAuthenticationMessage(), config.getChunksize()))
+            return execute(id, RequestConverter.encodeBuffer(id, authenticationMethod.getVstAuthenticationMessage(), config.getChunkSize()))
                     .doOnNext(response -> {
                         if (response.getResponseCode() != 200) {
                             throw new RuntimeException("Authentication failure!");
@@ -154,8 +150,8 @@ final public class VstConnection implements ArangoConnection {
         return Mono.defer(task).subscribeOn(scheduler);
     }
 
-    private Disposable runOnScheduler(Runnable task) {
-        return scheduler.schedule(task);
+    private void runOnScheduler(Runnable task) {
+        scheduler.schedule(task);
     }
 
     private Mono<Void> send(ByteBuf buf) {

@@ -34,6 +34,7 @@ import static reactor.netty.resources.ConnectionProvider.DEFAULT_POOL_ACQUIRE_TI
  * @author Michele Rastelli
  */
 @Value.Immutable
+@SuppressWarnings("SameReturnValue")
 public interface ConnectionConfig {
 
     static ImmutableConnectionConfig.Builder builder() {
@@ -92,7 +93,7 @@ public interface ConnectionConfig {
      * @return VelocyStream Chunk content-size (bytes), used by VstConnection only
      */
     @Value.Default
-    default int getChunksize() {
+    default int getChunkSize() {
         return 30_000;
     }
 

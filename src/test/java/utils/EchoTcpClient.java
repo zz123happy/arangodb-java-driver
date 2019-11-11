@@ -36,9 +36,9 @@ import java.util.concurrent.CompletableFuture;
  */
 
 class EchoTcpClient {
-    private static Logger LOGGER = LoggerFactory.getLogger(EchoTcpClient.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EchoTcpClient.class);
 
-    private CompletableFuture<Connection> connection = new CompletableFuture<>();
+    private final CompletableFuture<Connection> connection = new CompletableFuture<>();
 
     public void send(String message) {
         connection.thenApply(c -> c.outbound()
@@ -52,7 +52,7 @@ class EchoTcpClient {
                 TcpClient.create()
                         .host("127.0.0.1")
                         .port(9000)
-                        .doOnConnected((c) -> connection.complete(c))
+                        .doOnConnected(connection::complete)
                         .handle((i, o) -> {
                             i.receive()
                                     .asString(StandardCharsets.UTF_8)

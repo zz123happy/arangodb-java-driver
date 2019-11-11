@@ -32,8 +32,8 @@ public final class ArangoDefaults {
 		super();
 	}
 
-	public static final int INTEGER_BYTES = Integer.SIZE / Byte.SIZE;
-	public static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
+	private static final int INTEGER_BYTES = Integer.SIZE / Byte.SIZE;
+	private static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
 	public static final int HEADER_SIZE = INTEGER_BYTES + INTEGER_BYTES + LONG_BYTES + LONG_BYTES;
 
 //	public static final String DEFAULT_HOST = "127.0.0.1";

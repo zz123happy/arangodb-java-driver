@@ -36,14 +36,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class HttpConnectionEchoTest {
 
-    private ConnectionConfig config = ConnectionConfig.builder()
+    private final ConnectionConfig config = ConnectionConfig.builder()
             .host(HostDescription.of("localhost", 9000))
             .authenticationMethod(AuthenticationMethod.ofJwt("token"))
             .contentType(ContentType.JSON)
             .build();
 
-    private String body = "{\"message\": \"Hello World!\"}";
-    private ArangoRequest request = ArangoRequest.builder()
+    private final String body = "{\"message\": \"Hello World!\"}";
+    private final ArangoRequest request = ArangoRequest.builder()
             .database("database")
             .path("/path")
             .putHeaderParam("headerParamKey", "headerParamValue")

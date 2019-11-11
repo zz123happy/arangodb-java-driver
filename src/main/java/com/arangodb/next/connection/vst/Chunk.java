@@ -45,10 +45,6 @@ class Chunk {
         this(messageId, chunkX(chunkIndex, numberOfChunks), messageLength, contentOffset, contentLength);
     }
 
-    Chunk copy() {
-        return new Chunk(messageId, chunkX, messageLength, contentOffset, contentLength);
-    }
-
     private static int chunkX(final int chunkIndex, final int numberOfChunks) {
         int chunkX;
         if (numberOfChunks == 1) {

@@ -32,6 +32,7 @@ import java.util.Map;
  * @see <a href="https://github.com/arangodb/velocystream#request--response">API
  */
 @Value.Immutable
+@SuppressWarnings("SameReturnValue")
 public interface ArangoRequest {
 
     static ImmutableArangoRequest.Builder builder() {
@@ -86,14 +87,6 @@ public interface ArangoRequest {
             return type;
         }
 
-        public static RequestType fromType(final int type) {
-            for (final RequestType rType : RequestType.values()) {
-                if (rType.type == type) {
-                    return rType;
-                }
-            }
-            return null;
-        }
     }
 
 }

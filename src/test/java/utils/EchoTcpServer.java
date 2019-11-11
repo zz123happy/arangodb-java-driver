@@ -28,7 +28,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * @author Michele Rastelli
  */
-public class EchoTcpServer {
+class EchoTcpServer {
 
     private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes();
 

@@ -26,8 +26,6 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.JdkSslContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -52,7 +50,6 @@ import static io.netty.handler.codec.http.HttpHeaderNames.*;
 
 final public class HttpConnection implements ArangoConnection {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(HttpConnection.class);
     static final String THREAD_PREFIX = "arango-http";
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=UTF-8";
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";

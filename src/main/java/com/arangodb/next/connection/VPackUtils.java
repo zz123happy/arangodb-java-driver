@@ -27,7 +27,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * @author Michele Rastelli
  */
-public class VPackUtils {
+class VPackUtils {
     /**
      * @param slice input
      * @return a ByteBuf from VPackSlice buffer, truncating final null bytes

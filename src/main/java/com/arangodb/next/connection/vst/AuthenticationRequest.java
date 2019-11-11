@@ -29,14 +29,6 @@ import org.immutables.value.Value;
 @Value.Immutable
 abstract class AuthenticationRequest {
 
-    int getVersion() {
-        return 1;
-    }
-
-    int getType() {
-        return 1000;
-    }
-
     abstract String getUser();
 
     abstract String getPassword();

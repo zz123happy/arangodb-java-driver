@@ -27,7 +27,7 @@ import java.util.List;
  * @author Michele Rastelli
  */
 @Value.Immutable
-public interface MyClass {
+interface MyClass {
     String getName();
     List<String> getRoles();
 }

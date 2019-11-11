@@ -28,10 +28,10 @@ import reactor.netty.http.client.HttpClient;
 /**
  * @author Michele Rastelli
  */
-public class EchoTest {
+class EchoTest {
 
     @Test
-    public void echoTcpTest() throws InterruptedException {
+    void echoTcpTest() throws InterruptedException {
         new EchoTcpServer().start().join();
         EchoTcpClient echoClient = new EchoTcpClient();
         echoClient.start().join();
@@ -41,7 +41,7 @@ public class EchoTest {
     }
 
     @Test
-    public void echoHttpTest() throws InterruptedException {
+    void echoHttpTest() throws InterruptedException {
         new EchoHttpServer().start().join();
 
         HttpClient.create()

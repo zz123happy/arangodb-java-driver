@@ -55,19 +55,19 @@ class ConnectionTest {
         );
     }
 
-    private ConnectionConfig config = ConnectionConfig.builder()
+    private final ConnectionConfig config = ConnectionConfig.builder()
             .host(HostDescription.of("172.28.3.1", 8529))
             .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
             .build();
 
-    private ArangoRequest getRequest = ArangoRequest.builder()
+    private final ArangoRequest getRequest = ArangoRequest.builder()
             .database("_system")
             .path("/_api/version")
             .requestType(ArangoRequest.RequestType.GET)
             .putQueryParam("details", "true")
             .build();
 
-    private ArangoRequest postRequest = ArangoRequest.builder()
+    private final ArangoRequest postRequest = ArangoRequest.builder()
             .database("_system")
             .path("/_api/query")
             .requestType(ArangoRequest.RequestType.POST)

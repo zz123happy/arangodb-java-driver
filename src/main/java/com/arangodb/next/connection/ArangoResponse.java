@@ -30,6 +30,7 @@ import java.util.Map;
  * @see <a href="https://github.com/arangodb/velocystream#request--response">API
  */
 @Value.Immutable
+@SuppressWarnings("SameReturnValue")
 public interface ArangoResponse {
 
     static ImmutableArangoResponse.Builder builder() {
