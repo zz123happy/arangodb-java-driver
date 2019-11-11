@@ -20,7 +20,6 @@
 
 package com.arangodb.next.connection;
 
-import com.arangodb.next.connection.vst.RequestType;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
@@ -64,14 +63,14 @@ class ConnectionTest {
     private ArangoRequest getRequest = ArangoRequest.builder()
             .database("_system")
             .path("/_api/version")
-            .requestType(RequestType.GET)
+            .requestType(ArangoRequest.RequestType.GET)
             .putQueryParam("details", "true")
             .build();
 
     private ArangoRequest postRequest = ArangoRequest.builder()
             .database("_system")
             .path("/_api/query")
-            .requestType(RequestType.POST)
+            .requestType(ArangoRequest.RequestType.POST)
             .body(VPackUtils.extractBuffer(createParseQueryRequestBody()))
             .build();
 
@@ -83,9 +82,9 @@ class ConnectionTest {
                 .authenticationMethod(authenticationMethod)
                 .build();
 
-        ArangoResponse response = ArangoConnection.create(protocol, testConfig)
-                .flatMap(connection -> connection.execute(getRequest))
-                .block();
+        ArangoConnection connection = ArangoConnection.create(protocol, testConfig).block();
+        assertThat(connection).isNotNull();
+        ArangoResponse response = connection.execute(getRequest).block();
 
         assertThat(response).isNotNull();
         assertThat(response.getVersion()).isEqualTo(1);
@@ -98,6 +97,7 @@ class ConnectionTest {
         System.out.println(responseBodySlice);
 
         response.getBody().release();
+        connection.close().block();
     }
 
     @ParameterizedTest
@@ -108,9 +108,9 @@ class ConnectionTest {
                 .authenticationMethod(authenticationMethod)
                 .build();
 
-        ArangoResponse response = ArangoConnection.create(protocol, testConfig)
-                .flatMap(connection -> connection.execute(postRequest))
-                .block();
+        ArangoConnection connection = ArangoConnection.create(protocol, testConfig).block();
+        assertThat(connection).isNotNull();
+        ArangoResponse response = connection.execute(postRequest).block();
 
         assertThat(response).isNotNull();
         assertThat(response.getVersion()).isEqualTo(1);
@@ -123,6 +123,7 @@ class ConnectionTest {
         System.out.println(responseBodySlice);
 
         response.getBody().release();
+        connection.close().block();
     }
 
     @ParameterizedTest

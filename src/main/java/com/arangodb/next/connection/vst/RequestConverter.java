@@ -36,7 +36,7 @@ import static com.arangodb.next.ArangoDefaults.HEADER_SIZE;
  * @author Mark Vollmary
  * @author Michele Rastelli
  */
-class RequestConverter {
+final class RequestConverter {
 
     /**
      * @param id id of the VST message id

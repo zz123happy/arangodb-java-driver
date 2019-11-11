@@ -21,7 +21,6 @@
 package com.arangodb.next.connection.http;
 
 import com.arangodb.next.connection.*;
-import com.arangodb.next.connection.vst.RequestType;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
@@ -49,7 +48,7 @@ class HttpConnectionEchoTest {
             .path("/path")
             .putHeaderParam("headerParamKey", "headerParamValue")
             .putQueryParam("queryParamKey", "queryParamValue")
-            .requestType(RequestType.POST)
+            .requestType(ArangoRequest.RequestType.POST)
             .body(Unpooled.wrappedBuffer(body.getBytes()))
             .build();
 

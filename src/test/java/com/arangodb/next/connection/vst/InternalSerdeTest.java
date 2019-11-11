@@ -76,7 +76,7 @@ class InternalSerdeTest {
     void serializeArangoRequest() {
         ArangoRequest request = ArangoRequest.builder()
                 .database("database")
-                .requestType(RequestType.GET)
+                .requestType(ArangoRequest.RequestType.GET)
                 .path("path")
                 .body(Unpooled.EMPTY_BUFFER)
                 .putHeaderParam("headerParamKey", "headerParamValue")

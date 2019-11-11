@@ -23,7 +23,7 @@ package com.arangodb.next.connection.vst;
 /**
  * @author Mark Vollmary
  */
-public class Chunk {
+class Chunk {
 
     private final long messageId;
     private final long messageLength;
@@ -31,8 +31,8 @@ public class Chunk {
     private final int contentOffset;
     private final int contentLength;
 
-    public Chunk(final long messageId, final int chunkX, final long messageLength, final int contentOffset,
-                 final int contentLength) {
+    Chunk(final long messageId, final int chunkX, final long messageLength, final int contentOffset,
+          final int contentLength) {
         this.messageId = messageId;
         this.chunkX = chunkX;
         this.messageLength = messageLength;
@@ -40,12 +40,12 @@ public class Chunk {
         this.contentLength = contentLength;
     }
 
-    public Chunk(final long messageId, final int chunkIndex, final int numberOfChunks, final long messageLength,
-                 final int contentOffset, final int contentLength) {
+    Chunk(final long messageId, final int chunkIndex, final int numberOfChunks, final long messageLength,
+          final int contentOffset, final int contentLength) {
         this(messageId, chunkX(chunkIndex, numberOfChunks), messageLength, contentOffset, contentLength);
     }
 
-    public Chunk copy() {
+    Chunk copy() {
         return new Chunk(messageId, chunkX, messageLength, contentOffset, contentLength);
     }
 
@@ -61,31 +61,31 @@ public class Chunk {
         return chunkX;
     }
 
-    public long getMessageId() {
+    long getMessageId() {
         return messageId;
     }
 
-    public long getMessageLength() {
+    long getMessageLength() {
         return messageLength;
     }
 
-    public boolean isFirstChunk() {
+    boolean isFirstChunk() {
         return 1 == (chunkX & 0x1);
     }
 
-    public int getChunk() {
+    int getChunk() {
         return chunkX >> 1;
     }
 
-    public int getChunkX() {
+    int getChunkX() {
         return chunkX;
     }
 
-    public int getContentOffset() {
+    int getContentOffset() {
         return contentOffset;
     }
 
-    public int getContentLength() {
+    int getContentLength() {
         return contentLength;
     }
 

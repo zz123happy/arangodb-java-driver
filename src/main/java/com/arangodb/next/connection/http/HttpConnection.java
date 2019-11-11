@@ -21,11 +21,9 @@
 package com.arangodb.next.connection.http;
 
 import com.arangodb.next.connection.*;
-import com.arangodb.next.connection.vst.RequestType;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.JdkSslContext;
 import org.slf4j.Logger;
@@ -40,10 +38,6 @@ import reactor.netty.http.client.HttpClientResponse;
 import reactor.netty.resources.ConnectionProvider;
 
 import java.time.Duration;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -56,25 +50,49 @@ import static io.netty.handler.codec.http.HttpHeaderNames.*;
  * @author Michele Rastelli
  */
 
-public class HttpConnection implements ArangoConnection {
+final public class HttpConnection implements ArangoConnection {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpConnection.class);
-    private static final String THREAD_PREFIX = "arango-http";
+    static final String THREAD_PREFIX = "arango-http";
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=UTF-8";
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";
 
-    private final Scheduler scheduler = Schedulers.newSingle(THREAD_PREFIX);
-
+    private final Scheduler scheduler;
     private final ConnectionConfig config;
     private final ConnectionProvider connectionProvider;
     private final HttpClient client;
-
-    // state managed by scheduler thread arango-http-X
-    private final Map<Cookie, Long> cookies = new HashMap<>();
+    private final CookieStore cookieStore;
 
     public HttpConnection(final ConnectionConfig config) {
         this.config = config;
+        scheduler = Schedulers.newSingle(THREAD_PREFIX);
         connectionProvider = createConnectionProvider();
         client = getClient();
+        cookieStore = new CookieStore();
+    }
+
+    @Override
+    public Mono<ArangoConnection> initialize() {
+        return Mono.just(this);
+    }
+
+    @Override
+    public Mono<ArangoResponse> execute(final ArangoRequest request) {
+        final String url = buildUrl(request);
+        return runOnScheduler(() ->
+                createHttpClient(request, request.getBody().readableBytes())
+                        .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
+                        .send(Mono.just(request.getBody()))
+                        .responseSingle(this::buildResponse))
+                .doOnError(e -> close().subscribe())
+                .timeout(Duration.ofMillis(config.getTimeout()));
+    }
+
+    @Override
+    public Mono<Void> close() {
+        return connectionProvider.disposeLater()
+                .publishOn(scheduler)
+                .doOnTerminate(cookieStore::clear);
     }
 
     private ConnectionProvider createConnectionProvider() {
@@ -109,11 +127,6 @@ public class HttpConnection implements ArangoConnection {
         }
     }
 
-    @Override
-    public Mono<Void> close() {
-        return connectionProvider.disposeLater();
-    }
-
     private static String buildUrl(final ArangoRequest request) {
         final StringBuilder sb = new StringBuilder();
         final String database = request.getDatabase();
@@ -132,7 +145,7 @@ public class HttpConnection implements ArangoConnection {
         return sb.toString();
     }
 
-    private HttpMethod requestTypeToHttpMethod(final RequestType requestType) {
+    private HttpMethod requestTypeToHttpMethod(final ArangoRequest.RequestType requestType) {
         switch (requestType) {
             case POST:
                 return HttpMethod.POST;
@@ -163,7 +176,7 @@ public class HttpConnection implements ArangoConnection {
     }
 
     private HttpClient createHttpClient(final ArangoRequest request, final int bodyLength) {
-        return addCookies(client)
+        return cookieStore.addCookies(client)
                 .headers(headers -> {
                     headers.set(CONTENT_LENGTH, bodyLength);
                     if (config.getContentType() == ContentType.VPACK) {
@@ -178,23 +191,6 @@ public class HttpConnection implements ArangoConnection {
                         headers.set(CONTENT_TYPE, getContentType());
                     }
                 });
-    }
-
-    @Override
-    public Mono<ArangoConnection> initialize() {
-        return Mono.just(this);
-    }
-
-    @Override
-    public Mono<ArangoResponse> execute(final ArangoRequest request) {
-        final String url = buildUrl(request);
-        return runOnScheduler(() ->
-                createHttpClient(request, request.getBody().readableBytes())
-                        .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
-                        .send(Mono.just(request.getBody()))
-                        .responseSingle(this::buildResponse))
-                .doOnError(e -> close().subscribe())
-                .timeout(Duration.ofMillis(config.getTimeout()));
     }
 
     /**
@@ -214,40 +210,6 @@ public class HttpConnection implements ArangoConnection {
         }
     }
 
-    private void removeExpiredCookies() {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-
-        long now = new Date().getTime();
-        boolean removed = cookies.entrySet().removeIf(entry -> entry.getKey().maxAge() >= 0 && entry.getValue() + entry.getKey().maxAge() * 1000 < now);
-        if (removed) {
-            LOGGER.debug("removed cookies");
-        }
-    }
-
-    private HttpClient addCookies(final HttpClient httpClient) {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-
-        removeExpiredCookies();
-        HttpClient c = httpClient;
-        for (Cookie cookie : cookies.keySet()) {
-            LOGGER.debug("sending cookie: {}", cookie);
-            c = c.cookie(cookie);
-        }
-        return c;
-    }
-
-    private void saveCookies(HttpClientResponse resp) {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-
-        if (config.getResendCookies()) {
-            resp.cookies().values().stream().flatMap(Collection::stream)
-                    .forEach(cookie -> {
-                        LOGGER.debug("saving cookie: {}", cookie);
-                        cookies.put(cookie, new Date().getTime());
-                    });
-        }
-    }
-
     private Mono<ArangoResponse> buildResponse(HttpClientResponse resp, ByteBufMono bytes) {
         return bytes
                 .switchIfEmpty(Mono.just(Unpooled.EMPTY_BUFFER))
@@ -257,7 +219,11 @@ public class HttpConnection implements ArangoConnection {
                         .body(IOUtils.copyOf(byteBuf))
                         .build())
                 .publishOn(scheduler)
-                .doOnNext(it -> saveCookies(resp));
+                .doOnNext(it -> {
+                    if (config.getResendCookies()) {
+                        cookieStore.saveCookies(resp);
+                    }
+                });
     }
 
 }

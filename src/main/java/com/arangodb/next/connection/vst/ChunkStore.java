@@ -34,7 +34,7 @@ import java.util.function.BiConsumer;
  * @author Mark Vollmary
  * @author Michele Rastelli
  */
-class ChunkStore {
+final class ChunkStore {
 
     private final Map<Long, ByteBuf> data;
     private final BiConsumer<Long, ArangoResponse> callback;

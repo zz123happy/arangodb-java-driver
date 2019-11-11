@@ -27,20 +27,20 @@ import org.immutables.value.Value;
  * @author Michele Rastelli
  */
 @Value.Immutable
-public abstract class AuthenticationRequest {
+abstract class AuthenticationRequest {
 
-    public int getVersion() {
+    int getVersion() {
         return 1;
     }
 
-    public int getType() {
+    int getType() {
         return 1000;
     }
 
-    abstract public String getUser();
+    abstract String getUser();
 
-    abstract public String getPassword();
+    abstract String getPassword();
 
-    abstract public String getEncryption();
+    abstract String getEncryption();
 
 }

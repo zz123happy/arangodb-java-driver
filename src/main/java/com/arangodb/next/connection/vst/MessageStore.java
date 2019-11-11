@@ -33,7 +33,7 @@ import java.util.Map;
  * @author Mark Vollmary
  * @author Michele Rastelli
  */
-class MessageStore {
+final class MessageStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageStore.class);
 

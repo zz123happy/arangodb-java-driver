@@ -20,7 +20,6 @@
 
 package com.arangodb.next.connection;
 
-import com.arangodb.next.connection.vst.RequestType;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.immutables.value.Value;
@@ -28,6 +27,7 @@ import org.immutables.value.Value;
 import java.util.Map;
 
 /**
+ * @author Mark Vollmary
  * @author Michele Rastelli
  * @see <a href="https://github.com/arangodb/velocystream#request--response">API
  */
@@ -60,6 +60,40 @@ public interface ArangoRequest {
     @Value.Default
     default ByteBuf getBody() {
         return Unpooled.EMPTY_BUFFER;
+    }
+
+
+    enum RequestType {
+        DELETE(0),
+        GET(1),
+        POST(2),
+        PUT(3),
+        HEAD(4),
+        PATCH(5),
+        OPTIONS(6),
+        VSTREAM_CRED(7),
+        VSTREAM_REGISTER(8),
+        VSTREAM_STATUS(9),
+        ILLEGAL(10);
+
+        private final int type;
+
+        RequestType(final int type) {
+            this.type = type;
+        }
+
+        public int getType() {
+            return type;
+        }
+
+        public static RequestType fromType(final int type) {
+            for (final RequestType rType : RequestType.values()) {
+                if (rType.type == type) {
+                    return rType;
+                }
+            }
+            return null;
+        }
     }
 
 }

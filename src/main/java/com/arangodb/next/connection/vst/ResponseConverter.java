@@ -34,7 +34,7 @@ import java.util.Map;
  * @author Mark Vollmary
  * @author Michele Rastelli
  */
-class ResponseConverter {
+final class ResponseConverter {
 
     /**
      * @param buffer received VST buffer
