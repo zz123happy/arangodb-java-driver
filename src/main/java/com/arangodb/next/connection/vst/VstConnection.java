@@ -67,7 +67,7 @@ final public class VstConnection implements ArangoConnection {
                 .option(CONNECT_TIMEOUT_MILLIS, config.getTimeout())
                 .host(config.getHost().getHost())
                 .port(config.getHost().getPort())
-                .doOnDisconnected(c -> runOnScheduler(() -> finalize(new IOException("Connection closed!"))))
+                .doOnDisconnected(c -> subscribeOnScheduler(() -> finalize(new IOException("Connection closed!"))).subscribe())
                 .handle((inbound, outbound) -> inbound
                         .receive()
                         // creates a defensive copy of the buffer to be propagate to the scheduler thread
@@ -86,8 +86,7 @@ final public class VstConnection implements ArangoConnection {
     @Override
     public Mono<ArangoResponse> execute(ArangoRequest request) {
         return subscribeOnScheduler(() -> {
-            assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-            final long id = mId++;
+            final long id = increaseAndGetMessageCounter();
             return execute(id, RequestConverter.encodeRequest(id, request, config.getChunkSize()));
         });
     }
@@ -99,6 +98,11 @@ final public class VstConnection implements ArangoConnection {
             connection.dispose();
             return connection.onDispose();
         });
+    }
+
+    private long increaseAndGetMessageCounter() {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        return ++mId;
     }
 
     private ConnectionProvider createConnectionProvider() {
@@ -115,7 +119,7 @@ final public class VstConnection implements ArangoConnection {
 
         if (config.getAuthenticationMethod().isPresent()) {
             AuthenticationMethod authenticationMethod = config.getAuthenticationMethod().get();
-            final long id = mId++;
+            final long id = increaseAndGetMessageCounter();
             return execute(id, RequestConverter.encodeBuffer(id, authenticationMethod.getVstAuthenticationMessage(), config.getChunkSize()))
                     .doOnNext(response -> {
                         if (response.getResponseCode() != 200) {
@@ -150,8 +154,11 @@ final public class VstConnection implements ArangoConnection {
         return Mono.defer(task).subscribeOn(scheduler);
     }
 
-    private void runOnScheduler(Runnable task) {
-        scheduler.schedule(task);
+    private Mono<Void> subscribeOnScheduler(Runnable task) {
+        return Mono.defer(() -> {
+            task.run();
+            return Mono.empty();
+        }).then().subscribeOn(scheduler);
     }
 
     private Mono<Void> send(ByteBuf buf) {

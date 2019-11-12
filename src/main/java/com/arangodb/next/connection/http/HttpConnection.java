@@ -76,7 +76,7 @@ final public class HttpConnection implements ArangoConnection {
     @Override
     public Mono<ArangoResponse> execute(final ArangoRequest request) {
         final String url = buildUrl(request);
-        return runOnScheduler(() ->
+        return subscribeOnScheduler(() ->
                 createHttpClient(request, request.getBody().readableBytes())
                         .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
                         .send(Mono.just(request.getBody()))
@@ -197,7 +197,7 @@ final public class HttpConnection implements ArangoConnection {
      * @param <T>  type returned
      * @return the supplied mono
      */
-    private <T> Mono<T> runOnScheduler(Supplier<Mono<T>> task) {
+    private <T> Mono<T> subscribeOnScheduler(Supplier<Mono<T>> task) {
         return Mono.defer(task).subscribeOn(scheduler);
     }
 

@@ -44,7 +44,7 @@ class ConnectionTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionTest.class);
 
-    private static final String JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEuNTczNDc2NDM0MDY2NjA4ZSs2LCJleHAiOjE1NzYwNjg0MzQsImlzcyI6ImFyYW5nb2RiIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicm9vdCJ9.h3Vr0d-_6TvSvF_7hVI_SPxiabZKGVXKF4UJj5d1QyE=";
+    private static final String JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEuNTczNTY1NDQ4MjkyMzQ5MmUrNiwiZXhwIjoxNTc2MTU3NDQ4LCJpc3MiOiJhcmFuZ29kYiIsInByZWZlcnJlZF91c2VybmFtZSI6InJvb3QifQ==.JC3OKu5RP94di1ZYOerNXiK3jv9tHEF5GYG832GSjNY=";
 
     static private Stream<Arguments> protocolAndAuthenticationMethodProvider() {
         return Stream.of(
