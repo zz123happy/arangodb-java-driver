@@ -51,10 +51,16 @@ final class VstReceiver {
         chunkContentBuffer = IOUtils.createBuffer();
     }
 
-    void close() {
+    void clear() {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
 
         chunkStore.clear();
+    }
+
+    void shutDown() {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+
+        clear();
         chunkHeaderBuffer.release();
         chunkContentBuffer.release();
     }

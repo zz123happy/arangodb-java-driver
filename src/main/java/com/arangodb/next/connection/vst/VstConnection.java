@@ -55,14 +55,13 @@ final public class VstConnection implements ArangoConnection {
     // state managed by scheduler thread arango-vst-X
     private long mId = 0L;
     private Throwable failureCause;
-    private reactor.netty.Connection connection;
+    private Connection connection;
 
     public VstConnection(final ConnectionConfig config) {
         this.config = config;
         messageStore = new MessageStore();
         scheduler = Schedulers.newSingle(THREAD_PREFIX);
         vstReceiver = new VstReceiver(messageStore::resolve);
-
         tcpClient = applySslContext(TcpClient.create(createConnectionProvider()))
                 .option(CONNECT_TIMEOUT_MILLIS, config.getTimeout())
                 .host(config.getHost().getHost())
@@ -85,7 +84,7 @@ final public class VstConnection implements ArangoConnection {
 
     @Override
     public Mono<ArangoResponse> execute(ArangoRequest request) {
-        return subscribeOnScheduler(() -> {
+        return connect().publishOn(scheduler).flatMap(c -> {
             final long id = increaseAndGetMessageCounter();
             return execute(id, RequestConverter.encodeRequest(id, request, config.getChunkSize()));
         });
@@ -95,8 +94,14 @@ final public class VstConnection implements ArangoConnection {
     public Mono<Void> close() {
         return subscribeOnScheduler(() -> {
             assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-            connection.dispose();
-            return connection.onDispose();
+            if (connection == null) {
+                return Mono.error(failureCause);
+            } else {
+                connection.dispose();
+                return connection
+                        .onDispose()
+                        .doOnTerminate(vstReceiver::shutDown);
+            }
         });
     }
 
@@ -135,7 +140,7 @@ final public class VstConnection implements ArangoConnection {
     private Mono<ArangoResponse> execute(long id, ByteBuf buf) {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
 
-        if (failureCause != null) {
+        if (connection == null) {
             return Mono.error(failureCause);
         } else {
             Mono<ArangoResponse> responseMono = messageStore.add(id);
@@ -163,10 +168,14 @@ final public class VstConnection implements ArangoConnection {
 
     private Mono<Void> send(ByteBuf buf) {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-        return connection.outbound()
-                .send(Mono.just(buf))
-                .then()
-                .doOnError(this::handleError);
+        if (connection == null) {
+            return Mono.error(failureCause);
+        } else {
+            return connection.outbound()
+                    .send(Mono.just(buf))
+                    .then()
+                    .doOnError(this::handleError);
+        }
     }
 
     private TcpClient applySslContext(TcpClient httpClient) {
@@ -179,7 +188,6 @@ final public class VstConnection implements ArangoConnection {
     }
 
     private void handleError(final Throwable t) {
-        t.printStackTrace();
         finalize(t);
         close().subscribe();
     }
@@ -187,23 +195,29 @@ final public class VstConnection implements ArangoConnection {
     private void finalize(final Throwable t) {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
 
-        vstReceiver.close();
+        vstReceiver.clear();
         failureCause = t;
+        connection = null;
         messageStore.clear(t);
     }
 
     private Mono<? extends Connection> connect() {
-        return tcpClient
-                .connect()
-                .publishOn(scheduler)
-                .doOnNext(this::setConnection)
-                .flatMap(c -> send(wrappedBuffer(PROTOCOL_HEADER)).then(authenticate()).thenReturn(c))
-                .doOnError(this::handleError);
+        if (connection == null) {
+            return tcpClient
+                    .connect()
+                    .publishOn(scheduler)
+                    .doOnNext(this::setConnection)
+                    .flatMap(c -> send(wrappedBuffer(PROTOCOL_HEADER)).then(authenticate()).thenReturn(c))
+                    .doOnError(this::handleError);
+        } else {
+            return Mono.just(connection);
+        }
     }
 
     private void setConnection(Connection connection) {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
         this.connection = connection;
+        failureCause = null;
     }
 
 }
