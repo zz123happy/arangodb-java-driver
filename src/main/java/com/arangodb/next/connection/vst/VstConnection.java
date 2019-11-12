@@ -100,6 +100,7 @@ final public class VstConnection implements ArangoConnection {
                 connection.dispose();
                 return connection
                         .onDispose()
+                        .publishOn(scheduler)
                         .doOnTerminate(vstReceiver::shutDown);
             }
         });

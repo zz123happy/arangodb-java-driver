@@ -23,6 +23,12 @@ package com.arangodb.next.connection;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import containers.SingleServerContainer;
+import containers.SingleServerWithChunkSizeContainer;
+import io.netty.buffer.Unpooled;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -32,7 +38,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
+import java.io.IOException;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,22 +52,50 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ConnectionTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionTest.class);
+    private static HostDescription host;
+    private static HostDescription smallChunkSizeHost;
+    private static String jwt;
 
-    private static final String JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEuNTczNTY1NDQ4MjkyMzQ5MmUrNiwiZXhwIjoxNTc2MTU3NDQ4LCJpc3MiOiJhcmFuZ29kYiIsInByZWZlcnJlZF91c2VybmFtZSI6InJvb3QifQ==.JC3OKu5RP94di1ZYOerNXiK3jv9tHEF5GYG832GSjNY=";
-
-    static private Stream<Arguments> protocolAndAuthenticationMethodProvider() {
+    /**
+     * Provided arguments are:
+     * - ArangoProtocol
+     * - AuthenticationMethod
+     * - HostDescription
+     */
+    static private Stream<Arguments> argumentsProvider() {
         return Stream.of(
-                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofBasic("root", "test")),
-                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofJwt(JWT)),
-                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofBasic("root", "test")),
-                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofJwt(JWT))
+                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofBasic("root", "test"), host),
+                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofJwt(jwt), host),
+                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofBasic("root", "test"), host),
+                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofJwt(jwt), host),
+                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofBasic("root", "test"), smallChunkSizeHost)
         );
     }
 
-    private final ConnectionConfig config = ConnectionConfig.builder()
-            .host(HostDescription.of("172.28.3.1", 8529))
+    @BeforeAll
+    static void setup() throws IOException {
+        smallChunkSizeHost = SingleServerWithChunkSizeContainer.INSTANCE.getHostDescription();
+        host = SingleServerContainer.INSTANCE.getHostDescription();
+        String request = "{\"username\":\"root\",\"password\":\"test\"}";
+        String response = HttpClient.create()
+                .post()
+                .uri("http://" + host.getHost() + ":" + host.getPort() + "/_db/_system/_open/auth")
+                .send(Mono.just(Unpooled.wrappedBuffer(request.getBytes())))
+                .responseContent()
+                .asString()
+                .blockFirst();
+        jwt = new ObjectMapper().readTree(response).get("jwt").asText();
+    }
+
+    @AfterAll
+    static void shutDown() {
+        SingleServerWithChunkSizeContainer.INSTANCE.stop();
+        SingleServerContainer.INSTANCE.stop();
+    }
+
+    private final ImmutableConnectionConfig.Builder config = ConnectionConfig.builder()
             .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
-            .build();
+            .chunkSize(8);
 
     private final ArangoRequest getRequest = ArangoRequest.builder()
             .database("_system")
@@ -75,10 +112,10 @@ class ConnectionTest {
             .build();
 
     @ParameterizedTest
-    @MethodSource("protocolAndAuthenticationMethodProvider")
-    void getRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
-        ConnectionConfig testConfig = ConnectionConfig.builder()
-                .from(config)
+    @MethodSource("argumentsProvider")
+    void getRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod, HostDescription hostDescription) {
+        ConnectionConfig testConfig = config
+                .host(hostDescription)
                 .authenticationMethod(authenticationMethod)
                 .build();
 
@@ -101,10 +138,10 @@ class ConnectionTest {
     }
 
     @ParameterizedTest
-    @MethodSource("protocolAndAuthenticationMethodProvider")
-    void postRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
-        ConnectionConfig testConfig = ConnectionConfig.builder()
-                .from(config)
+    @MethodSource("argumentsProvider")
+    void postRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod, HostDescription hostDescription) {
+        ConnectionConfig testConfig = config
+                .host(hostDescription)
                 .authenticationMethod(authenticationMethod)
                 .build();
 
@@ -129,7 +166,7 @@ class ConnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void parallelLoop(ArangoProtocol protocol) {
-        ArangoConnection.create(protocol, config).flatMapMany(connection -> Flux.range(0, 1_000)
+        ArangoConnection.create(protocol, config.host(host).build()).flatMapMany(connection -> Flux.range(0, 1_000)
                 .flatMap(i -> connection.execute(getRequest))
                 .doOnNext(response -> {
                     assertThat(response).isNotNull();
@@ -148,7 +185,7 @@ class ConnectionTest {
     @Test
     @Disabled
     void inifiniteParallelLoop() {
-        ArangoConnection.create(ArangoProtocol.VST, config).flatMapMany(connection -> Flux.fromStream(Stream.iterate(0, i -> i + 1))
+        ArangoConnection.create(ArangoProtocol.VST, config.host(host).build()).flatMapMany(connection -> Flux.fromStream(Stream.iterate(0, i -> i + 1))
                 .flatMap(i -> connection.execute(getRequest))
                 .doOnNext(v -> {
                     new VPackSlice(IOUtilsTest.getByteArray(v.getBody()));
