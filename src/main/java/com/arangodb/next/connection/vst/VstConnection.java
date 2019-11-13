@@ -33,6 +33,7 @@ import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.TcpClient;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.function.Supplier;
 
 import static io.netty.buffer.Unpooled.wrappedBuffer;
@@ -80,7 +81,7 @@ final public class VstConnection implements ArangoConnection {
 
     @Override
     public Mono<ArangoConnection> initialize() {
-        return connect().map(it -> this);
+        return connect().timeout(Duration.ofMillis(config.getTimeout())).map(it -> this);
     }
 
     @Override
@@ -88,7 +89,7 @@ final public class VstConnection implements ArangoConnection {
         return connect().publishOn(scheduler).flatMap(c -> {
             final long id = increaseAndGetMessageCounter();
             return execute(id, RequestConverter.encodeRequest(id, request, config.getChunkSize()));
-        });
+        }).timeout(Duration.ofMillis(config.getTimeout()));
     }
 
     @Override
@@ -176,6 +177,8 @@ final public class VstConnection implements ArangoConnection {
             return connection.outbound()
                     .send(Mono.just(buf))
                     .then()
+                    .publishOn(scheduler)
+                    .onErrorMap(e -> e.getClass().getSimpleName().equals("InternalNettyException"), Throwable::getCause)
                     .doOnError(this::handleError);
         }
     }
