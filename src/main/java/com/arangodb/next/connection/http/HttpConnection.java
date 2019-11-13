@@ -21,9 +21,11 @@
 package com.arangodb.next.connection.http;
 
 import com.arangodb.next.connection.*;
+import com.arangodb.next.connection.exceptions.ArangoConnectionAuthenticationException;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.JdkSslContext;
 import reactor.core.publisher.Mono;
@@ -81,6 +83,11 @@ final public class HttpConnection implements ArangoConnection {
                         .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
                         .send(Mono.just(request.getBody()))
                         .responseSingle(this::buildResponse))
+                .doOnNext(response -> {
+                    if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
+                        throw ArangoConnectionAuthenticationException.of(response);
+                    }
+                })
                 .doOnError(e -> close().subscribe())
                 .timeout(Duration.ofMillis(config.getTimeout()));
     }

@@ -20,13 +20,13 @@
 
 package com.arangodb.next.connection;
 
+import com.arangodb.next.connection.exceptions.ArangoConnectionAuthenticationException;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import containers.SingleServerWithSmallChunkSizeContainer;
 import io.netty.buffer.Unpooled;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -43,7 +43,8 @@ import reactor.netty.http.client.HttpClient;
 import java.io.IOException;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Michele Rastelli
@@ -91,6 +92,20 @@ class BasicConnectionTest {
         );
     }
 
+    /**
+     * Provided arguments are:
+     * - ArangoProtocol
+     * - AuthenticationMethod
+     */
+    static private Stream<Arguments> wrongAuthenticationArgumentsProvider() {
+        return Stream.of(
+                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofBasic("root", "wrong")),
+                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofJwt("invalid.jwt.token")),
+                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofBasic("root", "wrong")),
+                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofJwt("invalid.jwt.token"))
+        );
+    }
+
     @BeforeAll
     static void setup() throws IOException {
         host = SingleServerWithSmallChunkSizeContainer.INSTANCE.start().join().getHostDescription();
@@ -103,11 +118,6 @@ class BasicConnectionTest {
                 .asString()
                 .blockFirst();
         jwt = new ObjectMapper().readTree(response).get("jwt").asText();
-    }
-
-    @AfterAll
-    static void shutDown() {
-        SingleServerWithSmallChunkSizeContainer.INSTANCE.stop().join();
     }
 
     @ParameterizedTest
@@ -179,6 +189,22 @@ class BasicConnectionTest {
                     response.getBody().release();
                 }))
                 .then().block();
+    }
+
+
+    @ParameterizedTest
+    @MethodSource("wrongAuthenticationArgumentsProvider")
+    void authenticationFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
+        ConnectionConfig testConfig = config
+                .host(host)
+                .authenticationMethod(authenticationMethod)
+                .build();
+
+        assertThrows(ArangoConnectionAuthenticationException.class, () ->
+                ArangoConnection.create(protocol, testConfig)
+                        .flatMap(connection -> connection.execute(getRequest))
+                        .block()
+        );
     }
 
     @Test

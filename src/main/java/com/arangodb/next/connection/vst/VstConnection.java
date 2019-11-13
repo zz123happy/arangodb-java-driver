@@ -21,6 +21,7 @@
 package com.arangodb.next.connection.vst;
 
 import com.arangodb.next.connection.*;
+import com.arangodb.next.connection.exceptions.ArangoConnectionAuthenticationException;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.JdkSslContext;
@@ -129,7 +130,7 @@ final public class VstConnection implements ArangoConnection {
             return execute(id, RequestConverter.encodeBuffer(id, authenticationMethod.getVstAuthenticationMessage(), config.getChunkSize()))
                     .doOnNext(response -> {
                         if (response.getResponseCode() != 200) {
-                            throw new RuntimeException("Authentication failure!");
+                            throw ArangoConnectionAuthenticationException.of(response);
                         }
                     })
                     .then();
