@@ -24,8 +24,7 @@ import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import containers.SingleServerContainer;
-import containers.SingleServerWithChunkSizeContainer;
+import containers.SingleServerWithSmallChunkSizeContainer;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -49,33 +48,52 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Michele Rastelli
  */
-class ConnectionTest {
+class BasicConnectionTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasicConnectionTest.class);
     private static HostDescription host;
-    private static HostDescription smallChunkSizeHost;
     private static String jwt;
+    private final ImmutableConnectionConfig.Builder config;
+    private final ArangoRequest getRequest;
+    private final ArangoRequest postRequest;
+
+    BasicConnectionTest() {
+        config = ConnectionConfig.builder()
+                .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
+                .chunkSize(8);
+
+        getRequest = ArangoRequest.builder()
+                .database("_system")
+                .path("/_api/version")
+                .requestType(ArangoRequest.RequestType.GET)
+                .putQueryParam("details", "true")
+                .build();
+
+        postRequest = ArangoRequest.builder()
+                .database("_system")
+                .path("/_api/query")
+                .requestType(ArangoRequest.RequestType.POST)
+                .body(VPackUtils.extractBuffer(createParseQueryRequestBody()))
+                .build();
+    }
 
     /**
      * Provided arguments are:
      * - ArangoProtocol
      * - AuthenticationMethod
-     * - HostDescription
      */
     static private Stream<Arguments> argumentsProvider() {
         return Stream.of(
-                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofBasic("root", "test"), host),
-                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofJwt(jwt), host),
-                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofBasic("root", "test"), host),
-                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofJwt(jwt), host),
-                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofBasic("root", "test"), smallChunkSizeHost)
+                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofBasic("root", "test")),
+                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofJwt(jwt)),
+                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofBasic("root", "test")),
+                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofJwt(jwt))
         );
     }
 
     @BeforeAll
     static void setup() throws IOException {
-        smallChunkSizeHost = SingleServerWithChunkSizeContainer.INSTANCE.getHostDescription();
-        host = SingleServerContainer.INSTANCE.getHostDescription();
+        host = SingleServerWithSmallChunkSizeContainer.INSTANCE.start().join().getHostDescription();
         String request = "{\"username\":\"root\",\"password\":\"test\"}";
         String response = HttpClient.create()
                 .post()
@@ -89,33 +107,14 @@ class ConnectionTest {
 
     @AfterAll
     static void shutDown() {
-        SingleServerWithChunkSizeContainer.INSTANCE.stop();
-        SingleServerContainer.INSTANCE.stop();
+        SingleServerWithSmallChunkSizeContainer.INSTANCE.stop().join();
     }
-
-    private final ImmutableConnectionConfig.Builder config = ConnectionConfig.builder()
-            .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
-            .chunkSize(8);
-
-    private final ArangoRequest getRequest = ArangoRequest.builder()
-            .database("_system")
-            .path("/_api/version")
-            .requestType(ArangoRequest.RequestType.GET)
-            .putQueryParam("details", "true")
-            .build();
-
-    private final ArangoRequest postRequest = ArangoRequest.builder()
-            .database("_system")
-            .path("/_api/query")
-            .requestType(ArangoRequest.RequestType.POST)
-            .body(VPackUtils.extractBuffer(createParseQueryRequestBody()))
-            .build();
 
     @ParameterizedTest
     @MethodSource("argumentsProvider")
-    void getRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod, HostDescription hostDescription) {
+    void getRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
         ConnectionConfig testConfig = config
-                .host(hostDescription)
+                .host(host)
                 .authenticationMethod(authenticationMethod)
                 .build();
 
@@ -139,9 +138,9 @@ class ConnectionTest {
 
     @ParameterizedTest
     @MethodSource("argumentsProvider")
-    void postRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod, HostDescription hostDescription) {
+    void postRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
         ConnectionConfig testConfig = config
-                .host(hostDescription)
+                .host(host)
                 .authenticationMethod(authenticationMethod)
                 .build();
 
