@@ -40,6 +40,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
@@ -226,6 +227,22 @@ class BasicConnectionTest {
                         .block()
         );
     }
+
+
+    @ParameterizedTest
+    @MethodSource("argumentsProvider")
+    void wrongHostFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
+        ConnectionConfig testConfig = config
+                .host(HostDescription.of("wrongHost", 8529))
+                .authenticationMethod(authenticationMethod)
+                .build();
+
+        Throwable thrown = catchThrowable(() -> ArangoConnection.create(protocol, testConfig)
+                .flatMap(connection -> connection.execute(getRequest))
+                .block());
+        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
+    }
+
 
     @Test
     @Disabled
