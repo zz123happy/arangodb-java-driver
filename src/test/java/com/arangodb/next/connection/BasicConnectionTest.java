@@ -25,8 +25,12 @@ import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import containers.SingleServerWithSmallChunkSizeContainer;
+import containers.SingleServerSslContainer;
 import io.netty.buffer.Unpooled;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -40,7 +44,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
+import java.security.KeyStore;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
@@ -52,15 +60,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class BasicConnectionTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicConnectionTest.class);
+    private static final String SSL_TRUSTSTORE = "/example.truststore";
+    private static final String SSL_TRUSTSTORE_PASSWORD = "12345678";
+
     private static HostDescription host;
     private static String jwt;
     private final ImmutableConnectionConfig.Builder config;
     private final ArangoRequest getRequest;
     private final ArangoRequest postRequest;
 
-    BasicConnectionTest() {
+    BasicConnectionTest() throws Exception {
         config = ConnectionConfig.builder()
                 .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
+                .useSsl(true)
+                .sslContext(getSslContext())
                 .chunkSize(8);
 
         getRequest = ArangoRequest.builder()
@@ -108,11 +121,18 @@ class BasicConnectionTest {
 
     @BeforeAll
     static void setup() throws IOException {
-        host = SingleServerWithSmallChunkSizeContainer.INSTANCE.start().join().getHostDescription();
+        host = SingleServerSslContainer.INSTANCE.start().join().getHostDescription();
+        SslContext sslContext = SslContextBuilder
+                .forClient()
+                .sslProvider(SslProvider.JDK)
+                .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                .build();
+
         String request = "{\"username\":\"root\",\"password\":\"test\"}";
         String response = HttpClient.create()
+                .tcpConfiguration(tcp -> tcp.secure(c -> c.sslContext(sslContext)))
                 .post()
-                .uri("http://" + host.getHost() + ":" + host.getPort() + "/_db/_system/_open/auth")
+                .uri("https://" + host.getHost() + ":" + host.getPort() + "/_db/_system/_open/auth")
                 .send(Mono.just(Unpooled.wrappedBuffer(request.getBytes())))
                 .responseContent()
                 .asString()
@@ -226,6 +246,22 @@ class BasicConnectionTest {
         builder.add("query", "FOR i IN 1..100 RETURN i * 3");
         builder.close();
         return builder.slice();
+    }
+
+    private SSLContext getSslContext() throws Exception {
+        final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        ks.load(this.getClass().getResourceAsStream(SSL_TRUSTSTORE), SSL_TRUSTSTORE_PASSWORD.toCharArray());
+
+        final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(ks, SSL_TRUSTSTORE_PASSWORD.toCharArray());
+
+        final TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(ks);
+
+        final SSLContext sc = SSLContext.getInstance("TLS");
+        sc.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+        return sc;
     }
 
 }
