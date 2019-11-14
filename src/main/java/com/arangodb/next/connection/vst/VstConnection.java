@@ -68,7 +68,7 @@ final public class VstConnection implements ArangoConnection {
                 .option(CONNECT_TIMEOUT_MILLIS, config.getTimeout())
                 .host(config.getHost().getHost())
                 .port(config.getHost().getPort())
-                .doOnDisconnected(c -> subscribeOnScheduler(() -> finalize(new IOException("Connection closed!"))).subscribe())
+                .doOnDisconnected(c -> publishOnScheduler(() -> finalize(new IOException("Connection closed!"))).subscribe())
                 .handle((inbound, outbound) -> inbound
                         .receive()
                         // creates a defensive copy of the buffer to be propagate to the scheduler thread
@@ -94,7 +94,7 @@ final public class VstConnection implements ArangoConnection {
 
     @Override
     public Mono<Void> close() {
-        return subscribeOnScheduler(() -> {
+        return publishOnScheduler(() -> {
             assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
             if (connection == null) {
                 return Mono.error(failureCause);
@@ -158,11 +158,11 @@ final public class VstConnection implements ArangoConnection {
      * @param <T>  type returned
      * @return the supplied mono
      */
-    private <T> Mono<T> subscribeOnScheduler(Supplier<Mono<T>> task) {
+    private <T> Mono<T> publishOnScheduler(Supplier<Mono<T>> task) {
         return Mono.defer(task).subscribeOn(scheduler);
     }
 
-    private Mono<Void> subscribeOnScheduler(Runnable task) {
+    private Mono<Void> publishOnScheduler(Runnable task) {
         return Mono.defer(() -> {
             task.run();
             return Mono.empty();
@@ -177,8 +177,8 @@ final public class VstConnection implements ArangoConnection {
             return connection.outbound()
                     .send(Mono.just(buf))
                     .then()
-                    .publishOn(scheduler)
                     .onErrorMap(e -> e.getClass().getSimpleName().equals("InternalNettyException"), Throwable::getCause)
+                    .onErrorMap(reactor.netty.channel.AbortedException.class, e -> new IOException(e.getCause()))
                     .doOnError(this::handleError);
         }
     }
@@ -193,7 +193,7 @@ final public class VstConnection implements ArangoConnection {
     }
 
     private void handleError(final Throwable t) {
-        finalize(t);
+        publishOnScheduler(() -> finalize(t));
         close().subscribe();
     }
 
