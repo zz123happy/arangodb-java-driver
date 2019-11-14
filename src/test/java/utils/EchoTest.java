@@ -23,6 +23,7 @@ package utils;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
+import reactor.netty.DisposableServer;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -31,18 +32,8 @@ import reactor.netty.http.client.HttpClient;
 class EchoTest {
 
     @Test
-    void echoTcpTest() throws InterruptedException {
-        new EchoTcpServer().start().join();
-        EchoTcpClient echoClient = new EchoTcpClient();
-        echoClient.start().join();
-
-        echoClient.send("hello");
-        Thread.sleep(100);
-    }
-
-    @Test
     void echoHttpTest() throws InterruptedException {
-        new EchoHttpServer().start().join();
+        DisposableServer server = new EchoHttpServer().start().join();
 
         HttpClient.create()
                 .post()
@@ -55,6 +46,8 @@ class EchoTest {
                 .subscribe();
 
         Thread.sleep(100);
+        server.dispose();
+        server.onDispose().block();
     }
 
 }

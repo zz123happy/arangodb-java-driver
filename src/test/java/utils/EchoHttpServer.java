@@ -20,6 +20,7 @@
 
 package utils;
 
+import reactor.netty.DisposableServer;
 import reactor.netty.NettyOutbound;
 import reactor.netty.http.server.HttpServer;
 import reactor.netty.http.server.HttpServerRequest;
@@ -32,8 +33,8 @@ import java.util.concurrent.CompletableFuture;
  */
 public class EchoHttpServer {
 
-    public CompletableFuture<Void> start() {
-        CompletableFuture<Void> done = new CompletableFuture<>();
+    public CompletableFuture<DisposableServer> start() {
+        CompletableFuture<DisposableServer> done = new CompletableFuture<>();
 
         new Thread(() ->
                 HttpServer.create()
@@ -46,7 +47,7 @@ public class EchoHttpServer {
                                 .delete("/**", EchoHttpServer::echo)
                                 .head("/**", EchoHttpServer::echo)
                                 .options("/**", EchoHttpServer::echo))
-                        .tcpConfiguration(tcp -> tcp.doOnBound(c -> done.complete(null)))
+                        .tcpConfiguration(tcp -> tcp.doOnBound(done::complete))
                         .bindNow().onDispose().block()
         ).start();
 

@@ -25,8 +25,10 @@ import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
 import io.netty.buffer.Unpooled;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import reactor.netty.DisposableServer;
 import utils.EchoHttpServer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class HttpConnectionEchoTest {
 
+    private static DisposableServer server;
     private final ConnectionConfig config = ConnectionConfig.builder()
             .host(HostDescription.of("localhost", 9000))
             .authenticationMethod(AuthenticationMethod.ofJwt("token"))
@@ -54,7 +57,13 @@ class HttpConnectionEchoTest {
 
     @BeforeAll
     static void setup() {
-        new EchoHttpServer().start().join();
+        server = new EchoHttpServer().start().join();
+    }
+
+    @AfterAll
+    static void shutDown() {
+        server.dispose();
+        server.onDispose().block();
     }
 
     @Test
