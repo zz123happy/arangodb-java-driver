@@ -42,11 +42,11 @@ public interface ConnectionConfig {
     }
 
     /**
-     * @return max number of connections
+     * @return max number of connections, used by HttpConnection only
      */
     @Value.Default
     default int getMaxConnections() {
-        return 1;
+        return 10;
     }
 
     /**

@@ -102,7 +102,7 @@ final public class HttpConnection implements ArangoConnection {
     private ConnectionProvider createConnectionProvider() {
         return ConnectionProvider.fixed(
                 "http",
-                1,  // FIXME: connection pooling should happen here, inside HttpConnection
+                config.getMaxConnections(),
                 config.getTimeout(),
                 config.getTtl());
     }
