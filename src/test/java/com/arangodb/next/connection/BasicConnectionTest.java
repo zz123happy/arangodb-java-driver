@@ -32,8 +32,6 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -52,7 +50,8 @@ import java.io.IOException;
 import java.security.KeyStore;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -241,20 +240,6 @@ class BasicConnectionTest {
                 .flatMap(connection -> connection.execute(getRequest))
                 .block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
-    }
-
-
-    @Test
-    @Disabled
-    void inifiniteParallelLoop() {
-        ArangoConnection.create(ArangoProtocol.VST, config.host(host).build()).flatMapMany(connection -> Flux.fromStream(Stream.iterate(0, i -> i + 1))
-                .flatMap(i -> connection.execute(getRequest))
-                .doOnNext(v -> {
-                    new VPackSlice(IOUtilsTest.getByteArray(v.getBody()));
-                    v.getBody().release();
-                }))
-                .onErrorContinue((throwable, o) -> LOGGER.info(throwable.getClass().getSimpleName() + " while processing: {}", o))
-                .then().block();
     }
 
     private VPackSlice createParseQueryRequestBody() {
