@@ -18,30 +18,38 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-
 package com.arangodb.next.connection.vst;
 
+
 import com.arangodb.next.connection.ArangoResponse;
-import com.arangodb.next.connection.IOUtils;
+import com.arangodb.next.connection.ImmutableArangoResponse;
 import com.arangodb.velocypack.VPackSlice;
 import io.netty.buffer.ByteBuf;
 
+import java.util.Iterator;
+import java.util.Map;
+
 /**
- * @author Mark Vollmary
  * @author Michele Rastelli
  */
-final class ResponseConverter {
+class VPackVstDeserializers {
 
-    /**
-     * @param buffer received VST buffer
-     * @return ArangoDB response
-     */
-    static ArangoResponse decodeResponse(byte[] buffer) {
-        VPackSlice head = new VPackSlice(buffer);
-        final int headSize = head.getByteSize();
-        ByteBuf body = IOUtils.createBuffer(buffer.length - headSize);
-        body.writeBytes(buffer, headSize, buffer.length - headSize);
-        return VPackVstDeserializers.deserializeArangoResponse(head, body);
+     static ArangoResponse deserializeArangoResponse(VPackSlice vpack, ByteBuf body) {
+        ImmutableArangoResponse.Builder builder = ArangoResponse.builder()
+                .body(body)
+                .version(vpack.get(0).getAsInt())
+                .type(vpack.get(1).getAsInt())
+                .responseCode(vpack.get(2).getAsInt());
+
+        if (vpack.size() > 3) {
+            Iterator<Map.Entry<String, VPackSlice>> metaIterator = vpack.get(3).objectIterator();
+            while (metaIterator.hasNext()) {
+                Map.Entry<String, VPackSlice> meta = metaIterator.next();
+                builder.putMeta(meta.getKey(), meta.getValue().getAsString());
+            }
+        }
+
+        return builder.build();
     }
 
 }

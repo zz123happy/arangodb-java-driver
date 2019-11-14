@@ -22,9 +22,7 @@ package com.arangodb.next.connection.vst;
 
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.IOUtils;
-import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
-import com.arangodb.velocypack.ValueType;
 import io.netty.buffer.ByteBuf;
 
 import java.util.ArrayList;
@@ -78,7 +76,7 @@ final class RequestConverter {
     }
 
     private static ByteBuf createVstPayload(ArangoRequest request) {
-        VPackSlice headSlice = serializeArangoRequestHead(request);
+        VPackSlice headSlice = VPackVstSerializers.serialize(request);
         int headSize = headSlice.getByteSize();
         ByteBuf payload = IOUtils.createBuffer(headSize + request.getBody().readableBytes());
         payload.writeBytes(headSlice.getBuffer(), 0, headSize);
@@ -102,24 +100,6 @@ final class RequestConverter {
             chunks.add(chunk);
         }
         return chunks;
-    }
-
-    private static VPackSlice serializeArangoRequestHead(ArangoRequest request) {
-        final VPackBuilder builder = new VPackBuilder();
-        builder.add(ValueType.ARRAY);
-        builder.add(request.getVersion());
-        builder.add(request.getType());
-        builder.add(request.getDatabase());
-        builder.add(request.getRequestType().getType());
-        builder.add(request.getPath());
-        builder.add(ValueType.OBJECT);
-        request.getQueryParam().forEach(builder::add);
-        builder.close();
-        builder.add(ValueType.OBJECT);
-        request.getHeaderParam().forEach(builder::add);
-        builder.close();
-        builder.close();
-        return builder.slice();
     }
 
 }
