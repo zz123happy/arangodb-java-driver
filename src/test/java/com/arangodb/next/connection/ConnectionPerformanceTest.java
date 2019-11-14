@@ -21,12 +21,11 @@
 
 package com.arangodb.next.connection;
 
-import com.arangodb.velocypack.VPackSlice;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
-import java.util.stream.Stream;
+import java.util.Date;
 
 /**
  * @author Michele Rastelli
@@ -47,15 +46,20 @@ class ConnectionPerformanceTest {
 
     @Test
     void inifiniteParallelLoop() {
+        int requests = 1_000_000;
+        long start = new Date().getTime();
         ArangoConnection.create(ArangoProtocol.VST, config)
-                .flatMapMany(connection -> Flux.fromStream(Stream.iterate(0, i -> i + 1))
+                .flatMapMany(connection -> Flux.range(0, requests)
+                        .doOnNext(i -> {
+                            if (i % 100_000 == 0)
+                                System.out.println(i);
+                        })
                         .flatMap(i -> connection.execute(getRequest))
-                        .doOnNext(v -> {
-                            new VPackSlice(IOUtilsTest.getByteArray(v.getBody()));
-                            v.getBody().release();
-                        }))
+                        .doOnNext(v -> v.getBody().release()))
                 .then().block();
+        long end = new Date().getTime();
+        long elapsed = end - start;
+        System.out.println("rate: " + (1_000.0 * requests / elapsed));
     }
-
 
 }
