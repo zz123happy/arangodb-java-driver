@@ -65,6 +65,8 @@ class BasicConnectionTest {
 
     private static HostDescription host;
     private static String jwt;
+    private static SingleServerSslContainer container;
+
     private final ImmutableConnectionConfig.Builder config;
     private final ArangoRequest getRequest;
     private final ArangoRequest postRequest;
@@ -121,7 +123,8 @@ class BasicConnectionTest {
 
     @BeforeAll
     static void setup() throws IOException {
-        host = SingleServerSslContainer.INSTANCE.start().join().getHostDescription();
+        container = new SingleServerSslContainer().start().join();
+        host = container.getHostDescription();
         SslContext sslContext = SslContextBuilder
                 .forClient()
                 .sslProvider(SslProvider.JDK)

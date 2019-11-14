@@ -22,6 +22,8 @@ package com.arangodb.next.connection;
 
 import com.arangodb.velocypack.VPackSlice;
 import containers.SingleServerContainer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -44,6 +46,7 @@ class ReconnectionTest {
 
     private final ImmutableConnectionConfig.Builder config;
     private final ArangoRequest getRequest;
+    private SingleServerContainer container;
 
     ReconnectionTest() {
         config = ConnectionConfig.builder()
@@ -58,11 +61,21 @@ class ReconnectionTest {
                 .build();
     }
 
+    @BeforeEach
+    void setup() {
+        container = new SingleServerContainer().start().join();
+    }
+
+    @AfterEach
+    void shutDown() {
+        container.stop().join();
+    }
+
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void requestTimeout(ArangoProtocol protocol) {
-        HostDescription host = SingleServerContainer.INSTANCE.start().join().getHostDescription();
+        HostDescription host = container.getHostDescription();
 
         ConnectionConfig testConfig = config
                 .host(host)
@@ -73,38 +86,35 @@ class ReconnectionTest {
 
         performRequest(connection);
 
-        SingleServerContainer.INSTANCE.getProxy().setConnectionCut(true);
+        container.getProxy().setConnectionCut(true);
         Throwable thrown = catchThrowable(() -> performRequest(connection));
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
 
-        SingleServerContainer.INSTANCE.getProxy().setConnectionCut(false);
+        container.getProxy().setConnectionCut(false);
         performRequest(connection);
 
         connection.close().block();
-        SingleServerContainer.INSTANCE.stop().join();
     }
 
 
     @Test
     void VstConnectionTimeout() {
-        HostDescription host = SingleServerContainer.INSTANCE.start().join().getHostDescription();
+        HostDescription host = container.getHostDescription();
 
         ConnectionConfig testConfig = config
                 .host(host)
                 .build();
 
-        SingleServerContainer.INSTANCE.getProxy().setConnectionCut(true);
+        container.getProxy().setConnectionCut(true);
         Throwable thrown = catchThrowable(() -> ArangoConnection.create(ArangoProtocol.VST, testConfig).block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
-
-        SingleServerContainer.INSTANCE.stop().join();
     }
 
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void reconnect(ArangoProtocol protocol) {
-        HostDescription host = SingleServerContainer.INSTANCE.start().join().getHostDescription();
+        HostDescription host = container.getHostDescription();
 
         ConnectionConfig testConfig = config
                 .host(host)
@@ -115,15 +125,14 @@ class ReconnectionTest {
 
         performRequest(connection);
 
-        SingleServerContainer.INSTANCE.disableProxy();
+        container.disableProxy();
         Throwable thrown = catchThrowable(() -> performRequest(connection));
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
 
-        SingleServerContainer.INSTANCE.enableProxy();
+        container.enableProxy();
         performRequest(connection);
 
         connection.close().block();
-        SingleServerContainer.INSTANCE.stop().join();
     }
 
 

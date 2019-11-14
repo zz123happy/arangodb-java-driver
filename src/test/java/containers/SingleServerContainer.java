@@ -16,17 +16,15 @@ import reactor.netty.http.client.HttpClient;
 
 import java.util.concurrent.CompletableFuture;
 
-public enum SingleServerContainer {
+public class SingleServerContainer {
 
-    INSTANCE;
-
-    private final Logger log = LoggerFactory.getLogger(SingleServerContainer.class);
+    private static final Logger log = LoggerFactory.getLogger(SingleServerContainer.class);
 
     private final int PORT = 8529;
-    private final String DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.5.1";
+    private final String DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.5.2";
     private final String PASSWORD = "test";
 
-    private Network network = Network.newNetwork();
+    private final Network network = Network.newNetwork();
 
     private final GenericContainer container =
             new GenericContainer(DOCKER_IMAGE)
@@ -34,7 +32,6 @@ public enum SingleServerContainer {
                     .withEnv("ARANGO_ROOT_PASSWORD", PASSWORD)
                     .withNetwork(network)
                     .withNetworkAliases("db")
-                    .withExposedPorts(8529)
                     .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[DB_LOG]"))
                     .waitingFor(Wait.forHttp("/_api/version")
                             .withBasicCredentials("root", "test")
@@ -44,18 +41,23 @@ public enum SingleServerContainer {
 
     private ToxiproxyContainer.ContainerProxy proxy;
 
-    public HostDescription getHostDescription() {
-        return HostDescription.of(proxy.getContainerIpAddress(), proxy.getProxyPort());
-    }
-
     public CompletableFuture<SingleServerContainer> start() {
         return CompletableFuture.allOf(
                 CompletableFuture.runAsync(container::start).thenAccept((v) -> log.info("READY: db")),
                 CompletableFuture.runAsync(toxiproxy::start).thenAccept((v) -> log.info("READY: toxiproxy"))
         ).thenApply((v) -> {
-            proxy = toxiproxy.getProxy("db", 8529);
+            proxy = toxiproxy.getProxy("db", PORT);
             return this;
         });
+    }
+
+    /**
+     * call after {@link #start()}
+     *
+     * @return HostDescription of the proxy
+     */
+    public HostDescription getHostDescription() {
+        return HostDescription.of(proxy.getContainerIpAddress(), proxy.getProxyPort());
     }
 
     public CompletableFuture<Void> stop() {
@@ -81,12 +83,19 @@ public enum SingleServerContainer {
         setProxyEnabled(false);
     }
 
+    /**
+     * Bringing a service down is not technically a toxic in the implementation of Toxiproxy. This is done by POSTing
+     * to /proxies/{proxy} and setting the enabled field to false.
+     *
+     * @param value value to set
+     * @see <a href="https://github.com/Shopify/toxiproxy#down">
+     */
     private void setProxyEnabled(boolean value) {
         String request = new ObjectMapper().createObjectNode().put("enabled", value).toString();
         String response = HttpClient.create()
                 .post()
                 .uri("http://" + toxiproxy.getContainerIpAddress() + ":" + toxiproxy.getMappedPort(8474)
-                        + "/proxies/db:8529")
+                        + "/proxies/db:" + PORT)
                 .send(Mono.just(Unpooled.wrappedBuffer(request.getBytes())))
                 .responseContent()
                 .asString()
