@@ -112,7 +112,6 @@ final public class HttpConnection implements ArangoConnection {
                 HttpClient
                         .create(connectionProvider)
                         .tcpConfiguration(tcpClient -> tcpClient.option(CONNECT_TIMEOUT_MILLIS, config.getTimeout()))
-                        .wiretap(true)
                         .protocol(HttpProtocol.HTTP11)
                         .keepAlive(true)
                         .baseUrl((Boolean.TRUE == config.getUseSsl() ? "https://" : "http://") + config.getHost().getHost() + ":" + config.getHost().getPort())

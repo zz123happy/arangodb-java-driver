@@ -22,9 +22,7 @@ package com.arangodb.next.connection;
 
 import com.arangodb.velocypack.VPackSlice;
 import containers.SingleServerContainer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.slf4j.Logger;
@@ -46,7 +44,7 @@ class ReconnectionTest {
 
     private final ImmutableConnectionConfig.Builder config;
     private final ArangoRequest getRequest;
-    private SingleServerContainer container;
+    private static SingleServerContainer container;
 
     ReconnectionTest() {
         config = ConnectionConfig.builder()
@@ -61,16 +59,21 @@ class ReconnectionTest {
                 .build();
     }
 
-    @BeforeEach
-    void setup() {
+    @BeforeAll
+    static void setup() {
         container = new SingleServerContainer().start().join();
     }
 
-    @AfterEach
-    void shutDown() {
+    @AfterAll
+    static void shutDown() {
         container.stop().join();
     }
 
+    @AfterEach
+    void restore() {
+        container.enableProxy();
+        container.getProxy().setConnectionCut(false);
+    }
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
@@ -114,25 +117,27 @@ class ReconnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void reconnect(ArangoProtocol protocol) {
-        HostDescription host = container.getHostDescription();
+        for (int i = 0; i < 100; i++) {
+            HostDescription host = container.getHostDescription();
 
-        ConnectionConfig testConfig = config
-                .host(host)
-                .build();
+            ConnectionConfig testConfig = config
+                    .host(host)
+                    .build();
 
-        ArangoConnection connection = ArangoConnection.create(protocol, testConfig).block();
-        assertThat(connection).isNotNull();
+            ArangoConnection connection = ArangoConnection.create(protocol, testConfig).block();
+            assertThat(connection).isNotNull();
 
-        performRequest(connection);
+            performRequest(connection);
 
-        container.disableProxy();
-        Throwable thrown = catchThrowable(() -> performRequest(connection));
-        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
+            container.disableProxy();
+            Throwable thrown = catchThrowable(() -> performRequest(connection));
+            assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
 
-        container.enableProxy();
-        performRequest(connection);
+            container.enableProxy();
+            performRequest(connection);
 
-        connection.close().block();
+            connection.close().block();
+        }
     }
 
 

@@ -37,7 +37,7 @@ import static com.arangodb.next.connection.vst.VstConnection.THREAD_PREFIX;
  */
 final class VstReceiver {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(VstReceiver.class);
+    private static final Logger log = LoggerFactory.getLogger(VstReceiver.class);
 
     private final ChunkStore chunkStore;
 
@@ -53,12 +53,14 @@ final class VstReceiver {
 
     void clear() {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        log.debug("clear()");
 
         chunkStore.clear();
     }
 
     void shutDown() {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        log.debug("shutDown()");
 
         clear();
         chunkHeaderBuffer.release();
@@ -110,8 +112,8 @@ final class VstReceiver {
 
         chunk = new Chunk(messageId, chunkX, messageLength, 0, contentLength);
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(String.format("Received chunk %s:%s from message %s", chunk.getChunk(), chunk.isFirstChunk() ? 1 : 0, chunk.getMessageId()));
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("Received chunk %s:%s from message %s", chunk.getChunk(), chunk.isFirstChunk() ? 1 : 0, chunk.getMessageId()));
         }
     }
 

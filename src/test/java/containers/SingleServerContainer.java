@@ -76,11 +76,15 @@ public class SingleServerContainer {
     }
 
     public void enableProxy() {
+        log.debug("enableProxy()");
         setProxyEnabled(true);
+        log.debug("... enableProxy() done");
     }
 
     public void disableProxy() {
+        log.debug("disableProxy()");
         setProxyEnabled(false);
+        log.debug("... disableProxy() done");
     }
 
     /**
@@ -101,13 +105,7 @@ public class SingleServerContainer {
                 .asString()
                 .blockFirst();
 
-        log.info(response);
-
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        log.debug(response);
     }
 
 }
