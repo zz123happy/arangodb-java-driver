@@ -88,7 +88,7 @@ final public class VstConnection implements ArangoConnection {
     @Override
     public Mono<ArangoResponse> execute(ArangoRequest request) {
         log.debug("execute({})", request);
-        return publishOnScheduler(this::connect).publishOn(scheduler).flatMap(c -> {
+        return publishOnScheduler(this::connect).flatMap(c -> {
             final long id = increaseAndGetMessageCounter();
             return execute(c, id, RequestConverter.encodeRequest(id, request, config.getChunkSize()));
         }).timeout(Duration.ofMillis(config.getTimeout()));
@@ -98,6 +98,7 @@ final public class VstConnection implements ArangoConnection {
     public Mono<Void> close() {
         log.debug("close()");
         return publishOnScheduler(() -> {
+            assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
             if (connectionState == ConnectionState.DISCONNECTED) {
                 return Mono.empty();
             } else {
@@ -166,6 +167,7 @@ final public class VstConnection implements ArangoConnection {
 
     private Mono<Void> publishOnScheduler(Runnable task) {
         return Mono.defer(() -> {
+            assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
             task.run();
             return Mono.empty();
         }).then().subscribeOn(scheduler);
@@ -173,7 +175,6 @@ final public class VstConnection implements ArangoConnection {
 
     private Mono<Void> send(final Connection connection, final ByteBuf buf) {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-
         return connection.outbound()
                 .send(Mono.just(buf))
                 .then()
@@ -186,6 +187,7 @@ final public class VstConnection implements ArangoConnection {
     }
 
     private TcpClient applySslContext(TcpClient httpClient) {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
         return config.getSslContext()
                 .filter(v -> config.getUseSsl())
                 .map(sslContext ->
@@ -197,6 +199,7 @@ final public class VstConnection implements ArangoConnection {
     private void handleError(final Throwable t) {
         log.atDebug().addArgument(() -> t.getClass().getSimpleName()).log("handleError({})");
         publishOnScheduler(() -> {
+            assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
             if (connectionState == ConnectionState.DISCONNECTED) {
                 return;
             }
@@ -235,6 +238,7 @@ final public class VstConnection implements ArangoConnection {
     }
 
     private TcpClient createTcpClient() {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
         return applySslContext(TcpClient.create(createConnectionProvider()))
                 .option(CONNECT_TIMEOUT_MILLIS, config.getTimeout())
                 .host(config.getHost().getHost())

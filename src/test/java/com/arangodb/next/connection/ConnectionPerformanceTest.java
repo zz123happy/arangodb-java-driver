@@ -26,6 +26,9 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 import java.util.Date;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * @author Michele Rastelli
@@ -47,8 +50,21 @@ class ConnectionPerformanceTest {
     @Test
     void inifiniteParallelLoop() {
         int requests = 1_000_000;
+        int connections = 4;
         long start = new Date().getTime();
-        ArangoConnection.create(ArangoProtocol.VST, config)
+
+        IntStream.range(0, connections)
+                .mapToObj(i -> requestBatch(requests / connections))
+                .collect(Collectors.toList())
+                .forEach(CompletableFuture::join);
+
+        long end = new Date().getTime();
+        long elapsed = end - start;
+        System.out.println("rate: " + (1_000.0 * requests / elapsed));
+    }
+
+    private CompletableFuture<Void> requestBatch(int requests) {
+        return ArangoConnection.create(ArangoProtocol.VST, config)
                 .flatMapMany(connection -> Flux.range(0, requests)
                         .doOnNext(i -> {
                             if (i % 100_000 == 0)
@@ -56,10 +72,7 @@ class ConnectionPerformanceTest {
                         })
                         .flatMap(i -> connection.execute(getRequest))
                         .doOnNext(v -> v.getBody().release()))
-                .then().block();
-        long end = new Date().getTime();
-        long elapsed = end - start;
-        System.out.println("rate: " + (1_000.0 * requests / elapsed));
+                .then().toFuture();
     }
 
 }
