@@ -17,17 +17,16 @@ public class SingleServerSslContainer {
     private static final Logger log = LoggerFactory.getLogger(SingleServerSslContainer.class);
 
     private final int PORT = 8529;
-    private final String DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.5.2";
+    private final String DOCKER_IMAGE = ContainerUtils.getImage();
     private final String PASSWORD = "test";
     private final String SSL_CERT_PATH = Paths.get("docker/server.pem").toAbsolutePath().toString();
-    private final int CHUNK_SIZE = 8;
 
     private final GenericContainer container =
             new GenericContainer(DOCKER_IMAGE)
                     .withExposedPorts(PORT)
                     .withEnv("ARANGO_ROOT_PASSWORD", PASSWORD)
                     .withFileSystemBind(SSL_CERT_PATH, "/server.pem", BindMode.READ_ONLY)
-                    .withCommand("arangod --ssl.keyfile /server.pem --server.endpoint ssl://0.0.0.0:8529 --vst.maxsize " + CHUNK_SIZE)
+                    .withCommand("arangod --ssl.keyfile /server.pem --server.endpoint ssl://0.0.0.0:8529")
                     .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[DB_LOG]"))
                     .waitingFor(Wait.forLogMessage(".*ready for business.*", 1));
 

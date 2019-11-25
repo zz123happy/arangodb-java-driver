@@ -75,8 +75,7 @@ class BasicConnectionTest {
         config = ConnectionConfig.builder()
                 .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
                 .useSsl(true)
-                .sslContext(getSslContext())
-                .chunkSize(8);
+                .sslContext(getSslContext());
 
         getRequest = ArangoRequest.builder()
                 .database("_system")

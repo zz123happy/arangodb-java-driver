@@ -21,7 +21,7 @@ public class SingleServerContainer {
     private static final Logger log = LoggerFactory.getLogger(SingleServerContainer.class);
 
     private final int PORT = 8529;
-    private final String DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.5.2";
+    private final String DOCKER_IMAGE = ContainerUtils.getImage();
     private final String PASSWORD = "test";
 
     private final Network network = Network.newNetwork();
