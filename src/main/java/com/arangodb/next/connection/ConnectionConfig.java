@@ -50,6 +50,14 @@ public interface ConnectionConfig {
     }
 
     /**
+     * @return max number of vst threads, used by VstConnection only
+     */
+    @Value.Default
+    default int getMaxThreads() {
+        return 4;
+    }
+
+    /**
      * @return the authenticationMethod to use
      */
     Optional<AuthenticationMethod> getAuthenticationMethod();

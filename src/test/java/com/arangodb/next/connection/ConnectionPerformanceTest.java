@@ -21,6 +21,7 @@
 
 package com.arangodb.next.connection;
 
+import com.arangodb.velocypack.VPackSlice;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -71,6 +72,7 @@ class ConnectionPerformanceTest {
                                 System.out.println(i);
                         })
                         .flatMap(i -> connection.execute(getRequest))
+                        .doOnNext(v -> new VPackSlice(IOUtilsTest.getByteArray(v.getBody())).get("server"))
                         .doOnNext(v -> v.getBody().release()))
                 .then().toFuture();
     }

@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoProcessor;
 import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
 import reactor.netty.Connection;
 import reactor.netty.DisposableChannel;
 import reactor.netty.channel.AbortedException;
@@ -41,6 +40,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.function.Supplier;
 
+import static com.arangodb.next.connection.vst.VstSchedulerFactory.THREAD_PREFIX;
 import static io.netty.buffer.Unpooled.wrappedBuffer;
 import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
 
@@ -52,7 +52,6 @@ final public class VstConnection implements ArangoConnection {
 
     private static final Logger log = LoggerFactory.getLogger(VstConnection.class);
 
-    static final String THREAD_PREFIX = "arango-vst";
     private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes();
 
     private final ConnectionConfig config;
@@ -71,11 +70,11 @@ final public class VstConnection implements ArangoConnection {
         DISCONNECTED
     }
 
-    public VstConnection(final ConnectionConfig config) {
+    public VstConnection(final ConnectionConfig config, final VstSchedulerFactory schedulerFactory) {
         log.debug("VstConnection({})", config);
         this.config = config;
         messageStore = new MessageStore();
-        scheduler = Schedulers.newSingle(THREAD_PREFIX);
+        scheduler = schedulerFactory.getScheduler();
         vstReceiver = new VstReceiver(messageStore::resolve);
     }
 

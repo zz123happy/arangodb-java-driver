@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.util.function.BiConsumer;
 
 import static com.arangodb.next.ArangoDefaults.HEADER_SIZE;
-import static com.arangodb.next.connection.vst.VstConnection.THREAD_PREFIX;
+import static com.arangodb.next.connection.vst.VstSchedulerFactory.THREAD_PREFIX;
 
 /**
  * @author Michele Rastelli
