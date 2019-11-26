@@ -29,10 +29,8 @@ import reactor.netty.http.client.HttpClientResponse;
 
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
-
-import static com.arangodb.next.connection.http.HttpConnection.THREAD_PREFIX;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Michele Rastelli
@@ -41,12 +39,9 @@ final class CookieStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CookieStore.class);
 
-    // state managed by scheduler thread {@link HttpConnection.THREAD_PREFIX}
-    private final Map<Cookie, Long> cookies = new HashMap<>();
+    private final Map<Cookie, Long> cookies = new ConcurrentHashMap<>();
 
     HttpClient addCookies(final HttpClient httpClient) {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-
         removeExpiredCookies();
         HttpClient c = httpClient;
         for (Cookie cookie : cookies.keySet()) {
@@ -57,8 +52,6 @@ final class CookieStore {
     }
 
     void saveCookies(HttpClientResponse resp) {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-
         resp.cookies().values().stream().flatMap(Collection::stream)
                 .forEach(cookie -> {
                     LOGGER.debug("saving cookie: {}", cookie);
@@ -67,8 +60,6 @@ final class CookieStore {
     }
 
     void clear() {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-
         cookies.clear();
     }
 

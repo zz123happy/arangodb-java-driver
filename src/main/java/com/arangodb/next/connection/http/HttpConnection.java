@@ -31,8 +31,6 @@ import io.netty.handler.ssl.JdkSslContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
 import reactor.netty.ByteBufMono;
 import reactor.netty.http.HttpProtocol;
 import reactor.netty.http.client.HttpClient;
@@ -41,7 +39,6 @@ import reactor.netty.resources.ConnectionProvider;
 
 import java.time.Duration;
 import java.util.Map.Entry;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
@@ -56,11 +53,9 @@ final public class HttpConnection implements ArangoConnection {
 
     private static final Logger log = LoggerFactory.getLogger(HttpConnection.class);
 
-    static final String THREAD_PREFIX = "arango-http";
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=UTF-8";
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";
 
-    private final Scheduler scheduler;
     private final ConnectionConfig config;
     private final ConnectionProvider connectionProvider;
     private final HttpClient client;
@@ -69,7 +64,6 @@ final public class HttpConnection implements ArangoConnection {
     public HttpConnection(final ConnectionConfig config) {
         log.debug("HttpConnection({})", config);
         this.config = config;
-        scheduler = Schedulers.newSingle(THREAD_PREFIX);
         connectionProvider = createConnectionProvider();
         client = getClient();
         cookieStore = new CookieStore();
@@ -85,11 +79,10 @@ final public class HttpConnection implements ArangoConnection {
     public Mono<ArangoResponse> execute(final ArangoRequest request) {
         log.debug("execute({})", request);
         final String url = buildUrl(request);
-        return publishOnScheduler(() ->
-                createHttpClient(request, request.getBody().readableBytes())
-                        .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
-                        .send(Mono.just(request.getBody()))
-                        .responseSingle(this::buildResponse))
+        return createHttpClient(request, request.getBody().readableBytes())
+                .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
+                .send(Mono.just(request.getBody()))
+                .responseSingle(this::buildResponse)
                 .doOnNext(response -> {
                     if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
                         log.debug("in execute(): throwing ArangoConnectionAuthenticationException()");
@@ -104,7 +97,6 @@ final public class HttpConnection implements ArangoConnection {
     public Mono<Void> close() {
         log.debug("close()");
         return connectionProvider.disposeLater()
-                .publishOn(scheduler)
                 .doOnTerminate(cookieStore::clear);
     }
 
@@ -205,17 +197,6 @@ final public class HttpConnection implements ArangoConnection {
                 });
     }
 
-    /**
-     * Executes the provided task in the scheduler.
-     *
-     * @param task task to execute
-     * @param <T>  type returned
-     * @return the supplied mono
-     */
-    private <T> Mono<T> publishOnScheduler(Supplier<Mono<T>> task) {
-        return Mono.defer(task).subscribeOn(scheduler);
-    }
-
     private static void addHeaders(final ArangoRequest request, final HttpHeaders headers) {
         for (final Entry<String, String> header : request.getHeaderParam().entrySet()) {
             headers.add(header.getKey(), header.getValue());
@@ -230,7 +211,6 @@ final public class HttpConnection implements ArangoConnection {
                         .putAllMeta(resp.responseHeaders().entries().stream().collect(Collectors.toMap(Entry::getKey, Entry::getValue)))
                         .body(IOUtils.copyOf(byteBuf))
                         .build())
-                .publishOn(scheduler)
                 .doOnNext(it -> {
                     log.debug("received response {}", it);
                     if (config.getResendCookies()) {
