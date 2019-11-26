@@ -28,7 +28,7 @@ import javax.net.ssl.SSLContext;
 import java.time.Duration;
 import java.util.Optional;
 
-import static reactor.netty.resources.ConnectionProvider.DEFAULT_POOL_ACQUIRE_TIMEOUT;
+import static com.arangodb.next.ArangoDefaults.*;
 
 /**
  * @author Michele Rastelli
@@ -78,16 +78,11 @@ public interface ConnectionConfig {
     }
 
     /**
-     * @return ArangoDB host
-     */
-    HostDescription getHost();
-
-    /**
      * @return connect, request and pool acquisition timeout timeout (millisecond)
      */
     @Value.Default
     default int getTimeout() {
-        return (int) DEFAULT_POOL_ACQUIRE_TIMEOUT;
+        return (int) DEFAULT_TIMEOUT;
     }
 
     /**
@@ -102,7 +97,7 @@ public interface ConnectionConfig {
      */
     @Value.Default
     default int getChunkSize() {
-        return 30_000;
+        return CHUNK_DEFAULT_CONTENT_SIZE;
     }
 
     /**

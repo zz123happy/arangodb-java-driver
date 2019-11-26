@@ -146,11 +146,10 @@ class BasicConnectionTest {
     @MethodSource("argumentsProvider")
     void getRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
         ConnectionConfig testConfig = config
-                .host(host)
                 .authenticationMethod(authenticationMethod)
                 .build();
 
-        ArangoConnection connection = ArangoConnection.create(protocol, testConfig).block();
+        ArangoConnection connection = ArangoConnection.create(host, testConfig, protocol).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(getRequest).block();
 
@@ -172,11 +171,10 @@ class BasicConnectionTest {
     @MethodSource("argumentsProvider")
     void postRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
         ConnectionConfig testConfig = config
-                .host(host)
                 .authenticationMethod(authenticationMethod)
                 .build();
 
-        ArangoConnection connection = ArangoConnection.create(protocol, testConfig).block();
+        ArangoConnection connection = ArangoConnection.create(host, testConfig, protocol).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(postRequest).block();
 
@@ -197,7 +195,7 @@ class BasicConnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void parallelLoop(ArangoProtocol protocol) {
-        ArangoConnection.create(protocol, config.host(host).build()).flatMapMany(connection -> Flux.range(0, 1_000)
+        ArangoConnection.create(host, config.build(), protocol).flatMapMany(connection -> Flux.range(0, 1_000)
                 .flatMap(i -> connection.execute(getRequest))
                 .doOnNext(response -> {
                     assertThat(response).isNotNull();
@@ -218,12 +216,11 @@ class BasicConnectionTest {
     @MethodSource("wrongAuthenticationArgumentsProvider")
     void authenticationFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
         ConnectionConfig testConfig = config
-                .host(host)
                 .authenticationMethod(authenticationMethod)
                 .build();
 
         assertThrows(ArangoConnectionAuthenticationException.class, () ->
-                ArangoConnection.create(protocol, testConfig)
+                ArangoConnection.create(host, testConfig, protocol)
                         .flatMap(connection -> connection.execute(getRequest))
                         .block()
         );
@@ -233,12 +230,12 @@ class BasicConnectionTest {
     @ParameterizedTest
     @MethodSource("argumentsProvider")
     void wrongHostFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
+        HostDescription host = HostDescription.of("wrongHost", 8529);
         ConnectionConfig testConfig = config
-                .host(HostDescription.of("wrongHost", 8529))
                 .authenticationMethod(authenticationMethod)
                 .build();
 
-        Throwable thrown = catchThrowable(() -> ArangoConnection.create(protocol, testConfig)
+        Throwable thrown = catchThrowable(() -> ArangoConnection.create(host, testConfig, protocol)
                 .flatMap(connection -> connection.execute(getRequest))
                 .block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);

@@ -54,6 +54,7 @@ final public class VstConnection implements ArangoConnection {
 
     private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes();
 
+    private final HostDescription host;
     private final ConnectionConfig config;
     private final MessageStore messageStore;
     private final Scheduler scheduler;
@@ -70,8 +71,11 @@ final public class VstConnection implements ArangoConnection {
         DISCONNECTED
     }
 
-    public VstConnection(final ConnectionConfig config, final VstSchedulerFactory schedulerFactory) {
+    public VstConnection(final HostDescription host,
+                         final ConnectionConfig config,
+                         final VstSchedulerFactory schedulerFactory) {
         log.debug("VstConnection({})", config);
+        this.host = host;
         this.config = config;
         messageStore = new MessageStore();
         scheduler = schedulerFactory.getScheduler();
@@ -240,8 +244,8 @@ final public class VstConnection implements ArangoConnection {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
         return applySslContext(TcpClient.create(createConnectionProvider()))
                 .option(CONNECT_TIMEOUT_MILLIS, config.getTimeout())
-                .host(config.getHost().getHost())
-                .port(config.getHost().getPort())
+                .host(host.getHost())
+                .port(host.getPort())
                 .doOnDisconnected(c -> handleError(new IOException("Connection closed!")))
                 .handle((inbound, outbound) -> inbound
                         .receive()

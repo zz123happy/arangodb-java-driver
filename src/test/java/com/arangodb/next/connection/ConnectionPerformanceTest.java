@@ -37,9 +37,10 @@ import java.util.stream.IntStream;
 @Disabled
 class ConnectionPerformanceTest {
 
+    private final HostDescription host = HostDescription.of("172.28.3.1", 8529);
+
     private final ConnectionConfig config = ConnectionConfig.builder()
             .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
-            .host(HostDescription.of("172.28.3.1", 8529))
             .build();
 
     private final ArangoRequest getRequest = ArangoRequest.builder()
@@ -65,7 +66,7 @@ class ConnectionPerformanceTest {
     }
 
     private CompletableFuture<Void> requestBatch(int requests) {
-        return ArangoConnection.create(ArangoProtocol.VST, config)
+        return ArangoConnection.create(host, config, ArangoProtocol.VST)
                 .flatMapMany(connection -> Flux.range(0, requests)
                         .doOnNext(i -> {
                             if (i % 100_000 == 0)

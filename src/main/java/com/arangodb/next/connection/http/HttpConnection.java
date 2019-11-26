@@ -56,13 +56,15 @@ final public class HttpConnection implements ArangoConnection {
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=UTF-8";
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";
 
+    private final HostDescription host;
     private final ConnectionConfig config;
     private final ConnectionProvider connectionProvider;
     private final HttpClient client;
     private final CookieStore cookieStore;
 
-    public HttpConnection(final ConnectionConfig config) {
+    public HttpConnection(final HostDescription host, final ConnectionConfig config) {
         log.debug("HttpConnection({})", config);
+        this.host = host;
         this.config = config;
         connectionProvider = createConnectionProvider();
         client = getClient();
@@ -115,7 +117,8 @@ final public class HttpConnection implements ArangoConnection {
                         .tcpConfiguration(tcpClient -> tcpClient.option(CONNECT_TIMEOUT_MILLIS, config.getTimeout()))
                         .protocol(HttpProtocol.HTTP11)
                         .keepAlive(true)
-                        .baseUrl((Boolean.TRUE == config.getUseSsl() ? "https://" : "http://") + config.getHost().getHost() + ":" + config.getHost().getPort())
+                        .baseUrl((Boolean.TRUE == config.getUseSsl() ?
+                                "https://" : "http://") + host.getHost() + ":" + host.getPort())
                         .headers(headers -> config.getAuthenticationMethod().ifPresent(
                                 method -> headers.set(AUTHORIZATION, method.getHttpAuthorizationHeader())
                         ))
@@ -208,7 +211,8 @@ final public class HttpConnection implements ArangoConnection {
                 .switchIfEmpty(Mono.just(Unpooled.EMPTY_BUFFER))
                 .map(byteBuf -> (ArangoResponse) ArangoResponse.builder()
                         .responseCode(resp.status().code())
-                        .putAllMeta(resp.responseHeaders().entries().stream().collect(Collectors.toMap(Entry::getKey, Entry::getValue)))
+                        .putAllMeta(resp.responseHeaders().entries().stream()
+                                .collect(Collectors.toMap(Entry::getKey, Entry::getValue)))
                         .body(IOUtils.copyOf(byteBuf))
                         .build())
                 .doOnNext(it -> {

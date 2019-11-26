@@ -79,12 +79,8 @@ class ReconnectionTest {
     @EnumSource(ArangoProtocol.class)
     void requestTimeout(ArangoProtocol protocol) {
         HostDescription host = container.getHostDescription();
-
-        ConnectionConfig testConfig = config
-                .host(host)
-                .build();
-
-        ArangoConnection connection = ArangoConnection.create(protocol, testConfig).block();
+        ConnectionConfig testConfig = config.build();
+        ArangoConnection connection = ArangoConnection.create(host, testConfig, protocol).block();
         assertThat(connection).isNotNull();
 
         performRequest(connection);
@@ -103,13 +99,9 @@ class ReconnectionTest {
     @Test
     void VstConnectionTimeout() {
         HostDescription host = container.getHostDescription();
-
-        ConnectionConfig testConfig = config
-                .host(host)
-                .build();
-
+        ConnectionConfig testConfig = config.build();
         container.getProxy().setConnectionCut(true);
-        Throwable thrown = catchThrowable(() -> ArangoConnection.create(ArangoProtocol.VST, testConfig).block());
+        Throwable thrown = catchThrowable(() -> ArangoConnection.create(host, testConfig, ArangoProtocol.VST).block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
     }
 
@@ -117,27 +109,21 @@ class ReconnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void reconnect(ArangoProtocol protocol) {
-        for (int i = 0; i < 100; i++) {
-            HostDescription host = container.getHostDescription();
+        HostDescription host = container.getHostDescription();
+        ConnectionConfig testConfig = config.build();
+        ArangoConnection connection = ArangoConnection.create(host, testConfig, protocol).block();
+        assertThat(connection).isNotNull();
 
-            ConnectionConfig testConfig = config
-                    .host(host)
-                    .build();
-
-            ArangoConnection connection = ArangoConnection.create(protocol, testConfig).block();
-            assertThat(connection).isNotNull();
-
+        for (int i = 0; i < 1000; i++) {
             performRequest(connection);
-
             container.disableProxy();
             Throwable thrown = catchThrowable(() -> performRequest(connection));
             assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
-
             container.enableProxy();
             performRequest(connection);
-
-            connection.close().block();
         }
+
+        connection.close().block();
     }
 
 

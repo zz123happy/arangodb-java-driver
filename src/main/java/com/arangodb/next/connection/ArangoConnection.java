@@ -36,12 +36,14 @@ public interface ArangoConnection {
      * @param config   connection config
      * @return a Mono which will produce a new connection already initialized
      */
-    static Mono<ArangoConnection> create(final ArangoProtocol protocol, final ConnectionConfig config) {
+    static Mono<ArangoConnection> create(final HostDescription host,
+                                         final ConnectionConfig config,
+                                         final ArangoProtocol protocol) {
         switch (protocol) {
             case VST:
-                return new VstConnection(config, VstSchedulerFactory.getInstance(config.getMaxThreads())).initialize();
+                return new VstConnection(host, config, VstSchedulerFactory.getInstance(config.getMaxThreads())).initialize();
             case HTTP:
-                return new HttpConnection(config).initialize();
+                return new HttpConnection(host, config).initialize();
             default:
                 throw new IllegalArgumentException(String.valueOf(protocol));
         }

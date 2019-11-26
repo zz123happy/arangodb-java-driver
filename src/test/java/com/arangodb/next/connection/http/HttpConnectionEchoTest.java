@@ -39,8 +39,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HttpConnectionEchoTest {
 
     private static DisposableServer server;
+
+    private final HostDescription host = HostDescription.of("localhost", 9000);
+
     private final ConnectionConfig config = ConnectionConfig.builder()
-            .host(HostDescription.of("localhost", 9000))
             .authenticationMethod(AuthenticationMethod.ofJwt("token"))
             .contentType(ContentType.JSON)
             .build();
@@ -68,7 +70,7 @@ class HttpConnectionEchoTest {
 
     @Test
     void execute() {
-        HttpConnection connection = new HttpConnection(config);
+        HttpConnection connection = new HttpConnection(host, config);
         ArangoResponse response = connection.execute(request).block();
 
         // authorization
@@ -104,7 +106,7 @@ class HttpConnectionEchoTest {
 
     @Test
     void executeVPack() {
-        HttpConnection connection = new HttpConnection(ConnectionConfig.builder().from(config)
+        HttpConnection connection = new HttpConnection(host, ConnectionConfig.builder().from(config)
                 .contentType(ContentType.VPACK)
                 .build());
 
@@ -133,7 +135,7 @@ class HttpConnectionEchoTest {
 
     @Test
     void executeEmptyBody() {
-        HttpConnection connection = new HttpConnection(ConnectionConfig.builder().from(config)
+        HttpConnection connection = new HttpConnection(host, ConnectionConfig.builder().from(config)
                 .authenticationMethod(AuthenticationMethod.ofBasic("user", "password"))
                 .build());
 
@@ -147,7 +149,7 @@ class HttpConnectionEchoTest {
 
     @Test
     void executeBasicAuthentication() {
-        HttpConnection connection = new HttpConnection(ConnectionConfig.builder().from(config)
+        HttpConnection connection = new HttpConnection(host, ConnectionConfig.builder().from(config)
                 .authenticationMethod(AuthenticationMethod.ofBasic("user", "password"))
                 .build());
 
