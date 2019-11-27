@@ -1,4 +1,4 @@
-/*
+package com.arangodb.next.connection;/*
  * DISCLAIMER
  *
  * Copyright 2016 ArangoDB GmbH, Cologne, Germany
@@ -18,31 +18,10 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.connection;
-
-import reactor.core.publisher.Mono;
-
 
 /**
  * @author Michele Rastelli
  */
-public interface ArangoConnection {
-
-    /**
-     * Initializes the connection asynchronously, eg. establishing the tcp connection and performing the authentication
-     *
-     * @return the connection ready to be used
-     */
-    Mono<ArangoConnection> initialize();
-
-    /**
-     * Note: the consumer is responsible to call release() on Response body
-     *
-     * @param request to send
-     * @return response from the server
-     */
-    Mono<ArangoResponse> execute(final ArangoRequest request);
-
-    Mono<Void> close();
-
+public class ConnectionTestUtils {
+    public static final ConnectionSchedulerFactory DEFAULT_SCHEDULER_FACTORY = new ConnectionSchedulerFactory(4);
 }

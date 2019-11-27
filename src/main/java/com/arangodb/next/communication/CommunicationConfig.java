@@ -32,7 +32,6 @@ import java.util.List;
  */
 @Value.Immutable
 public interface CommunicationConfig {
-
     static ImmutableCommunicationConfig.Builder builder() {
         return ImmutableCommunicationConfig.builder();
     }
@@ -43,8 +42,22 @@ public interface CommunicationConfig {
     List<HostDescription> getHosts();
 
     /**
+     * @return amount of connections that will be created for every host
+     */
+    default int getConnectionsPerHost() {
+        return 1;
+    }
+
+    /**
      * @return connection configuration
      */
     ConnectionConfig getConnectionConfig();
 
+    /**
+     * @return max number of vst threads, used by VstConnection only
+     */
+    @Value.Default
+    default int getMaxThreads() {
+        return 4;
+    }
 }

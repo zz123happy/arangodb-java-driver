@@ -31,6 +31,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.arangodb.next.connection.ConnectionTestUtils.DEFAULT_SCHEDULER_FACTORY;
+
 /**
  * @author Michele Rastelli
  */
@@ -66,7 +68,7 @@ class ConnectionPerformanceTest {
     }
 
     private CompletableFuture<Void> requestBatch(int requests) {
-        return ArangoConnection.create(host, config, ArangoProtocol.VST)
+        return new ArangoConnectionFactory(config, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY).create(host)
                 .flatMapMany(connection -> Flux.range(0, requests)
                         .doOnNext(i -> {
                             if (i % 100_000 == 0)

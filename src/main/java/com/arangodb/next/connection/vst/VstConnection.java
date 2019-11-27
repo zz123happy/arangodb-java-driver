@@ -40,7 +40,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.function.Supplier;
 
-import static com.arangodb.next.connection.vst.VstSchedulerFactory.THREAD_PREFIX;
+import static com.arangodb.next.connection.ConnectionSchedulerFactory.THREAD_PREFIX;
 import static io.netty.buffer.Unpooled.wrappedBuffer;
 import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
 
@@ -73,7 +73,7 @@ final public class VstConnection implements ArangoConnection {
 
     public VstConnection(final HostDescription host,
                          final ConnectionConfig config,
-                         final VstSchedulerFactory schedulerFactory) {
+                         final ConnectionSchedulerFactory schedulerFactory) {
         log.debug("VstConnection({})", config);
         this.host = host;
         this.config = config;

@@ -32,6 +32,7 @@ import reactor.core.Exceptions;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
+import static com.arangodb.next.connection.ConnectionTestUtils.DEFAULT_SCHEDULER_FACTORY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
@@ -80,7 +81,8 @@ class ReconnectionTest {
     void requestTimeout(ArangoProtocol protocol) {
         HostDescription host = container.getHostDescription();
         ConnectionConfig testConfig = config.build();
-        ArangoConnection connection = ArangoConnection.create(host, testConfig, protocol).block();
+        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
+                .create(host).block();
         assertThat(connection).isNotNull();
 
         performRequest(connection);
@@ -101,7 +103,7 @@ class ReconnectionTest {
         HostDescription host = container.getHostDescription();
         ConnectionConfig testConfig = config.build();
         container.getProxy().setConnectionCut(true);
-        Throwable thrown = catchThrowable(() -> ArangoConnection.create(host, testConfig, ArangoProtocol.VST).block());
+        Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY).create(host).block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
     }
 
@@ -111,7 +113,7 @@ class ReconnectionTest {
     void reconnect(ArangoProtocol protocol) {
         HostDescription host = container.getHostDescription();
         ConnectionConfig testConfig = config.build();
-        ArangoConnection connection = ArangoConnection.create(host, testConfig, protocol).block();
+        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host).block();
         assertThat(connection).isNotNull();
 
         for (int i = 0; i < 1000; i++) {

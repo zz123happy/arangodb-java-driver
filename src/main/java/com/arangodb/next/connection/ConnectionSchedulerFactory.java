@@ -18,7 +18,7 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.connection.vst;
+package com.arangodb.next.connection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,33 +32,25 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author Michele Rastelli
  */
-public class VstSchedulerFactory {
+public class ConnectionSchedulerFactory {
 
-    static final String THREAD_PREFIX = "arango-vst";
-    private static final Logger log = LoggerFactory.getLogger(VstSchedulerFactory.class);
-    private static VstSchedulerFactory instance;
+    public static final String THREAD_PREFIX = "arango-connection";
+    private static final Logger log = LoggerFactory.getLogger(ConnectionSchedulerFactory.class);
 
     private final int maxThreads;
     private final List<Scheduler> schedulers;
     private AtomicInteger cursor;
 
-    private VstSchedulerFactory(int maxThreads) {
+    public ConnectionSchedulerFactory(int maxThreads) {
         this.maxThreads = maxThreads;
         schedulers = new ArrayList<>();
         cursor = new AtomicInteger();
     }
 
-    public synchronized static VstSchedulerFactory getInstance(int maxThreads) {
-        if (instance == null) {
-            instance = new VstSchedulerFactory(maxThreads);
-        }
-        return instance;
-    }
-
-    synchronized Scheduler getScheduler() {
+    public synchronized Scheduler getScheduler() {
         int position = cursor.getAndIncrement();
         if (position < maxThreads) {
-            log.debug("Creating single thread vst scheduler #{}", position);
+            log.debug("Creating single thread connection scheduler #{}", position);
             schedulers.add(Schedulers.newSingle(THREAD_PREFIX));
         }
         return schedulers.get(position % maxThreads);

@@ -50,6 +50,7 @@ import java.io.IOException;
 import java.security.KeyStore;
 import java.util.stream.Stream;
 
+import static com.arangodb.next.connection.ConnectionTestUtils.DEFAULT_SCHEDULER_FACTORY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -149,7 +150,7 @@ class BasicConnectionTest {
                 .authenticationMethod(authenticationMethod)
                 .build();
 
-        ArangoConnection connection = ArangoConnection.create(host, testConfig, protocol).block();
+        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(getRequest).block();
 
@@ -174,7 +175,7 @@ class BasicConnectionTest {
                 .authenticationMethod(authenticationMethod)
                 .build();
 
-        ArangoConnection connection = ArangoConnection.create(host, testConfig, protocol).block();
+        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(postRequest).block();
 
@@ -195,19 +196,20 @@ class BasicConnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void parallelLoop(ArangoProtocol protocol) {
-        ArangoConnection.create(host, config.build(), protocol).flatMapMany(connection -> Flux.range(0, 1_000)
-                .flatMap(i -> connection.execute(getRequest))
-                .doOnNext(response -> {
-                    assertThat(response).isNotNull();
-                    assertThat(response.getVersion()).isEqualTo(1);
-                    assertThat(response.getType()).isEqualTo(2);
-                    assertThat(response.getResponseCode()).isEqualTo(200);
+        new ArangoConnectionFactory(config.build(), protocol, DEFAULT_SCHEDULER_FACTORY).create(host).flatMapMany(c ->
+                Flux.range(0, 1_000)
+                        .flatMap(i -> c.execute(getRequest))
+                        .doOnNext(response -> {
+                            assertThat(response).isNotNull();
+                            assertThat(response.getVersion()).isEqualTo(1);
+                            assertThat(response.getType()).isEqualTo(2);
+                            assertThat(response.getResponseCode()).isEqualTo(200);
 
-                    VPackSlice responseBodySlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
-                    assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
+                            VPackSlice responseBodySlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
+                            assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
 
-                    response.getBody().release();
-                }))
+                            response.getBody().release();
+                        }))
                 .then().block();
     }
 
@@ -220,7 +222,7 @@ class BasicConnectionTest {
                 .build();
 
         assertThrows(ArangoConnectionAuthenticationException.class, () ->
-                ArangoConnection.create(host, testConfig, protocol)
+                new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host)
                         .flatMap(connection -> connection.execute(getRequest))
                         .block()
         );
@@ -235,7 +237,7 @@ class BasicConnectionTest {
                 .authenticationMethod(authenticationMethod)
                 .build();
 
-        Throwable thrown = catchThrowable(() -> ArangoConnection.create(host, testConfig, protocol)
+        Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host)
                 .flatMap(connection -> connection.execute(getRequest))
                 .block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
