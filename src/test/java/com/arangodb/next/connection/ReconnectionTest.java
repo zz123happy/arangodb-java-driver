@@ -49,8 +49,7 @@ class ReconnectionTest {
 
     ReconnectionTest() {
         config = ConnectionConfig.builder()
-                .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
-                .timeout(1000);
+                .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"));
 
         getRequest = ArangoRequest.builder()
                 .database("_system")
@@ -80,7 +79,7 @@ class ReconnectionTest {
     @EnumSource(ArangoProtocol.class)
     void requestTimeout(ArangoProtocol protocol) {
         HostDescription host = container.getHostDescription();
-        ConnectionConfig testConfig = config.build();
+        ConnectionConfig testConfig = config.timeout(1000).build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host).block();
         assertThat(connection).isNotNull();
@@ -101,7 +100,7 @@ class ReconnectionTest {
     @Test
     void VstConnectionTimeout() {
         HostDescription host = container.getHostDescription();
-        ConnectionConfig testConfig = config.build();
+        ConnectionConfig testConfig = config.timeout(1000).build();
         container.getProxy().setConnectionCut(true);
         Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY).create(host).block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
@@ -116,11 +115,11 @@ class ReconnectionTest {
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host).block();
         assertThat(connection).isNotNull();
 
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 100; i++) {
             performRequest(connection);
             container.disableProxy();
             Throwable thrown = catchThrowable(() -> performRequest(connection));
-            assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
+            assertThat(Exceptions.unwrap(thrown)).isInstanceOfAny(IOException.class, TimeoutException.class);
             container.enableProxy();
             performRequest(connection);
         }
