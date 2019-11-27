@@ -54,6 +54,7 @@ final public class VstConnection implements ArangoConnection {
 
     private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes();
 
+    private volatile boolean initialized = false;
     private final HostDescription host;
     private final ConnectionConfig config;
     private final MessageStore messageStore;
@@ -83,8 +84,12 @@ final public class VstConnection implements ArangoConnection {
     }
 
     @Override
-    public Mono<ArangoConnection> initialize() {
+    public synchronized Mono<ArangoConnection> initialize() {
         log.debug("initialize()");
+        if (initialized) {
+            throw new IllegalStateException("Already initialized!");
+        }
+        initialized = true;
         return publishOnScheduler(this::connect).timeout(Duration.ofMillis(config.getTimeout())).map(it -> this);
     }
 

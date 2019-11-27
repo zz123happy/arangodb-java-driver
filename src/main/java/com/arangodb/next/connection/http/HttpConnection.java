@@ -56,6 +56,7 @@ final public class HttpConnection implements ArangoConnection {
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=UTF-8";
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";
 
+    private volatile boolean initialized = false;
     private final HostDescription host;
     private final ConnectionConfig config;
     private final ConnectionProvider connectionProvider;
@@ -72,8 +73,12 @@ final public class HttpConnection implements ArangoConnection {
     }
 
     @Override
-    public Mono<ArangoConnection> initialize() {
+    public synchronized Mono<ArangoConnection> initialize() {
         log.debug("initialize()");
+        if (initialized) {
+            throw new IllegalStateException("Already initialized!");
+        }
+        initialized = true;
         return Mono.just(this);
     }
 

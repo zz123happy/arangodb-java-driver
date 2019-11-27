@@ -21,6 +21,7 @@
 package com.arangodb.next.communication;
 
 
+import com.arangodb.next.connection.ArangoProtocol;
 import com.arangodb.next.connection.ConnectionConfig;
 import com.arangodb.next.connection.HostDescription;
 import org.immutables.value.Value;
@@ -42,16 +43,31 @@ public interface CommunicationConfig {
     List<HostDescription> getHosts();
 
     /**
-     * @return amount of connections that will be created for every host
-     */
-    default int getConnectionsPerHost() {
-        return 1;
-    }
-
-    /**
      * @return connection configuration
      */
     ConnectionConfig getConnectionConfig();
+
+    /**
+     * @return network protocol
+     */
+    ArangoProtocol getProtocol();
+
+    /**
+     * @return interval of seconds at which the host list will be fetched, if {@code 0} the host list will never be
+     * fetched.
+     */
+    @Value.Default
+    default int getAcquireHostListInterval() {
+        return 0;
+    }
+
+    /**
+     * @return amount of connections that will be created for every host
+     */
+    @Value.Default
+    default int getConnectionsPerHost() {
+        return 1;
+    }
 
     /**
      * @return max number of vst threads, used by VstConnection only
@@ -60,4 +76,5 @@ public interface CommunicationConfig {
     default int getMaxThreads() {
         return 4;
     }
+
 }

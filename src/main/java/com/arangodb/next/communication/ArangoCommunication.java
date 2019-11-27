@@ -18,22 +18,27 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.connection;
+package com.arangodb.next.communication;
 
+
+import com.arangodb.next.connection.ArangoRequest;
+import com.arangodb.next.connection.ArangoResponse;
 import reactor.core.publisher.Mono;
-
 
 /**
  * @author Michele Rastelli
  */
-public interface ArangoConnection {
+public interface ArangoCommunication {
 
     /**
-     * Initializes the connection asynchronously, eg. establishing the tcp connection and performing the authentication
+     * Initializes the communication asynchronously performing the following tasks:
+     * - negotiate authentication (eg. Kerberos),
+     * - acquire the host list from server,
+     * - create and initialize the connections
      *
-     * @return the connection ready to be used
+     * @return the communication ready to be used
      */
-    Mono<ArangoConnection> initialize();
+    Mono<ArangoCommunication> initialize();
 
     /**
      * Note: the consumer is responsible to call release() on Response body
@@ -44,7 +49,7 @@ public interface ArangoConnection {
     Mono<ArangoResponse> execute(final ArangoRequest request);
 
     /**
-     * @return a mono completing once the connection is closed
+     * @return a mono completing once all the connections are closed
      */
     Mono<Void> close();
 
