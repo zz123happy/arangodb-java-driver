@@ -37,8 +37,10 @@ import reactor.netty.http.client.HttpClient;
 import reactor.netty.http.client.HttpClientResponse;
 import reactor.netty.resources.ConnectionProvider;
 
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
@@ -58,14 +60,19 @@ final public class HttpConnection implements ArangoConnection {
 
     private volatile boolean initialized = false;
     private final HostDescription host;
+    @Nullable
+    private final AuthenticationMethod authentication;
     private final ConnectionConfig config;
     private final ConnectionProvider connectionProvider;
     private final HttpClient client;
     private final CookieStore cookieStore;
 
-    public HttpConnection(final HostDescription host, final ConnectionConfig config) {
+    public HttpConnection(final HostDescription host,
+                          @Nullable final AuthenticationMethod authentication,
+                          final ConnectionConfig config) {
         log.debug("HttpConnection({})", config);
         this.host = host;
+        this.authentication = authentication;
         this.config = config;
         connectionProvider = createConnectionProvider();
         client = getClient();
@@ -124,7 +131,7 @@ final public class HttpConnection implements ArangoConnection {
                         .keepAlive(true)
                         .baseUrl((Boolean.TRUE == config.getUseSsl() ?
                                 "https://" : "http://") + host.getHost() + ":" + host.getPort())
-                        .headers(headers -> config.getAuthenticationMethod().ifPresent(
+                        .headers(headers -> Optional.ofNullable(authentication).ifPresent(
                                 method -> headers.set(AUTHORIZATION, method.getHttpAuthorizationHeader())
                         ))
         );

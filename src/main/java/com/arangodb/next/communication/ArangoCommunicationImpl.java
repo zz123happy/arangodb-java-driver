@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,8 +46,9 @@ class ArangoCommunicationImpl implements ArangoCommunication {
     private volatile boolean updatingConnectionsSemaphore = false;
     private volatile boolean updatingHostSetSemaphore = false;
 
+    @Nullable
+    private volatile AuthenticationMethod authentication;
     private volatile Set<HostDescription> hostSet;
-    private volatile AuthenticationMethod authenticationMethod;
     private final CommunicationConfig config;
     private final ArangoConnectionFactory connectionFactory;
     private final Map<HostDescription, List<ArangoConnection>> connectionsByHost;
@@ -120,7 +122,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         if (config.getNegotiateAuthentication()) {
             throw new RuntimeException("Authentication Negotiation is not yet supported!");
         } else {
-            authenticationMethod = config.getConnectionConfig().getAuthenticationMethod().orElse(null);
+            authentication = config.getAuthenticationMethod();
             return Mono.empty();
         }
     }
@@ -186,7 +188,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         log.debug("createHostConnections({})", host);
 
         return IntStream.range(0, config.getConnectionsPerHost())
-                .mapToObj(i -> connectionFactory.create(host))
+                .mapToObj(i -> connectionFactory.create(host, authentication))
                 .collect(Collectors.toList());
     }
 

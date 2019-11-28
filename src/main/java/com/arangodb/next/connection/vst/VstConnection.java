@@ -36,8 +36,10 @@ import reactor.netty.channel.AbortedException;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.TcpClient;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static com.arangodb.next.connection.ConnectionSchedulerFactory.THREAD_PREFIX;
@@ -56,6 +58,8 @@ final public class VstConnection implements ArangoConnection {
 
     private volatile boolean initialized = false;
     private final HostDescription host;
+    @Nullable
+    private final AuthenticationMethod authentication;
     private final ConnectionConfig config;
     private final MessageStore messageStore;
     private final Scheduler scheduler;
@@ -73,10 +77,12 @@ final public class VstConnection implements ArangoConnection {
     }
 
     public VstConnection(final HostDescription host,
+                         @Nullable final AuthenticationMethod authentication,
                          final ConnectionConfig config,
                          final ConnectionSchedulerFactory schedulerFactory) {
         log.debug("VstConnection({})", config);
         this.host = host;
+        this.authentication = authentication;
         this.config = config;
         messageStore = new MessageStore();
         scheduler = schedulerFactory.getScheduler();
@@ -136,7 +142,7 @@ final public class VstConnection implements ArangoConnection {
     private Mono<Void> authenticate(Connection connection) {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
         log.debug("authenticate()");
-        return config.getAuthenticationMethod()
+        return Optional.ofNullable(authentication)
                 .map(authenticationMethod -> {
                     final long id = increaseAndGetMessageCounter();
                     final ByteBuf buffer = RequestConverter.encodeBuffer(

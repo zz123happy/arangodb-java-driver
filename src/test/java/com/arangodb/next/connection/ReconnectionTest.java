@@ -43,13 +43,13 @@ class ReconnectionTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReconnectionTest.class);
 
+    private final AuthenticationMethod authentication = AuthenticationMethod.ofBasic("root", "test");
     private final ImmutableConnectionConfig.Builder config;
     private final ArangoRequest getRequest;
     private static SingleServerContainer container;
 
     ReconnectionTest() {
-        config = ConnectionConfig.builder()
-                .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"));
+        config = ConnectionConfig.builder();
 
         getRequest = ArangoRequest.builder()
                 .database("_system")
@@ -81,7 +81,7 @@ class ReconnectionTest {
         HostDescription host = container.getHostDescription();
         ConnectionConfig testConfig = config.timeout(1000).build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
-                .create(host).block();
+                .create(host, authentication).block();
         assertThat(connection).isNotNull();
 
         performRequest(connection);
@@ -102,7 +102,7 @@ class ReconnectionTest {
         HostDescription host = container.getHostDescription();
         ConnectionConfig testConfig = config.timeout(1000).build();
         container.getProxy().setConnectionCut(true);
-        Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY).create(host).block());
+        Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY).create(host, authentication).block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
     }
 
@@ -112,7 +112,7 @@ class ReconnectionTest {
     void reconnect(ArangoProtocol protocol) {
         HostDescription host = container.getHostDescription();
         ConnectionConfig testConfig = config.build();
-        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host).block();
+        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authentication).block();
         assertThat(connection).isNotNull();
 
         for (int i = 0; i < 100; i++) {

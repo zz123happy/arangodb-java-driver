@@ -65,18 +65,19 @@ class BasicConnectionTest {
     private static final String SSL_TRUSTSTORE_PASSWORD = "12345678";
 
     private static HostDescription host;
+    private final AuthenticationMethod authentication = AuthenticationMethod.ofBasic("root", "test");
     private static String jwt;
     private static SingleServerSslContainer container;
 
-    private final ImmutableConnectionConfig.Builder config;
+    private final ConnectionConfig config;
     private final ArangoRequest getRequest;
     private final ArangoRequest postRequest;
 
     BasicConnectionTest() throws Exception {
         config = ConnectionConfig.builder()
-                .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
                 .useSsl(true)
-                .sslContext(getSslContext());
+                .sslContext(getSslContext())
+                .build();
 
         getRequest = ArangoRequest.builder()
                 .database("_system")
@@ -146,11 +147,8 @@ class BasicConnectionTest {
     @ParameterizedTest
     @MethodSource("argumentsProvider")
     void getRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
-        ConnectionConfig testConfig = config
-                .authenticationMethod(authenticationMethod)
-                .build();
-
-        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host).block();
+        ArangoConnection connection = new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY)
+                .create(host, authenticationMethod).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(getRequest).block();
 
@@ -171,11 +169,8 @@ class BasicConnectionTest {
     @ParameterizedTest
     @MethodSource("argumentsProvider")
     void postRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
-        ConnectionConfig testConfig = config
-                .authenticationMethod(authenticationMethod)
-                .build();
-
-        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host).block();
+        ArangoConnection connection = new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY)
+                .create(host, authenticationMethod).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(postRequest).block();
 
@@ -196,20 +191,21 @@ class BasicConnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void parallelLoop(ArangoProtocol protocol) {
-        new ArangoConnectionFactory(config.build(), protocol, DEFAULT_SCHEDULER_FACTORY).create(host).flatMapMany(c ->
-                Flux.range(0, 1_000)
-                        .flatMap(i -> c.execute(getRequest))
-                        .doOnNext(response -> {
-                            assertThat(response).isNotNull();
-                            assertThat(response.getVersion()).isEqualTo(1);
-                            assertThat(response.getType()).isEqualTo(2);
-                            assertThat(response.getResponseCode()).isEqualTo(200);
+        new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authentication)
+                .flatMapMany(c ->
+                        Flux.range(0, 1_000)
+                                .flatMap(i -> c.execute(getRequest))
+                                .doOnNext(response -> {
+                                    assertThat(response).isNotNull();
+                                    assertThat(response.getVersion()).isEqualTo(1);
+                                    assertThat(response.getType()).isEqualTo(2);
+                                    assertThat(response.getResponseCode()).isEqualTo(200);
 
-                            VPackSlice responseBodySlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
-                            assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
+                                    VPackSlice responseBodySlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
+                                    assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
 
-                            response.getBody().release();
-                        }))
+                                    response.getBody().release();
+                                }))
                 .then().block();
     }
 
@@ -217,12 +213,8 @@ class BasicConnectionTest {
     @ParameterizedTest
     @MethodSource("wrongAuthenticationArgumentsProvider")
     void authenticationFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
-        ConnectionConfig testConfig = config
-                .authenticationMethod(authenticationMethod)
-                .build();
-
         assertThrows(ArangoConnectionAuthenticationException.class, () ->
-                new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host)
+                new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authenticationMethod)
                         .flatMap(connection -> connection.execute(getRequest))
                         .block()
         );
@@ -233,11 +225,7 @@ class BasicConnectionTest {
     @MethodSource("argumentsProvider")
     void wrongHostFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
         HostDescription host = HostDescription.of("wrongHost", 8529);
-        ConnectionConfig testConfig = config
-                .authenticationMethod(authenticationMethod)
-                .build();
-
-        Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host)
+        Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authenticationMethod)
                 .flatMap(connection -> connection.execute(getRequest))
                 .block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);

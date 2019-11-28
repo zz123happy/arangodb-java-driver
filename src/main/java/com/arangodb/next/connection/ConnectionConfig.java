@@ -50,11 +50,6 @@ public interface ConnectionConfig {
     }
 
     /**
-     * @return the authenticationMethod to use
-     */
-    Optional<AuthenticationMethod> getAuthenticationMethod();
-
-    /**
      * @return use SSL connection
      */
     @Value.Default

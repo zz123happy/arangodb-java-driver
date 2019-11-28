@@ -52,12 +52,12 @@ public class ArangoConnectionFactory {
      * @param host host
      * @return a Mono which will produce a new connection already initialized
      */
-    public Mono<ArangoConnection> create(final HostDescription host) {
+    public Mono<ArangoConnection> create(final HostDescription host, final AuthenticationMethod authentication) {
         switch (protocol) {
             case VST:
-                return new VstConnection(host, config, schedulerFactory).initialize();
+                return new VstConnection(host, authentication, config, schedulerFactory).initialize();
             case HTTP:
-                return new HttpConnection(host, config).initialize();
+                return new HttpConnection(host, authentication, config).initialize();
             default:
                 throw new IllegalArgumentException(String.valueOf(protocol));
         }

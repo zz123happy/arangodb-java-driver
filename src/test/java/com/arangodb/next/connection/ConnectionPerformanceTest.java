@@ -40,10 +40,8 @@ import static com.arangodb.next.connection.ConnectionTestUtils.DEFAULT_SCHEDULER
 class ConnectionPerformanceTest {
 
     private final HostDescription host = HostDescription.of("172.28.3.1", 8529);
-
-    private final ConnectionConfig config = ConnectionConfig.builder()
-            .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
-            .build();
+    private final AuthenticationMethod authentication = AuthenticationMethod.ofBasic("root", "test");
+    private final ConnectionConfig config = ConnectionConfig.builder().build();
 
     private final ArangoRequest getRequest = ArangoRequest.builder()
             .database("_system")
@@ -68,7 +66,7 @@ class ConnectionPerformanceTest {
     }
 
     private CompletableFuture<Void> requestBatch(int requests) {
-        return new ArangoConnectionFactory(config, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY).create(host)
+        return new ArangoConnectionFactory(config, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY).create(host, authentication)
                 .flatMapMany(connection -> Flux.range(0, requests)
                         .doOnNext(i -> {
                             if (i % 100_000 == 0)

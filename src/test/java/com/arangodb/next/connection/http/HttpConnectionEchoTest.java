@@ -41,9 +41,9 @@ class HttpConnectionEchoTest {
     private static DisposableServer server;
 
     private final HostDescription host = HostDescription.of("localhost", 9000);
+    private final AuthenticationMethod authentication = AuthenticationMethod.ofJwt("token");
 
     private final ConnectionConfig config = ConnectionConfig.builder()
-            .authenticationMethod(AuthenticationMethod.ofJwt("token"))
             .contentType(ContentType.JSON)
             .build();
 
@@ -70,7 +70,7 @@ class HttpConnectionEchoTest {
 
     @Test
     void execute() {
-        HttpConnection connection = new HttpConnection(host, config);
+        HttpConnection connection = new HttpConnection(host, authentication, config);
         ArangoResponse response = connection.execute(request).block();
 
         // authorization
@@ -106,7 +106,7 @@ class HttpConnectionEchoTest {
 
     @Test
     void executeVPack() {
-        HttpConnection connection = new HttpConnection(host, ConnectionConfig.builder().from(config)
+        HttpConnection connection = new HttpConnection(host, authentication, ConnectionConfig.builder().from(config)
                 .contentType(ContentType.VPACK)
                 .build());
 
@@ -135,9 +135,7 @@ class HttpConnectionEchoTest {
 
     @Test
     void executeEmptyBody() {
-        HttpConnection connection = new HttpConnection(host, ConnectionConfig.builder().from(config)
-                .authenticationMethod(AuthenticationMethod.ofBasic("user", "password"))
-                .build());
+        HttpConnection connection = new HttpConnection(host, AuthenticationMethod.ofBasic("user", "password"), config);
 
         ArangoResponse response = connection.execute(ArangoRequest.builder().from(request).body(IOUtils.createBuffer()).build()).block();
 
@@ -149,9 +147,7 @@ class HttpConnectionEchoTest {
 
     @Test
     void executeBasicAuthentication() {
-        HttpConnection connection = new HttpConnection(host, ConnectionConfig.builder().from(config)
-                .authenticationMethod(AuthenticationMethod.ofBasic("user", "password"))
-                .build());
+        HttpConnection connection = new HttpConnection(host, AuthenticationMethod.ofBasic("user", "password"), config);
 
         ArangoResponse response = connection.execute(request).block();
 
