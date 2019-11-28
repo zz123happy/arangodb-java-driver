@@ -30,6 +30,10 @@ import reactor.core.publisher.Mono;
  */
 public interface ArangoCommunication {
 
+    static Mono<ArangoCommunication> create(CommunicationConfig config) {
+        return new ArangoCommunicationImpl(config).initialize();
+    }
+
     /**
      * Initializes the communication asynchronously performing the following tasks:
      * - negotiate authentication (eg. Kerberos),

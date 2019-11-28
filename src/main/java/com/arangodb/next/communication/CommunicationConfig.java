@@ -26,7 +26,8 @@ import com.arangodb.next.connection.ConnectionConfig;
 import com.arangodb.next.connection.HostDescription;
 import org.immutables.value.Value;
 
-import java.util.List;
+import java.time.Duration;
+import java.util.Set;
 
 /**
  * @author Michele Rastelli
@@ -40,7 +41,7 @@ public interface CommunicationConfig {
     /**
      * @return ArangoDB host
      */
-    List<HostDescription> getHosts();
+    Set<HostDescription> getHosts();
 
     /**
      * @return connection configuration
@@ -53,12 +54,12 @@ public interface CommunicationConfig {
     ArangoProtocol getProtocol();
 
     /**
-     * @return interval of seconds at which the host list will be fetched, if {@code 0} the host list will never be
+     * @return interval at which the host list will be fetched, if {@code Duration.ZERO} the host list will never be
      * fetched.
      */
     @Value.Default
-    default int getAcquireHostListInterval() {
-        return 0;
+    default Duration getAcquireHostListInterval() {
+        return Duration.ZERO;
     }
 
     /**
@@ -75,6 +76,14 @@ public interface CommunicationConfig {
     @Value.Default
     default int getMaxThreads() {
         return 4;
+    }
+
+    /**
+     * @return whether to negotiate the authentication (SPNEGO / Kerberos)
+     */
+    @Value.Default
+    default boolean getNegotiateAuthentication() {
+        return false;
     }
 
 }
