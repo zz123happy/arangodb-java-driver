@@ -63,4 +63,8 @@ public class ArangoConnectionFactory {
         }
     }
 
+    public void close() {
+        schedulerFactory.close();
+    }
+
 }

@@ -56,4 +56,9 @@ public class ConnectionSchedulerFactory {
         return schedulers.get(position % maxThreads);
     }
 
+    public void close() {
+        schedulers.forEach(Scheduler::dispose);
+        schedulers.clear();
+    }
+
 }

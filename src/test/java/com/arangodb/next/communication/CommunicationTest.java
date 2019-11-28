@@ -23,7 +23,10 @@ package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.ArangoProtocol;
 import com.arangodb.next.connection.ConnectionConfig;
+import com.arangodb.next.connection.HostDescription;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Michele Rastelli
@@ -36,6 +39,7 @@ class CommunicationTest {
 
         config = CommunicationConfig.builder()
                 .protocol(ArangoProtocol.VST)
+                .addHosts(HostDescription.of("coordinator1", 8529))
                 .connectionConfig(ConnectionConfig.builder()
                         .build());
 
@@ -43,7 +47,9 @@ class CommunicationTest {
 
     @Test
     void creationTest() {
-        ArangoCommunication.create(config.build()).block();
+        ArangoCommunication communication = ArangoCommunication.create(config.build()).block();
+        assertThat(communication).isNotNull();
+        communication.close().block();
     }
 
 }

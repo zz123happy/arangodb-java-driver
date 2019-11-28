@@ -104,9 +104,9 @@ final public class VstConnection implements ArangoConnection {
 
     @Override
     public Mono<Void> close() {
-        log.debug("close()");
         return publishOnScheduler(() -> {
             assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+            log.debug("close()");
             if (connectionState == ConnectionState.DISCONNECTED) {
                 return Mono.empty();
             } else {
@@ -239,6 +239,7 @@ final public class VstConnection implements ArangoConnection {
                     .connect()
                     .publishOn(scheduler)
                     .flatMap(c -> send(c, wrappedBuffer(PROTOCOL_HEADER)).then(authenticate(c)).thenReturn(c))
+                    .publishOn(scheduler)
                     .doOnNext(this::setSession);
         } else {
             throw new IllegalStateException("connectionState: " + connectionState);

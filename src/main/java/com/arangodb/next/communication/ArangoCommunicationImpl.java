@@ -97,14 +97,18 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
     @Override
     public Mono<Void> close() {
-        throw new RuntimeException("TODO");
+        List<Mono<Void>> closedConnections = connectionsByHost.values().stream()
+                .flatMap(Collection::stream)
+                .map(ArangoConnection::close)
+                .collect(Collectors.toList());
+        return Flux.merge(closedConnections).doFinally(v -> connectionFactory.close()).then();
     }
 
     /**
      * hook to perform kerberos authentication negotiation -- for future use
      *
      * <p>
-     * Implementation shoud overwrite this::authenticationMethod with an AuthenticationMethod that can be used
+     * Implementation should overwrite this::authenticationMethod with an AuthenticationMethod that can be used
      * to connect to the db
      * </p>
      *
