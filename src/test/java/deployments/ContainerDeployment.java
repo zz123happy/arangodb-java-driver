@@ -18,25 +18,30 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package containers;
+package deployments;
 
+import com.arangodb.next.connection.HostDescription;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Michele Rastelli
  */
-class ContainerUtils {
+public interface ContainerDeployment {
 
-    private static final String DEFAULT_DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.5.3";
-    private static final Logger log = LoggerFactory.getLogger(ContainerUtils.class);
-
-    static String getImage() {
-        String dockerImageFromProperties = System.getProperty("test.docker.image");
-        String dockerImage = dockerImageFromProperties != null ? dockerImageFromProperties : DEFAULT_DOCKER_IMAGE;
-        log.info("Using docker image: {}", dockerImage);
-        return dockerImage;
+    static ContainerDeployment ofCluster(int dbServers, int coordinators) {
+        return new ClusterDeployment(dbServers, coordinators);
     }
+
+    default String getImage() {
+        return ContainerUtils.getImage();
+    }
+
+    List<HostDescription> getHosts();
+
+    CompletableFuture<? extends ContainerDeployment> start();
+
+    CompletableFuture<ContainerDeployment> stop();
 
 }

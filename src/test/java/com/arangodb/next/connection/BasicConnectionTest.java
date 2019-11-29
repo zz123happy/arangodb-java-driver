@@ -25,7 +25,8 @@ import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import containers.SingleServerSslContainer;
+import deployments.ContainerDeployment;
+import deployments.SingleServerSslDeployment;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -67,7 +68,6 @@ class BasicConnectionTest {
     private static HostDescription host;
     private final AuthenticationMethod authentication = AuthenticationMethod.ofBasic("root", "test");
     private static String jwt;
-    private static SingleServerSslContainer container;
 
     private final ConnectionConfig config;
     private final ArangoRequest getRequest;
@@ -124,8 +124,8 @@ class BasicConnectionTest {
 
     @BeforeAll
     static void setup() throws IOException {
-        container = new SingleServerSslContainer().start().join();
-        host = container.getHostDescription();
+        ContainerDeployment deployment = new SingleServerSslDeployment().start().join();
+        host = deployment.getHosts().get(0);
         SslContext sslContext = SslContextBuilder
                 .forClient()
                 .sslProvider(SslProvider.JDK)
@@ -224,8 +224,8 @@ class BasicConnectionTest {
     @ParameterizedTest
     @MethodSource("argumentsProvider")
     void wrongHostFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
-        HostDescription host = HostDescription.of("wrongHost", 8529);
-        Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authenticationMethod)
+        HostDescription wrongHost = HostDescription.of("wrongHost", 8529);
+        Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(wrongHost, authenticationMethod)
                 .flatMap(connection -> connection.execute(getRequest))
                 .block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);

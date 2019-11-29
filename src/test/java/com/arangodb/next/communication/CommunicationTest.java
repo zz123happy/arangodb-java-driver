@@ -24,7 +24,11 @@ package com.arangodb.next.communication;
 import com.arangodb.next.connection.ArangoProtocol;
 import com.arangodb.next.connection.ConnectionConfig;
 import com.arangodb.next.connection.HostDescription;
+import deployments.ContainerDeployment;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,12 +38,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CommunicationTest {
 
     private final ImmutableCommunicationConfig.Builder config;
+    private static List<HostDescription> hosts;
+
+    @BeforeAll
+    static void setup() {
+        ContainerDeployment deployment = ContainerDeployment.ofCluster(2, 2).start().join();
+        hosts = deployment.getHosts();
+    }
 
     CommunicationTest() {
 
         config = CommunicationConfig.builder()
                 .protocol(ArangoProtocol.VST)
-                .addHosts(HostDescription.of("coordinator1", 8529))
+                .addAllHosts(hosts)
                 .connectionConfig(ConnectionConfig.builder()
                         .build());
 

@@ -1,4 +1,4 @@
-package containers;
+package deployments;
 
 
 import com.arangodb.next.connection.HostDescription;
@@ -14,41 +14,35 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class SingleServerContainer {
+public class SingleServerDeployment implements ProxiedContainerDeployment {
 
-    private static final Logger log = LoggerFactory.getLogger(SingleServerContainer.class);
+    private static final Logger log = LoggerFactory.getLogger(SingleServerDeployment.class);
 
     private final int PORT = 8529;
-    private final String DOCKER_IMAGE = ContainerUtils.getImage();
-    private final String PASSWORD = "test";
 
-    private final Network network = Network.newNetwork();
-
-    private final GenericContainer container =
-            new GenericContainer(DOCKER_IMAGE)
-                    .withExposedPorts(PORT)
-                    .withEnv("ARANGO_ROOT_PASSWORD", PASSWORD)
-                    .withNetwork(network)
-                    .withNetworkAliases("db")
-                    .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[DB_LOG]"))
-                    .waitingFor(Wait.forHttp("/_api/version")
-                            .withBasicCredentials("root", "test")
-                            .forStatusCode(200));
-
-    private final ToxiproxyContainer toxiproxy = new ToxiproxyContainer().withNetwork(network);
+    private final Network network;
+    private final ToxiproxyContainer toxiproxy;
+    private final GenericContainer container;
 
     private ToxiproxyContainer.ContainerProxy proxy;
 
-    public CompletableFuture<SingleServerContainer> start() {
-        return CompletableFuture.allOf(
-                CompletableFuture.runAsync(container::start).thenAccept((v) -> log.info("READY: db")),
-                CompletableFuture.runAsync(toxiproxy::start).thenAccept((v) -> log.info("READY: toxiproxy"))
-        ).thenApply((v) -> {
-            proxy = toxiproxy.getProxy("db", PORT);
-            return this;
-        });
+    public SingleServerDeployment() {
+        network = Network.newNetwork();
+        toxiproxy = new ToxiproxyContainer().withNetwork(network);
+        container = new GenericContainer(getImage())
+                .withExposedPorts(PORT)
+                .withEnv("ARANGO_ROOT_PASSWORD", "test")
+                .withNetwork(network)
+                .withNetworkAliases("db")
+                .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[DB_LOG]"))
+                .waitingFor(Wait.forHttp("/_api/version")
+                        .withBasicCredentials("root", "test")
+                        .forStatusCode(200));
+
     }
 
     /**
@@ -56,31 +50,43 @@ public class SingleServerContainer {
      *
      * @return HostDescription of the proxy
      */
-    public HostDescription getHostDescription() {
-        return HostDescription.of(proxy.getContainerIpAddress(), proxy.getProxyPort());
+    @Override
+    public List<HostDescription> getHosts() {
+        return Collections.singletonList(HostDescription.of(proxy.getContainerIpAddress(), proxy.getProxyPort()));
     }
 
-    public CompletableFuture<Void> stop() {
+    @Override
+    public CompletableFuture<ProxiedContainerDeployment> start() {
+        return CompletableFuture.allOf(
+                CompletableFuture.runAsync(container::start).thenAccept((v) -> log.info("READY: db")),
+                CompletableFuture.runAsync(toxiproxy::start).thenAccept((v) -> log.info("READY: toxiproxy"))
+        )
+                .thenCompose(v -> CompletableFuture.runAsync(() -> proxy = toxiproxy.getProxy("db", PORT)))
+                .thenApply(v -> this);
+    }
+
+
+    @Override
+    public CompletableFuture<ContainerDeployment> stop() {
         return CompletableFuture.allOf(
                 CompletableFuture.runAsync(container::stop).thenAccept((v) -> log.info("STOPPED: db")),
                 CompletableFuture.runAsync(toxiproxy::stop).thenAccept((v) -> log.info("STOPPED: toxiproxy"))
-        );
+        ).thenApply(v -> this);
     }
 
-    public GenericContainer getContainer() {
-        return container;
-    }
-
+    @Override
     public ToxiproxyContainer.ContainerProxy getProxy() {
         return proxy;
     }
 
+    @Override
     public void enableProxy() {
         log.debug("enableProxy()");
         setProxyEnabled(true);
         log.debug("... enableProxy() done");
     }
 
+    @Override
     public void disableProxy() {
         log.debug("disableProxy()");
         setProxyEnabled(false);

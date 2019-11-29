@@ -1,4 +1,4 @@
-package containers;
+package deployments;
 
 
 import com.arangodb.next.connection.HostDescription;
@@ -20,9 +20,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class ClusterContainer implements ContainerDeployment {
+public class ClusterDeployment implements ContainerDeployment {
 
-    private final Logger log = LoggerFactory.getLogger(ClusterContainer.class);
+    private final Logger log = LoggerFactory.getLogger(ClusterDeployment.class);
     private final String DOCKER_COMMAND = "arangodb --auth.jwt-secret /jwtSecret ";
 
     private final AtomicInteger createdAgentsCount = new AtomicInteger();
@@ -35,7 +35,7 @@ public class ClusterContainer implements ContainerDeployment {
     private final List<GenericContainer> dbServers;
     private final List<GenericContainer> coordinators;
 
-    ClusterContainer(int dbServers, int coordinators) {
+    ClusterDeployment(int dbServers, int coordinators) {
         network = Network.newNetwork();
 
         agents = Arrays.asList(
@@ -107,7 +107,7 @@ public class ClusterContainer implements ContainerDeployment {
 
     private GenericContainer createContainer(String name, int port) {
         return new GenericContainer(getImage())
-                .withCopyFileToContainer(MountableFile.forClasspathResource("containers/jwtSecret"), "/jwtSecret")
+                .withCopyFileToContainer(MountableFile.forClasspathResource("deployments/jwtSecret"), "/jwtSecret")
                 .withExposedPorts(port)
                 .withNetwork(network)
                 .withNetworkAliases(name)

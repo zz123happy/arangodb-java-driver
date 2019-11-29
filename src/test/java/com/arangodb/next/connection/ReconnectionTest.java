@@ -21,7 +21,8 @@
 package com.arangodb.next.connection;
 
 import com.arangodb.velocypack.VPackSlice;
-import containers.SingleServerContainer;
+import deployments.ProxiedContainerDeployment;
+import deployments.SingleServerDeployment;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -46,7 +47,7 @@ class ReconnectionTest {
     private final AuthenticationMethod authentication = AuthenticationMethod.ofBasic("root", "test");
     private final ImmutableConnectionConfig.Builder config;
     private final ArangoRequest getRequest;
-    private static SingleServerContainer container;
+    private static ProxiedContainerDeployment container;
 
     ReconnectionTest() {
         config = ConnectionConfig.builder();
@@ -61,7 +62,7 @@ class ReconnectionTest {
 
     @BeforeAll
     static void setup() {
-        container = new SingleServerContainer().start().join();
+        container = new SingleServerDeployment().start().join();
     }
 
     @AfterAll
@@ -78,7 +79,7 @@ class ReconnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void requestTimeout(ArangoProtocol protocol) {
-        HostDescription host = container.getHostDescription();
+        HostDescription host = container.getHosts().get(0);
         ConnectionConfig testConfig = config.timeout(1000).build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, authentication).block();
@@ -99,7 +100,7 @@ class ReconnectionTest {
 
     @Test
     void VstConnectionTimeout() {
-        HostDescription host = container.getHostDescription();
+        HostDescription host = container.getHosts().get(0);
         ConnectionConfig testConfig = config.timeout(1000).build();
         container.getProxy().setConnectionCut(true);
         Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY).create(host, authentication).block());
@@ -110,7 +111,7 @@ class ReconnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void reconnect(ArangoProtocol protocol) {
-        HostDescription host = container.getHostDescription();
+        HostDescription host = container.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authentication).block();
         assertThat(connection).isNotNull();
