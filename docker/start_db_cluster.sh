@@ -5,7 +5,7 @@
 #   ./start_db_cluster.sh <dockerImage>
 
 # EXAMPLE:
-#   ./start_db_cluster.sh docker.io/arangodb/arangodb:3.5.1
+#   ./start_db_cluster.sh docker.io/arangodb/arangodb:3.5.3
 
 docker pull "$1"
 
@@ -89,6 +89,6 @@ done
 
 docker exec coordinator1 arangosh --server.authentication=false --javascript.execute-string='require("org/arangodb/users").update("root", "test")'
 
-rm "$LOCATION"/jwtHeader "$LOCATION"/jwtSecret
+#rm "$LOCATION"/jwtHeader "$LOCATION"/jwtSecret
 
 echo "Done, your cluster is ready."
