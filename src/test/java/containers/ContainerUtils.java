@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  */
 class ContainerUtils {
 
-    private static final String DEFAULT_DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.5.2";
+    private static final String DEFAULT_DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.5.3";
     private static final Logger log = LoggerFactory.getLogger(ContainerUtils.class);
 
     static String getImage() {
