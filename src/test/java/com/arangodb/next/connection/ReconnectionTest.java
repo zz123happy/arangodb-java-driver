@@ -101,6 +101,29 @@ class ReconnectionTest {
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
     }
 
+    @ParameterizedTest
+    @EnumSource(ArangoProtocol.class)
+    void closeConnection(ArangoProtocol protocol) {
+        HostDescription host = container.getHosts().get(0);
+        ConnectionConfig testConfig = config.build();
+        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authentication).block();
+        assertThat(connection).isNotNull();
+        performRequest(connection);
+        connection.close().block();
+    }
+
+    @ParameterizedTest
+    @EnumSource(ArangoProtocol.class)
+    void closeConnectionWhenDisconnected(ArangoProtocol protocol) {
+        HostDescription host = container.getHosts().get(0);
+        ConnectionConfig testConfig = config.build();
+        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authentication).block();
+        assertThat(connection).isNotNull();
+        container.disableProxy();
+        Throwable thrown = catchThrowable(() -> performRequest(connection));
+        assertThat(Exceptions.unwrap(thrown)).isInstanceOfAny(IOException.class, TimeoutException.class);
+        connection.close().block();
+    }
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)

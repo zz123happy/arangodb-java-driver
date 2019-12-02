@@ -57,6 +57,8 @@ final public class VstConnection implements ArangoConnection {
     private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes();
 
     private volatile boolean initialized = false;
+    private volatile boolean closing = false;
+
     private final HostDescription host;
     @Nullable
     private final AuthenticationMethod authentication;
@@ -68,6 +70,9 @@ final public class VstConnection implements ArangoConnection {
     // state managed by scheduler thread arango-vst-X
     private long mId = 0L;
     private MonoProcessor<Connection> session;
+
+    // mono that will be resolved when the closing process is finished
+    private final MonoProcessor<Void> closed;
     private ConnectionState connectionState = ConnectionState.DISCONNECTED;
 
     private enum ConnectionState {
@@ -84,6 +89,7 @@ final public class VstConnection implements ArangoConnection {
         this.host = host;
         this.authentication = authentication;
         this.config = config;
+        closed = MonoProcessor.create();
         messageStore = new MessageStore();
         scheduler = schedulerFactory.getScheduler();
         vstReceiver = new VstReceiver(messageStore::resolve);
@@ -110,17 +116,26 @@ final public class VstConnection implements ArangoConnection {
 
     @Override
     public Mono<Void> close() {
+        if (closing) {
+            return Mono.error(new IllegalStateException("Connection has been already closed!"));
+        }
+        closing = true;
+
         return publishOnScheduler(() -> {
             assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
             log.debug("close()");
             if (connectionState == ConnectionState.DISCONNECTED) {
-                return Mono.empty();
+                return Mono.empty()
+                        .publishOn(scheduler)
+                        .doFinally(s -> vstReceiver.shutDown())
+                        .then();
             } else {
                 return session
                         .doOnNext(DisposableChannel::dispose)
-                        .flatMap(connection -> connection.onDispose().subscribeOn(scheduler))
+                        .flatMap(DisposableChannel::onDispose)
                         .publishOn(scheduler)
-                        .doFinally(s -> vstReceiver.shutDown());
+                        .doFinally(s -> vstReceiver.shutDown())
+                        .then(closed);
             }
         });
     }
@@ -225,6 +240,12 @@ final public class VstConnection implements ArangoConnection {
                 session.onError(t);
             }
             session = null;
+
+            // completes the closing process
+            if (closing) {
+                closed.onComplete();
+            }
+
         }).subscribe();
     }
 
