@@ -21,15 +21,14 @@
 
 package com.arangodb.next.communication;
 
-import com.arangodb.next.connection.ArangoProtocol;
-import com.arangodb.next.connection.ConnectionConfig;
-import com.arangodb.next.connection.HostDescription;
+import com.arangodb.next.connection.*;
 import deployments.ContainerDeployment;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,6 +49,7 @@ class CommunicationTest {
         config = CommunicationConfig.builder()
                 .protocol(ArangoProtocol.VST)
                 .addAllHosts(hosts)
+                .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
                 .connectionConfig(ConnectionConfig.builder()
                         .build());
     }
@@ -58,6 +58,19 @@ class CommunicationTest {
     void create() {
         ArangoCommunication communication = ArangoCommunication.create(config.build()).block();
         assertThat(communication).isNotNull();
+
+        Map<HostDescription, List<ArangoConnection>> connectionsByHost =
+                ((ArangoCommunicationImpl) communication).getConnectionsByHost();
+        HostDescription[] expectedKeys = hosts.toArray(new HostDescription[0]);
+
+        assertThat(connectionsByHost)
+                .containsKeys(expectedKeys)
+                .containsOnlyKeys(expectedKeys);
+
+        // check if every connection is connected
+        connectionsByHost.forEach((key, value) ->
+                value.forEach(ConnectionTestUtils::performRequest));
+
         communication.close().block();
     }
 

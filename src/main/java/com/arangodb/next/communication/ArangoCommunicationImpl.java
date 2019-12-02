@@ -106,6 +106,10 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         return Flux.merge(closedConnections).doFinally(v -> connectionFactory.close()).then();
     }
 
+    Map<HostDescription, List<ArangoConnection>> getConnectionsByHost() {
+        return connectionsByHost;
+    }
+
     /**
      * hook to perform kerberos authentication negotiation -- for future use
      *

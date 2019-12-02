@@ -19,9 +19,35 @@ package com.arangodb.next.connection;/*
  */
 
 
+import com.arangodb.velocypack.VPackSlice;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Michele Rastelli
  */
 public class ConnectionTestUtils {
     public static final ConnectionSchedulerFactory DEFAULT_SCHEDULER_FACTORY = new ConnectionSchedulerFactory(4);
+
+    private static final ArangoRequest getRequest = ArangoRequest.builder()
+            .database("_system")
+            .path("/_api/version")
+            .requestType(ArangoRequest.RequestType.GET)
+            .putQueryParam("details", "true")
+            .build();
+
+    public static void performRequest(ArangoConnection connection) {
+        ArangoResponse response = connection.execute(getRequest).block();
+
+        assertThat(response).isNotNull();
+        assertThat(response.getVersion()).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(2);
+        assertThat(response.getResponseCode()).isEqualTo(200);
+
+        VPackSlice responseBodySlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
+        assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
+
+        response.getBody().release();
+    }
+
 }

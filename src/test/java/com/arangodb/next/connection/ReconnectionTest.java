@@ -20,7 +20,6 @@
 
 package com.arangodb.next.connection;
 
-import com.arangodb.velocypack.VPackSlice;
 import deployments.ProxiedContainerDeployment;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,6 +34,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 import static com.arangodb.next.connection.ConnectionTestUtils.DEFAULT_SCHEDULER_FACTORY;
+import static com.arangodb.next.connection.ConnectionTestUtils.performRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
@@ -48,20 +48,12 @@ class ReconnectionTest {
 
     private final AuthenticationMethod authentication = AuthenticationMethod.ofBasic("root", "test");
     private final ImmutableConnectionConfig.Builder config;
-    private final ArangoRequest getRequest;
 
     @Container
     private static final ProxiedContainerDeployment container = ProxiedContainerDeployment.ofSingleServer();
 
     ReconnectionTest() {
         config = ConnectionConfig.builder();
-
-        getRequest = ArangoRequest.builder()
-                .database("_system")
-                .path("/_api/version")
-                .requestType(ArangoRequest.RequestType.GET)
-                .putQueryParam("details", "true")
-                .build();
     }
 
     @BeforeEach
@@ -143,21 +135,6 @@ class ReconnectionTest {
         }
 
         connection.close().block();
-    }
-
-
-    private void performRequest(ArangoConnection connection) {
-        ArangoResponse response = connection.execute(getRequest).block();
-
-        assertThat(response).isNotNull();
-        assertThat(response.getVersion()).isEqualTo(1);
-        assertThat(response.getType()).isEqualTo(2);
-        assertThat(response.getResponseCode()).isEqualTo(200);
-
-        VPackSlice responseBodySlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
-        assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
-
-        response.getBody().release();
     }
 
 }
