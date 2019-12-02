@@ -67,7 +67,7 @@ public class ClusterDeployment implements ContainerDeployment {
                         Container.ExecResult result = coordinators.get(0).execInContainer(
                                 "arangosh",
                                 "--server.authentication=false",
-                                "--javascript.execute-string=require('org/arangodb/users').update('root', 'test')");
+                                "--javascript.execute-string=require('org/arangodb/users').update('" + getUser() + "', '" + getPassword() + "')");
 
                         if (result.getExitCode() != 0) {
                             throw new RuntimeException(result.getStderr() + "\n" + result.getStdout());

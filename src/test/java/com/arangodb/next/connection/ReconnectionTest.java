@@ -46,11 +46,10 @@ class ReconnectionTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReconnectionTest.class);
 
-    private final AuthenticationMethod authentication = AuthenticationMethod.ofBasic("root", "test");
     private final ImmutableConnectionConfig.Builder config;
 
     @Container
-    private static final ProxiedContainerDeployment container = ProxiedContainerDeployment.ofSingleServer();
+    private static final ProxiedContainerDeployment deployment = ProxiedContainerDeployment.ofSingleServer();
 
     ReconnectionTest() {
         config = ConnectionConfig.builder();
@@ -58,26 +57,26 @@ class ReconnectionTest {
 
     @BeforeEach
     void restore() {
-        container.enableProxy();
-        container.getProxy().setConnectionCut(false);
+        deployment.enableProxy();
+        deployment.getProxy().setConnectionCut(false);
     }
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void requestTimeout(ArangoProtocol protocol) {
-        HostDescription host = container.getHosts().get(0);
+        HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.timeout(1000).build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
-                .create(host, authentication).block();
+                .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
 
         performRequest(connection);
 
-        container.getProxy().setConnectionCut(true);
+        deployment.getProxy().setConnectionCut(true);
         Throwable thrown = catchThrowable(() -> performRequest(connection));
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
 
-        container.getProxy().setConnectionCut(false);
+        deployment.getProxy().setConnectionCut(false);
         performRequest(connection);
 
         connection.close().block();
@@ -86,19 +85,22 @@ class ReconnectionTest {
 
     @Test
     void VstConnectionTimeout() {
-        HostDescription host = container.getHosts().get(0);
+        HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.timeout(1000).build();
-        container.getProxy().setConnectionCut(true);
-        Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY).create(host, authentication).block());
+        deployment.getProxy().setConnectionCut(true);
+        Throwable thrown = catchThrowable(() ->
+                new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY)
+                        .create(host, deployment.getAuthentication()).block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
     }
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void closeConnection(ArangoProtocol protocol) {
-        HostDescription host = container.getHosts().get(0);
+        HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
-        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authentication).block();
+        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
+                .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
         performRequest(connection);
         connection.close().block();
@@ -107,11 +109,12 @@ class ReconnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void closeConnectionWhenDisconnected(ArangoProtocol protocol) {
-        HostDescription host = container.getHosts().get(0);
+        HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
-        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authentication).block();
+        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
+                .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
-        container.disableProxy();
+        deployment.disableProxy();
         Throwable thrown = catchThrowable(() -> performRequest(connection));
         assertThat(Exceptions.unwrap(thrown)).isInstanceOfAny(IOException.class, TimeoutException.class);
         connection.close().block();
@@ -120,17 +123,18 @@ class ReconnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void reconnect(ArangoProtocol protocol) {
-        HostDescription host = container.getHosts().get(0);
+        HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
-        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authentication).block();
+        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
+                .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
 
         for (int i = 0; i < 100; i++) {
             performRequest(connection);
-            container.disableProxy();
+            deployment.disableProxy();
             Throwable thrown = catchThrowable(() -> performRequest(connection));
             assertThat(Exceptions.unwrap(thrown)).isInstanceOfAny(IOException.class, TimeoutException.class);
-            container.enableProxy();
+            deployment.enableProxy();
             performRequest(connection);
         }
 

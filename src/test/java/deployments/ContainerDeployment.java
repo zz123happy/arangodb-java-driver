@@ -20,6 +20,7 @@
 
 package deployments;
 
+import com.arangodb.next.connection.AuthenticationMethod;
 import com.arangodb.next.connection.HostDescription;
 import org.testcontainers.lifecycle.Startable;
 
@@ -44,6 +45,18 @@ public interface ContainerDeployment extends Startable {
     }
 
     List<HostDescription> getHosts();
+
+    default String getUser() {
+        return "root";
+    }
+
+    default String getPassword() {
+        return "test";
+    }
+
+    default AuthenticationMethod getAuthentication() {
+        return AuthenticationMethod.ofBasic(getUser(), getPassword());
+    }
 
     CompletableFuture<? extends ContainerDeployment> asyncStart();
 

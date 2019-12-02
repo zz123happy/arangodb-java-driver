@@ -49,7 +49,7 @@ class CommunicationTest {
         config = CommunicationConfig.builder()
                 .protocol(ArangoProtocol.VST)
                 .addAllHosts(hosts)
-                .authenticationMethod(AuthenticationMethod.ofBasic("root", "test"))
+                .authenticationMethod(deployment.getAuthentication())
                 .connectionConfig(ConnectionConfig.builder()
                         .build());
     }

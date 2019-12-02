@@ -68,7 +68,6 @@ class BasicConnectionTest {
     private static final String SSL_TRUSTSTORE_PASSWORD = "12345678";
 
     private static HostDescription host;
-    private final AuthenticationMethod authentication = AuthenticationMethod.ofBasic("root", "test");
     private static String jwt;
 
     private final ConnectionConfig config;
@@ -103,9 +102,9 @@ class BasicConnectionTest {
      */
     static private Stream<Arguments> argumentsProvider() {
         return Stream.of(
-                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofBasic("root", "test")),
+                Arguments.of(ArangoProtocol.VST, deployment.getAuthentication()),
                 Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofJwt(jwt)),
-                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofBasic("root", "test")),
+                Arguments.of(ArangoProtocol.HTTP, deployment.getAuthentication()),
                 Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofJwt(jwt))
         );
     }
@@ -117,9 +116,9 @@ class BasicConnectionTest {
      */
     static private Stream<Arguments> wrongAuthenticationArgumentsProvider() {
         return Stream.of(
-                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofBasic("root", "wrong")),
+                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofBasic(deployment.getUser(), "wrong")),
                 Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofJwt("invalid.jwt.token")),
-                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofBasic("root", "wrong")),
+                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofBasic(deployment.getUser(), "wrong")),
                 Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofJwt("invalid.jwt.token"))
         );
     }
@@ -136,7 +135,7 @@ class BasicConnectionTest {
                 .trustManager(InsecureTrustManagerFactory.INSTANCE)
                 .build();
 
-        String request = "{\"username\":\"root\",\"password\":\"test\"}";
+        String request = "{\"username\":\"" + deployment.getUser() + "\",\"password\":\"" + deployment.getPassword() + "\"}";
         String response = HttpClient.create()
                 .tcpConfiguration(tcp -> tcp.secure(c -> c.sslContext(sslContext)))
                 .post()
@@ -195,7 +194,7 @@ class BasicConnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void parallelLoop(ArangoProtocol protocol) {
-        new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authentication)
+        new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, deployment.getAuthentication())
                 .flatMapMany(c ->
                         Flux.range(0, 1_000)
                                 .flatMap(i -> c.execute(getRequest))
