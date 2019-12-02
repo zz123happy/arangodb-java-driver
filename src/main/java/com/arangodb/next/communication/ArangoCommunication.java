@@ -45,6 +45,7 @@ public interface ArangoCommunication {
     Mono<ArangoCommunication> initialize();
 
     /**
+     * Send the request to a random host over a random connection
      * Note: the consumer is responsible to call release() on Response body
      *
      * @param request to send

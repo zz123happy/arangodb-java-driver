@@ -24,13 +24,19 @@ package com.arangodb.next.communication;
 import com.arangodb.next.connection.*;
 import deployments.ContainerDeployment;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import reactor.core.Exceptions;
 
+import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 /**
  * @author Michele Rastelli
@@ -54,9 +60,12 @@ class CommunicationTest {
                         .build());
     }
 
-    @Test
-    void create() {
-        ArangoCommunication communication = ArangoCommunication.create(config.build()).block();
+    @ParameterizedTest
+    @EnumSource(ArangoProtocol.class)
+    void create(ArangoProtocol protocol) {
+        ArangoCommunication communication = ArangoCommunication.create(config
+                .protocol(protocol)
+                .build()).block();
         assertThat(communication).isNotNull();
 
         Map<HostDescription, List<ArangoConnection>> connectionsByHost =
@@ -71,6 +80,28 @@ class CommunicationTest {
         connectionsByHost.forEach((key, value) ->
                 value.forEach(ConnectionTestUtils::performRequest));
 
+        communication.execute(ConnectionTestUtils.versionRequest);
+        communication.close().block();
+    }
+
+    @Test
+    void wrongHostVstConnectionFailure() {
+        Throwable thrown = catchThrowable(() -> ArangoCommunication.create(config
+                .protocol(ArangoProtocol.VST)
+                .hosts(Collections.singleton(HostDescription.of("wrongHost", 8529)))
+                .build()).block());
+        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(UnknownHostException.class);
+    }
+
+    @Test
+    void wrongHostHttpRequestFailure() {
+        ArangoCommunication communication = ArangoCommunication.create(config
+                .protocol(ArangoProtocol.HTTP)
+                .hosts(Collections.singleton(HostDescription.of("wrongHost", 8529)))
+                .build()).block();
+        assertThat(communication).isNotNull();
+        Throwable thrown = catchThrowable(() -> communication.execute(ConnectionTestUtils.versionRequest).block());
+        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(UnknownHostException.class);
         communication.close().block();
     }
 

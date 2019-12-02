@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ConnectionTestUtils {
     public static final ConnectionSchedulerFactory DEFAULT_SCHEDULER_FACTORY = new ConnectionSchedulerFactory(4);
 
-    private static final ArangoRequest getRequest = ArangoRequest.builder()
+    public static final ArangoRequest versionRequest = ArangoRequest.builder()
             .database("_system")
             .path("/_api/version")
             .requestType(ArangoRequest.RequestType.GET)
@@ -37,7 +37,7 @@ public class ConnectionTestUtils {
             .build();
 
     public static void performRequest(ArangoConnection connection) {
-        ArangoResponse response = connection.execute(getRequest).block();
+        ArangoResponse response = connection.execute(versionRequest).block();
 
         assertThat(response).isNotNull();
         assertThat(response.getVersion()).isEqualTo(1);

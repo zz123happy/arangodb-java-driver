@@ -53,14 +53,21 @@ public class ArangoConnectionFactory {
      * @return a Mono which will produce a new connection already initialized
      */
     public Mono<ArangoConnection> create(final HostDescription host, final AuthenticationMethod authentication) {
+
+        ArangoConnection connection;
         switch (protocol) {
             case VST:
-                return new VstConnection(host, authentication, config, schedulerFactory).initialize();
+                connection = new VstConnection(host, authentication, config, schedulerFactory);
+                break;
             case HTTP:
-                return new HttpConnection(host, authentication, config).initialize();
+                connection = new HttpConnection(host, authentication, config);
+                break;
             default:
                 throw new IllegalArgumentException(String.valueOf(protocol));
         }
+
+        return connection.initialize()
+                .doOnError(e -> connection.close().subscribe());
     }
 
     public void close() {
