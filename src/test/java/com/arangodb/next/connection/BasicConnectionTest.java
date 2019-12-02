@@ -26,7 +26,6 @@ import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import deployments.ContainerDeployment;
-import deployments.SingleServerSslDeployment;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -39,6 +38,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -59,6 +60,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 /**
  * @author Michele Rastelli
  */
+@Testcontainers
 class BasicConnectionTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicConnectionTest.class);
@@ -122,9 +124,11 @@ class BasicConnectionTest {
         );
     }
 
+    @Container
+    private static final ContainerDeployment deployment = ContainerDeployment.ofSingleServerWithSsl();
+
     @BeforeAll
     static void setup() throws IOException {
-        ContainerDeployment deployment = new SingleServerSslDeployment().start().join();
         host = deployment.getHosts().get(0);
         SslContext sslContext = SslContextBuilder
                 .forClient()

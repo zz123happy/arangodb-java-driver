@@ -20,10 +20,10 @@ public class SingleServerSslDeployment implements ContainerDeployment {
 
     private final String SSL_CERT_PATH = Paths.get("docker/server.pem").toAbsolutePath().toString();
 
-    private final GenericContainer container;
+    private final GenericContainer<?> container;
 
     public SingleServerSslDeployment() {
-        container = new GenericContainer(getImage())
+        container = new GenericContainer<>(getImage())
                 .withExposedPorts(8529)
                 .withEnv("ARANGO_ROOT_PASSWORD", "test")
                 .withFileSystemBind(SSL_CERT_PATH, "/server.pem", BindMode.READ_ONLY)
@@ -38,12 +38,12 @@ public class SingleServerSslDeployment implements ContainerDeployment {
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> start() {
+    public CompletableFuture<ContainerDeployment> asyncStart() {
         return CompletableFuture.runAsync(container::start).thenAccept((v) -> log.info("Ready!")).thenApply((v) -> this);
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> stop() {
+    public CompletableFuture<ContainerDeployment> asyncStop() {
         return CompletableFuture.runAsync(container::stop).thenAccept((v) -> log.info("Stopped!")).thenApply((v) -> this);
     }
 

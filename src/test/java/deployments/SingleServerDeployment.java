@@ -26,14 +26,14 @@ public class SingleServerDeployment implements ProxiedContainerDeployment {
 
     private final Network network;
     private final ToxiproxyContainer toxiproxy;
-    private final GenericContainer container;
+    private final GenericContainer<?> container;
 
     private ToxiproxyContainer.ContainerProxy proxy;
 
     public SingleServerDeployment() {
         network = Network.newNetwork();
         toxiproxy = new ToxiproxyContainer().withNetwork(network);
-        container = new GenericContainer(getImage())
+        container = new GenericContainer<>(getImage())
                 .withExposedPorts(PORT)
                 .withEnv("ARANGO_ROOT_PASSWORD", "test")
                 .withNetwork(network)
@@ -56,7 +56,7 @@ public class SingleServerDeployment implements ProxiedContainerDeployment {
     }
 
     @Override
-    public CompletableFuture<ProxiedContainerDeployment> start() {
+    public CompletableFuture<ProxiedContainerDeployment> asyncStart() {
         return CompletableFuture.allOf(
                 CompletableFuture.runAsync(container::start).thenAccept((v) -> log.info("READY: db")),
                 CompletableFuture.runAsync(toxiproxy::start).thenAccept((v) -> log.info("READY: toxiproxy"))
@@ -67,7 +67,7 @@ public class SingleServerDeployment implements ProxiedContainerDeployment {
 
 
     @Override
-    public CompletableFuture<ContainerDeployment> stop() {
+    public CompletableFuture<ContainerDeployment> asyncStop() {
         return CompletableFuture.allOf(
                 CompletableFuture.runAsync(container::stop).thenAccept((v) -> log.info("STOPPED: db")),
                 CompletableFuture.runAsync(toxiproxy::stop).thenAccept((v) -> log.info("STOPPED: toxiproxy"))

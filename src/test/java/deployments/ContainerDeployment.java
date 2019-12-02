@@ -21,6 +21,7 @@
 package deployments;
 
 import com.arangodb.next.connection.HostDescription;
+import org.testcontainers.lifecycle.Startable;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -28,10 +29,14 @@ import java.util.concurrent.CompletableFuture;
 /**
  * @author Michele Rastelli
  */
-public interface ContainerDeployment {
+public interface ContainerDeployment extends Startable {
 
     static ContainerDeployment ofCluster(int dbServers, int coordinators) {
         return new ClusterDeployment(dbServers, coordinators);
+    }
+
+    static ContainerDeployment ofSingleServerWithSsl() {
+        return new SingleServerSslDeployment();
     }
 
     default String getImage() {
@@ -40,8 +45,18 @@ public interface ContainerDeployment {
 
     List<HostDescription> getHosts();
 
-    CompletableFuture<? extends ContainerDeployment> start();
+    CompletableFuture<? extends ContainerDeployment> asyncStart();
 
-    CompletableFuture<ContainerDeployment> stop();
+    CompletableFuture<ContainerDeployment> asyncStop();
+
+    @Override
+    default void start() {
+        asyncStart().join();
+    }
+
+    @Override
+    default void stop() {
+        asyncStop().join();
+    }
 
 }

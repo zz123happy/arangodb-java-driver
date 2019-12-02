@@ -22,12 +22,13 @@ package com.arangodb.next.connection;
 
 import com.arangodb.velocypack.VPackSlice;
 import deployments.ProxiedContainerDeployment;
-import deployments.SingleServerDeployment;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
 
 import java.io.IOException;
@@ -40,6 +41,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 /**
  * @author Michele Rastelli
  */
+@Testcontainers
 class ReconnectionTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReconnectionTest.class);
@@ -47,7 +49,9 @@ class ReconnectionTest {
     private final AuthenticationMethod authentication = AuthenticationMethod.ofBasic("root", "test");
     private final ImmutableConnectionConfig.Builder config;
     private final ArangoRequest getRequest;
-    private static ProxiedContainerDeployment container;
+
+    @Container
+    private static ProxiedContainerDeployment container = ProxiedContainerDeployment.ofSingleServer();
 
     ReconnectionTest() {
         config = ConnectionConfig.builder();
@@ -60,17 +64,7 @@ class ReconnectionTest {
                 .build();
     }
 
-    @BeforeAll
-    static void setup() {
-        container = new SingleServerDeployment().start().join();
-    }
-
-    @AfterAll
-    static void shutDown() {
-        container.stop().join();
-    }
-
-    @AfterEach
+    @BeforeEach
     void restore() {
         container.enableProxy();
         container.getProxy().setConnectionCut(false);

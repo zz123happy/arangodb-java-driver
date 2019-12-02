@@ -31,9 +31,9 @@ public class ClusterDeployment implements ContainerDeployment {
 
     private final Network network;
 
-    private final List<GenericContainer> agents;
-    private final List<GenericContainer> dbServers;
-    private final List<GenericContainer> coordinators;
+    private final List<GenericContainer<?>> agents;
+    private final List<GenericContainer<?>> dbServers;
+    private final List<GenericContainer<?>> coordinators;
 
     ClusterDeployment(int dbServers, int coordinators) {
         network = Network.newNetwork();
@@ -54,17 +54,14 @@ public class ClusterDeployment implements ContainerDeployment {
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> start() {
+    public CompletableFuture<ContainerDeployment> asyncStart() {
         return CompletableFuture.completedFuture(null)
                 .thenCompose(v -> performActionOnGroup(agents, GenericContainer::start))
-                .thenCompose(v -> performActionOnGroup(dbServers, GenericContainer::start))
-                .thenCompose(v -> performActionOnGroup(coordinators, GenericContainer::start))
+                .thenCompose(v -> CompletableFuture.allOf(
+                        performActionOnGroup(dbServers, GenericContainer::start),
+                        performActionOnGroup(coordinators, GenericContainer::start)
+                ))
                 .thenCompose(v -> {
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                     CompletableFuture<Void> future = new CompletableFuture<>();
                     try {
                         Container.ExecResult result = coordinators.get(0).execInContainer(
@@ -88,13 +85,13 @@ public class ClusterDeployment implements ContainerDeployment {
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> stop() {
+    public CompletableFuture<ContainerDeployment> asyncStop() {
         return CompletableFuture.allOf(
                 performActionOnGroup(agents, GenericContainer::stop),
                 performActionOnGroup(dbServers, GenericContainer::stop),
                 performActionOnGroup(coordinators, GenericContainer::stop)
         )
-                .thenAccept((v) -> log.info("Cluster is ready!"))
+                .thenAccept((v) -> log.info("Cluster has been shutdown!"))
                 .thenApply((v) -> this);
     }
 
@@ -105,8 +102,8 @@ public class ClusterDeployment implements ContainerDeployment {
                 .collect(Collectors.toList());
     }
 
-    private GenericContainer createContainer(String name, int port) {
-        return new GenericContainer(getImage())
+    private GenericContainer<?> createContainer(String name, int port) {
+        return new GenericContainer<>(getImage())
                 .withCopyFileToContainer(MountableFile.forClasspathResource("deployments/jwtSecret"), "/jwtSecret")
                 .withExposedPorts(port)
                 .withNetwork(network)
@@ -115,26 +112,26 @@ public class ClusterDeployment implements ContainerDeployment {
                 .waitingFor(Wait.forLogMessage(".*up and running.*", 1).withStartupTimeout(Duration.ofSeconds(300)));
     }
 
-    private GenericContainer createAgent() {
+    private GenericContainer<?> createAgent() {
         int count = createdAgentsCount.incrementAndGet();
         String joinParameter = count == 1 ? " " : "--starter.join agent1 ";
         return createContainer("agent" + count, 8531)
                 .withCommand(DOCKER_COMMAND + "--cluster.start-dbserver false --cluster.start-coordinator false " + joinParameter);
     }
 
-    private GenericContainer createDbServer() {
+    private GenericContainer<?> createDbServer() {
         int count = createdDbServersCount.incrementAndGet();
         return createContainer("dbserver" + count, 8530)
                 .withCommand(DOCKER_COMMAND + "--cluster.start-dbserver true --cluster.start-coordinator false --starter.join agent1");
     }
 
-    private GenericContainer createCoordinator() {
+    private GenericContainer<?> createCoordinator() {
         int count = createdCoordinatorsCount.incrementAndGet();
         return createContainer("coordinator" + count, 8529)
                 .withCommand(DOCKER_COMMAND + "--cluster.start-dbserver false --cluster.start-coordinator true --starter.join agent1");
     }
 
-    private CompletableFuture<Void> performActionOnGroup(List<GenericContainer> group, Consumer<GenericContainer> action) {
+    private CompletableFuture<Void> performActionOnGroup(List<GenericContainer<?>> group, Consumer<GenericContainer<?>> action) {
         return CompletableFuture.allOf(
                 group.stream()
                         .map(it -> CompletableFuture.runAsync(() -> action.accept(it)))

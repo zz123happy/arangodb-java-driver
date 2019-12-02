@@ -28,6 +28,10 @@ import org.testcontainers.containers.ToxiproxyContainer;
  */
 public interface ProxiedContainerDeployment extends ContainerDeployment {
 
+    static ProxiedContainerDeployment ofSingleServer() {
+        return new SingleServerDeployment();
+    }
+
     ToxiproxyContainer.ContainerProxy getProxy();
 
     void enableProxy();
