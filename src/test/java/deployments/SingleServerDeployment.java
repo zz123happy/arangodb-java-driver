@@ -24,14 +24,13 @@ public class SingleServerDeployment implements ProxiedContainerDeployment {
 
     private final int PORT = 8529;
 
-    private final Network network;
     private final ToxiproxyContainer toxiproxy;
     private final GenericContainer<?> container;
 
     private ToxiproxyContainer.ContainerProxy proxy;
 
     public SingleServerDeployment() {
-        network = Network.newNetwork();
+        Network network = Network.newNetwork();
         toxiproxy = new ToxiproxyContainer().withNetwork(network);
         container = new GenericContainer<>(getImage())
                 .withExposedPorts(PORT)

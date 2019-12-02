@@ -39,7 +39,7 @@ public class ConnectionSchedulerFactory {
 
     private final int maxThreads;
     private final List<Scheduler> schedulers;
-    private AtomicInteger cursor;
+    private final AtomicInteger cursor;
 
     public ConnectionSchedulerFactory(int maxThreads) {
         this.maxThreads = maxThreads;

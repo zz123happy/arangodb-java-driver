@@ -18,11 +18,10 @@ public class SingleServerSslDeployment implements ContainerDeployment {
 
     private static final Logger log = LoggerFactory.getLogger(SingleServerSslDeployment.class);
 
-    private final String SSL_CERT_PATH = Paths.get("docker/server.pem").toAbsolutePath().toString();
-
     private final GenericContainer<?> container;
 
     public SingleServerSslDeployment() {
+        String SSL_CERT_PATH = Paths.get("docker/server.pem").toAbsolutePath().toString();
         container = new GenericContainer<>(getImage())
                 .withExposedPorts(8529)
                 .withEnv("ARANGO_ROOT_PASSWORD", "test")

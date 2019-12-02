@@ -50,7 +50,7 @@ class ConnectionPerformanceTest {
             .build();
 
     @Test
-    void inifiniteParallelLoop() {
+    void infiniteParallelLoop() {
         int requests = 1_000_000;
         int connections = 4;
         long start = new Date().getTime();

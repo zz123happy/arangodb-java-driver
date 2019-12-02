@@ -100,7 +100,7 @@ class HttpConnectionEchoTest {
         assertThat(response.getMeta()).containsKey("host");
         assertThat(response.getMeta().get("host")).isEqualTo("localhost:9000");
 
-        // reponseCode
+        // responseCode
         assertThat(response.getResponseCode()).isEqualTo(200);
     }
 

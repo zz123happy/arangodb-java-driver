@@ -51,7 +51,7 @@ class ReconnectionTest {
     private final ArangoRequest getRequest;
 
     @Container
-    private static ProxiedContainerDeployment container = ProxiedContainerDeployment.ofSingleServer();
+    private static final ProxiedContainerDeployment container = ProxiedContainerDeployment.ofSingleServer();
 
     ReconnectionTest() {
         config = ConnectionConfig.builder();
