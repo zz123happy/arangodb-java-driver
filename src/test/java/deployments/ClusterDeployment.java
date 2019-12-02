@@ -104,6 +104,7 @@ public class ClusterDeployment implements ContainerDeployment {
 
     private GenericContainer<?> createContainer(String name, int port) {
         return new GenericContainer<>(getImage())
+                .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
                 .withCopyFileToContainer(MountableFile.forClasspathResource("deployments/jwtSecret"), "/jwtSecret")
                 .withExposedPorts(port)
                 .withNetwork(network)

@@ -39,4 +39,10 @@ class ContainerUtils {
         return dockerImage;
     }
 
+    static String getLicenseKey() {
+        String arangoLicenseKeyFromProperties = System.getProperty("arango.license.key");
+        String arangoLicenseKey = arangoLicenseKeyFromProperties != null ? arangoLicenseKeyFromProperties : "";
+        log.info("Using arango license key: {}", arangoLicenseKey.replaceAll(".", "*"));
+        return arangoLicenseKey;
+    }
 }

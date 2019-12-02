@@ -33,8 +33,9 @@ public class SingleServerDeployment implements ProxiedContainerDeployment {
         Network network = Network.newNetwork();
         toxiproxy = new ToxiproxyContainer().withNetwork(network);
         container = new GenericContainer<>(getImage())
-                .withExposedPorts(PORT)
+                .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
                 .withEnv("ARANGO_ROOT_PASSWORD", "test")
+                .withExposedPorts(PORT)
                 .withNetwork(network)
                 .withNetworkAliases("db")
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[DB_LOG]"))
