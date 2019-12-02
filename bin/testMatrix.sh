@@ -7,7 +7,7 @@ run_tests() {
   echo "==================================================="
   echo "=== $1 "
   echo "==================================================="
-  mvn clean test -Dtest.docker.image="$1" -Darango.license.key="$ARANGO_LICENSE_KEY"
+  mvn clean test -e -Dtest.docker.image="$1" -Darango.license.key="$ARANGO_LICENSE_KEY"
 }
 
 for img in \
