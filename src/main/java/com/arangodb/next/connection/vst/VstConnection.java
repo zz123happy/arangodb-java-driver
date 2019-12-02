@@ -118,7 +118,7 @@ final public class VstConnection implements ArangoConnection {
             } else {
                 return session
                         .doOnNext(DisposableChannel::dispose)
-                        .flatMap(DisposableChannel::onDispose)
+                        .flatMap(connection -> connection.onDispose().subscribeOn(scheduler))
                         .publishOn(scheduler)
                         .doFinally(s -> vstReceiver.shutDown());
             }
