@@ -115,7 +115,7 @@ final public class VstConnection implements ArangoConnection {
     }
 
     @Override
-    public Mono<Void> close() {
+    public synchronized Mono<Void> close() {
         if (closing) {
             return Mono.error(new IllegalStateException("Connection has been already closed!"));
         }
@@ -125,10 +125,7 @@ final public class VstConnection implements ArangoConnection {
             assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
             log.debug("close()");
             if (connectionState == ConnectionState.DISCONNECTED) {
-                return Mono.empty()
-                        .publishOn(scheduler)
-                        .doFinally(s -> vstReceiver.shutDown())
-                        .then();
+                return publishOnScheduler(vstReceiver::shutDown);
             } else {
                 return session
                         .doOnNext(DisposableChannel::dispose)
