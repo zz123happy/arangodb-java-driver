@@ -29,7 +29,7 @@ import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author Michele Rastelli
@@ -43,7 +43,7 @@ public interface CommunicationConfig {
     /**
      * @return ArangoDB host
      */
-    Set<HostDescription> getHosts();
+    List<HostDescription> getHosts();
 
     /**
      * @return connection configuration

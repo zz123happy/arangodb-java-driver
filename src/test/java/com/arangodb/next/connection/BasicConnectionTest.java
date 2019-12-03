@@ -161,7 +161,7 @@ class BasicConnectionTest {
         assertThat(response.getResponseCode()).isEqualTo(200);
         System.out.println(response);
 
-        VPackSlice responseBodySlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
+        VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
         assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
         System.out.println(responseBodySlice);
 
@@ -183,7 +183,7 @@ class BasicConnectionTest {
         assertThat(response.getResponseCode()).isEqualTo(200);
         System.out.println(response);
 
-        VPackSlice responseBodySlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
+        VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
         assertThat(responseBodySlice.get("parsed").getAsBoolean()).isEqualTo(true);
         System.out.println(responseBodySlice);
 
@@ -204,7 +204,7 @@ class BasicConnectionTest {
                                     assertThat(response.getType()).isEqualTo(2);
                                     assertThat(response.getResponseCode()).isEqualTo(200);
 
-                                    VPackSlice responseBodySlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
+                                    VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
                                     assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
 
                                     response.getBody().release();

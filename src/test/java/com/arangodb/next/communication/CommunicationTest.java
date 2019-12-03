@@ -31,6 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
 
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +82,23 @@ class CommunicationTest {
                 value.forEach(ConnectionTestUtils::performRequest));
 
         communication.execute(ConnectionTestUtils.versionRequest);
+        communication.close().block();
+    }
+
+    @ParameterizedTest
+    @EnumSource(ArangoProtocol.class)
+    void acquireHostList(ArangoProtocol protocol) throws InterruptedException {
+
+        ArangoCommunication communication = ArangoCommunication.create(config
+                .protocol(protocol)
+                .acquireHostListInterval(Duration.ofSeconds(10))
+                .hosts(hosts.subList(0, 1))
+                .build()).block();
+        assertThat(communication).isNotNull();
+
+        Thread.sleep(500);
+
+        assertThat(((ArangoCommunicationImpl) communication).getConnectionsByHost()).hasSize(2);
         communication.close().block();
     }
 

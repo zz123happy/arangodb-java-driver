@@ -44,7 +44,7 @@ public class ConnectionTestUtils {
         assertThat(response.getType()).isEqualTo(2);
         assertThat(response.getResponseCode()).isEqualTo(200);
 
-        VPackSlice responseBodySlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
+        VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
         assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
 
         response.getBody().release();

@@ -79,7 +79,7 @@ class HttpConnectionEchoTest {
         assertThat(response.getMeta().get("authorization")).isEqualTo("Bearer token");
 
         // body
-        String receivedString = new String(IOUtilsTest.getByteArray(response.getBody()));
+        String receivedString = new String(IOUtils.getByteArray(response.getBody()));
         response.getBody().release();
 
         assertThat(receivedString).isEqualTo(body);
@@ -122,7 +122,7 @@ class HttpConnectionEchoTest {
 
         // body
         assertThat(response).isNotNull();
-        VPackSlice receivedSlice = new VPackSlice(IOUtilsTest.getByteArray(response.getBody()));
+        VPackSlice receivedSlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
         response.getBody().release();
 
         assertThat(receivedSlice).isEqualTo(slice);

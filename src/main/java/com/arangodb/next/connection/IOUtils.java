@@ -49,4 +49,10 @@ public class IOUtils {
         return created;
     }
 
+    public static byte[] getByteArray(final ByteBuf byteBuf) {
+        byte[] array = new byte[byteBuf.readableBytes()];
+        byteBuf.readBytes(array);
+        return array;
+    }
+
 }

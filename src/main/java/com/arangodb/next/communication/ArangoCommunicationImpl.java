@@ -21,6 +21,8 @@
 package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.*;
+import com.arangodb.velocypack.VPack;
+import com.arangodb.velocypack.VPackSlice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
@@ -41,21 +43,21 @@ import java.util.stream.IntStream;
 class ArangoCommunicationImpl implements ArangoCommunication {
 
     private static final Logger log = LoggerFactory.getLogger(ArangoCommunicationImpl.class);
-    private static final int ACQUIRE_HOST_LIST_RETRIES = 10;
-    private static final Duration ACQUIRE_HOST_LIST_TIMEOUT = Duration.ofSeconds(10);
-    private static final int CONNECTION_RETRIES = 10;
-    private static final Duration UPDATE_CONNECTIONS_TIMEOUT = Duration.ofSeconds(10);
+
+    // TODO: mv to CommunicationConfig
+    private static final int OPERATIONS_RETRIES = 10;
+    private static final Duration OPERATIONS_TIMEOUT = Duration.ofSeconds(10);
 
     private volatile boolean initialized = false;
     private volatile boolean updatingConnectionsSemaphore = false;
-    private volatile boolean updatingHostSetSemaphore = false;
+    private volatile boolean updatingHostListSemaphore = false;
 
     @Nullable
     private volatile AuthenticationMethod authentication;
 
     @Nullable
-    private volatile Disposable scheduledUpdateHostSetSubscription;
-    private volatile Set<HostDescription> hostSet;
+    private volatile Disposable scheduledUpdateHostListSubscription;
+    private volatile List<HostDescription> hostList;
     private final CommunicationConfig config;
     private final ArangoConnectionFactory connectionFactory;
     private final Map<HostDescription, List<ArangoConnection>> connectionsByHost;
@@ -70,6 +72,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         log.debug("ArangoCommunicationImpl({})", config);
 
         this.config = config;
+        hostList = config.getHosts();
         connectionsByHost = new ConcurrentHashMap<>();
         connectionFactory = new ArangoConnectionFactory(
                 config.getConnectionConfig(),
@@ -88,16 +91,19 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         initialized = true;
 
         return negotiateAuthentication()
-                .then(Mono.defer(() -> {
-                    hostSet = config.getHosts();
-                    return updateConnections();
-                }))
-                .doOnSuccess(v -> scheduleUpdateHostSet())
+                .then(Mono.defer(this::updateConnections))
+                .doOnSuccess(v -> scheduleUpdateHostList())
                 .then(Mono.just(this));
     }
 
     @Override
     public Mono<ArangoResponse> execute(ArangoRequest request) {
+        return executeOnRandomHost(request)
+                .retry(OPERATIONS_RETRIES)
+                .timeout(OPERATIONS_TIMEOUT);
+    }
+
+    private Mono<ArangoResponse> executeOnRandomHost(ArangoRequest request) {
         HostDescription host = getRandomItem(connectionsByHost.keySet());
         ArangoConnection connection = getRandomItem(connectionsByHost.get(host));
         return connection.execute(request);
@@ -105,9 +111,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
     @Override
     public Mono<Void> close() {
-        if (scheduledUpdateHostSetSubscription != null) {
-            scheduledUpdateHostSetSubscription.dispose();
-        }
+        Optional.ofNullable(scheduledUpdateHostListSubscription).ifPresent(Disposable::dispose);
         List<Mono<Void>> closedConnections = connectionsByHost.values().stream()
                 .flatMap(Collection::stream)
                 .map(ArangoConnection::close)
@@ -157,25 +161,36 @@ class ArangoCommunicationImpl implements ArangoCommunication {
      * - connections related to removed hosts have been closed
      * - connections related to added hosts have been initialized
      */
-    private synchronized Mono<Void> updateHostSet() {
-        log.debug("updateHostSet()");
+    private synchronized Mono<Void> updateHostList() {
+        log.debug("updateHostList()");
 
-        if (updatingHostSetSemaphore) {
-            return Mono.error(new IllegalStateException("Ongoing updateHostSet!"));
+        if (updatingHostListSemaphore) {
+            return Mono.error(new IllegalStateException("Ongoing updateHostList!"));
         }
-        updatingHostSetSemaphore = true;
+        updatingHostListSemaphore = true;
 
-        // TODO
-
-        return Mono.defer(() -> Mono.empty())
-                .retry(ACQUIRE_HOST_LIST_RETRIES)
-                .timeout(ACQUIRE_HOST_LIST_TIMEOUT)
+        return execute(acquireHostListRequest)
+                .map(this::parseAcquireHostListResponse)
+                .doOnNext(it -> hostList = it)
                 .then(Mono.defer(this::updateConnections))
-                .doFinally(s -> updatingHostSetSemaphore = false);
+                .doFinally(s -> updatingHostListSemaphore = false);
+    }
+
+    private List<HostDescription> parseAcquireHostListResponse(ArangoResponse response) {
+        // TODO: handle exceptions           response.getResponseCode() != 200
+        VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
+        VPackSlice field = responseBodySlice.get("endpoints");
+        final Collection<Map<String, String>> entity = new VPack.Builder().build().deserialize(field, Collection.class);
+        return entity.stream()
+                .map(it -> it.get("endpoint"))
+                // TODO: support ipv6 addresses
+                .map(it -> it.replaceFirst(".*://", "").split(":"))
+                .map(it -> HostDescription.of(it[0], Integer.parseInt(it[1])))
+                .collect(Collectors.toList());
     }
 
     /**
-     * Updates the connectionsByHost map, making it consistent with the current hostSet
+     * Updates the connectionsByHost map, making it consistent with the current hostList
      *
      * @return a {@code Mono} which completes once all these conditions are met:
      * - the connectionsByHost has been updated
@@ -192,28 +207,28 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         Set<HostDescription> currentHosts = connectionsByHost.keySet();
 
-        List<Mono<List<ArangoConnection>>> addedHosts = hostSet.stream()
+        List<Mono<List<ArangoConnection>>> addedHosts = hostList.stream()
                 .filter(o -> !currentHosts.contains(o))
                 .map(host -> Flux.merge(createHostConnections(host)).collectList()
                         .doOnNext(hostConnections -> connectionsByHost.put(host, hostConnections)))
                 .collect(Collectors.toList());
 
         List<Mono<List<Void>>> removedHosts = currentHosts.stream()
-                .filter(o -> !hostSet.contains(o))
+                .filter(o -> !hostList.contains(o))
                 .map(host -> Flux.merge(closeHostConnections(connectionsByHost.remove(host))).collectList())
                 .collect(Collectors.toList());
 
         return Flux.merge(Flux.merge(addedHosts), Flux.merge(removedHosts))
-                .timeout(UPDATE_CONNECTIONS_TIMEOUT)
+                .timeout(OPERATIONS_TIMEOUT)
                 .doFinally(s -> updatingConnectionsSemaphore = false)
                 .then();
     }
 
-    private void scheduleUpdateHostSet() {
+    private void scheduleUpdateHostList() {
         Duration acquireHostListInterval = config.getAcquireHostListInterval();
         if (acquireHostListInterval != Duration.ZERO) {
-            scheduledUpdateHostSetSubscription = Flux.interval(acquireHostListInterval, acquireHostListInterval)
-                    .flatMap(it -> updateHostSet())
+            scheduledUpdateHostListSubscription = Flux.interval(Duration.ZERO, acquireHostListInterval)
+                    .flatMap(it -> updateHostList())
                     .subscribe();
         }
     }
@@ -223,7 +238,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         return IntStream.range(0, config.getConnectionsPerHost())
                 .mapToObj(i -> Mono.defer(() -> connectionFactory.create(host, authentication))
-                        .retry(CONNECTION_RETRIES)
+                        .retry(OPERATIONS_RETRIES)
                 )
                 .collect(Collectors.toList());
     }

@@ -73,7 +73,7 @@ class ConnectionPerformanceTest {
                                 System.out.println(i);
                         })
                         .flatMap(i -> connection.execute(getRequest))
-                        .doOnNext(v -> new VPackSlice(IOUtilsTest.getByteArray(v.getBody())).get("server"))
+                        .doOnNext(v -> new VPackSlice(IOUtils.getByteArray(v.getBody())).get("server"))
                         .doOnNext(v -> v.getBody().release()))
                 .then().toFuture();
     }
