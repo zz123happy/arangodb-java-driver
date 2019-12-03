@@ -29,12 +29,12 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import static com.arangodb.next.connection.ConnectionTestUtils.DEFAULT_SCHEDULER_FACTORY;
-import static com.arangodb.next.connection.ConnectionTestUtils.performRequest;
+import static com.arangodb.next.connection.ConnectionTestUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
@@ -104,6 +104,21 @@ class ReconnectionTest {
         assertThat(connection).isNotNull();
         performRequest(connection);
         connection.close().block();
+    }
+
+    @Test
+    void concurrentCloseConnection() {
+        HostDescription host = deployment.getHosts().get(0);
+        ConnectionConfig testConfig = config.build();
+        ArangoConnection connection = new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY)
+                .create(host, deployment.getAuthentication()).block();
+        assertThat(connection).isNotNull();
+
+        Mono<ArangoResponse> response = connection.execute(versionRequest);
+        connection.close().block();
+
+        Throwable thrown = catchThrowable(response::block);
+        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class).hasMessageContaining("Connection closed");
     }
 
     @ParameterizedTest
