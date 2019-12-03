@@ -21,7 +21,7 @@
 
 package deployments;
 
-import org.testcontainers.containers.ToxiproxyContainer;
+import java.util.List;
 
 /**
  * @author Michele Rastelli
@@ -32,9 +32,6 @@ public interface ProxiedContainerDeployment extends ContainerDeployment {
         return new SingleServerDeployment();
     }
 
-    ToxiproxyContainer.ContainerProxy getProxy();
+    List<ProxiedHost> getProxiedHosts();
 
-    void enableProxy();
-
-    void disableProxy();
 }

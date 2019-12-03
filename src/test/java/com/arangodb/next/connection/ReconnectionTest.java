@@ -21,6 +21,7 @@
 package com.arangodb.next.connection;
 
 import deployments.ProxiedContainerDeployment;
+import deployments.ProxiedHost;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -57,8 +58,10 @@ class ReconnectionTest {
 
     @BeforeEach
     void restore() {
-        deployment.enableProxy();
-        deployment.getProxy().setConnectionCut(false);
+        deployment.getProxiedHosts().forEach(it -> {
+            it.enableProxy();
+            it.getProxy().setConnectionCut(false);
+        });
     }
 
     @ParameterizedTest
@@ -72,11 +75,11 @@ class ReconnectionTest {
 
         performRequest(connection);
 
-        deployment.getProxy().setConnectionCut(true);
+        deployment.getProxiedHosts().forEach(it -> it.getProxy().setConnectionCut(true));
         Throwable thrown = catchThrowable(() -> performRequest(connection));
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
 
-        deployment.getProxy().setConnectionCut(false);
+        deployment.getProxiedHosts().forEach(it -> it.getProxy().setConnectionCut(false));
         performRequest(connection);
 
         connection.close().block();
@@ -87,7 +90,7 @@ class ReconnectionTest {
     void VstConnectionTimeout() {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.timeout(1000).build();
-        deployment.getProxy().setConnectionCut(true);
+        deployment.getProxiedHosts().forEach(it -> it.getProxy().setConnectionCut(true));
         Throwable thrown = catchThrowable(() ->
                 new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY)
                         .create(host, deployment.getAuthentication()).block());
@@ -129,7 +132,7 @@ class ReconnectionTest {
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
-        deployment.disableProxy();
+        deployment.getProxiedHosts().forEach(ProxiedHost::disableProxy);
         Throwable thrown = catchThrowable(() -> performRequest(connection));
         assertThat(Exceptions.unwrap(thrown)).isInstanceOfAny(IOException.class, TimeoutException.class);
         connection.close().block();
@@ -146,10 +149,10 @@ class ReconnectionTest {
 
         for (int i = 0; i < 100; i++) {
             performRequest(connection);
-            deployment.disableProxy();
+            deployment.getProxiedHosts().forEach(ProxiedHost::disableProxy);
             Throwable thrown = catchThrowable(() -> performRequest(connection));
             assertThat(Exceptions.unwrap(thrown)).isInstanceOfAny(IOException.class, TimeoutException.class);
-            deployment.enableProxy();
+            deployment.getProxiedHosts().forEach(ProxiedHost::enableProxy);
             performRequest(connection);
         }
 

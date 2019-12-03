@@ -2,8 +2,6 @@ package deployments;
 
 
 import com.arangodb.next.connection.HostDescription;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.netty.buffer.Unpooled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -11,8 +9,6 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.ToxiproxyContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
-import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +38,6 @@ public class SingleServerDeployment implements ProxiedContainerDeployment {
                 .waitingFor(Wait.forHttp("/_api/version")
                         .withBasicCredentials(getUser(), getPassword())
                         .forStatusCode(200));
-
     }
 
     /**
@@ -75,43 +70,12 @@ public class SingleServerDeployment implements ProxiedContainerDeployment {
     }
 
     @Override
-    public ToxiproxyContainer.ContainerProxy getProxy() {
-        return proxy;
-    }
-
-    @Override
-    public void enableProxy() {
-        log.debug("enableProxy()");
-        setProxyEnabled(true);
-        log.debug("... enableProxy() done");
-    }
-
-    @Override
-    public void disableProxy() {
-        log.debug("disableProxy()");
-        setProxyEnabled(false);
-        log.debug("... disableProxy() done");
-    }
-
-    /**
-     * Bringing a service down is not technically a toxic in the implementation of Toxiproxy. This is done by POSTing
-     * to /proxies/{proxy} and setting the enabled field to false.
-     *
-     * @param value value to set
-     * @see <a href="https://github.com/Shopify/toxiproxy#down">
-     */
-    private void setProxyEnabled(boolean value) {
-        String request = new ObjectMapper().createObjectNode().put("enabled", value).toString();
-        String response = HttpClient.create()
-                .post()
-                .uri("http://" + toxiproxy.getContainerIpAddress() + ":" + toxiproxy.getMappedPort(8474)
-                        + "/proxies/db:" + PORT)
-                .send(Mono.just(Unpooled.wrappedBuffer(request.getBytes())))
-                .responseContent()
-                .asString()
-                .blockFirst();
-
-        log.debug(response);
+    public List<ProxiedHost> getProxiedHosts() {
+        return Collections.singletonList(ProxiedHost.builder()
+                .proxiedHost("db")
+                .proxiedPort(PORT)
+                .toxiproxy(toxiproxy)
+                .build());
     }
 
 }
