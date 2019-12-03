@@ -98,13 +98,14 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
     @Override
     public Mono<ArangoResponse> execute(ArangoRequest request) {
-        return executeOnRandomHost(request)
+        return Mono.defer(() -> executeOnRandomHost(request))
                 .retry(OPERATIONS_RETRIES)
                 .timeout(OPERATIONS_TIMEOUT);
     }
 
     private Mono<ArangoResponse> executeOnRandomHost(ArangoRequest request) {
         HostDescription host = getRandomItem(connectionsByHost.keySet());
+        log.debug("executeOnRandomHost: picked host {}", host);
         ArangoConnection connection = getRandomItem(connectionsByHost.get(host));
         return connection.execute(request);
     }

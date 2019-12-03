@@ -32,6 +32,10 @@ public interface ProxiedContainerDeployment extends ContainerDeployment {
         return new SingleServerDeployment();
     }
 
+    static ProxiedContainerDeployment ofCluster(int dbServers, int coordinators) {
+        return new ClusterDeployment(dbServers, coordinators);
+    }
+
     List<ProxiedHost> getProxiedHosts();
 
 }

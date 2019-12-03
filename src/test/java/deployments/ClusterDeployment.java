@@ -100,8 +100,8 @@ public class ClusterDeployment implements ProxiedContainerDeployment {
 
     @Override
     public List<HostDescription> getHosts() {
-        return coordinators.values().stream()
-                .map(it -> HostDescription.of(it.getContainerIpAddress(), it.getFirstMappedPort()))
+        return getProxiedHosts().stream()
+                .map(ProxiedHost::getHostDescription)
                 .collect(Collectors.toList());
     }
 

@@ -32,10 +32,6 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface ContainerDeployment extends Startable {
 
-    static ContainerDeployment ofCluster(int dbServers, int coordinators) {
-        return new ClusterDeployment(dbServers, coordinators);
-    }
-
     static ContainerDeployment ofSingleServerWithSsl() {
         return new SingleServerSslDeployment();
     }
