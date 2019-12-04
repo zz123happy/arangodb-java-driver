@@ -87,7 +87,7 @@ class CommunicationTest {
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
-    void acquireHostList(ArangoProtocol protocol) throws InterruptedException {
+    void acquireHostList(ArangoProtocol protocol) {
 
         ArangoCommunication communication = ArangoCommunication.create(config
                 .protocol(protocol)
@@ -95,8 +95,6 @@ class CommunicationTest {
                 .hosts(hosts.subList(0, 1))
                 .build()).block();
         assertThat(communication).isNotNull();
-
-        Thread.sleep(500);
 
         Map<HostDescription, List<ArangoConnection>> currentHosts = ((ArangoCommunicationImpl) communication).getConnectionsByHost();
         assertThat(currentHosts).hasSize(2);

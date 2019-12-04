@@ -92,7 +92,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         return negotiateAuthentication()
                 .then(Mono.defer(this::updateConnections))
-                .doOnSuccess(v -> scheduleUpdateHostList())
+                .then(Mono.defer(this::scheduleUpdateHostList))
                 .then(Mono.just(this));
     }
 
@@ -225,12 +225,15 @@ class ArangoCommunicationImpl implements ArangoCommunication {
                 .then();
     }
 
-    private void scheduleUpdateHostList() {
+    private Mono<Void> scheduleUpdateHostList() {
         Duration acquireHostListInterval = config.getAcquireHostListInterval();
         if (acquireHostListInterval != Duration.ZERO) {
-            scheduledUpdateHostListSubscription = Flux.interval(Duration.ZERO, acquireHostListInterval)
+            scheduledUpdateHostListSubscription = Flux.interval(acquireHostListInterval)
                     .flatMap(it -> updateHostList())
                     .subscribe();
+            return updateHostList();
+        } else {
+            return Mono.empty();
         }
     }
 
