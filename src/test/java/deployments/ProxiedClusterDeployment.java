@@ -90,6 +90,7 @@ public class ProxiedClusterDeployment implements ProxiedContainerDeployment {
                 performActionOnGroup(dbServers, GenericContainer::stop),
                 performActionOnGroup(coordinators.values(), GenericContainer::stop)
         )
+                .thenAcceptAsync(__ -> network.close())
                 .thenAccept((v) -> log.info("Cluster has been shutdown!"))
                 .thenApply((v) -> this);
     }
