@@ -55,11 +55,10 @@ class CommunicationResiliencyTest {
     CommunicationResiliencyTest() {
         hosts = deployment.getHosts();
         config = CommunicationConfig.builder()
-                .protocol(ArangoProtocol.VST)
                 .addAllHosts(hosts)
                 .authenticationMethod(deployment.getAuthentication())
-                .connectionConfig(ConnectionConfig.builder()
-                        .build());
+                // use proxied hostDescriptions
+                .acquireHostList(false);
     }
 
     @BeforeEach

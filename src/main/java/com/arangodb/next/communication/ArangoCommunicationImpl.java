@@ -226,9 +226,8 @@ class ArangoCommunicationImpl implements ArangoCommunication {
     }
 
     private Mono<Void> scheduleUpdateHostList() {
-        Duration acquireHostListInterval = config.getAcquireHostListInterval();
-        if (acquireHostListInterval != Duration.ZERO) {
-            scheduledUpdateHostListSubscription = Flux.interval(acquireHostListInterval)
+        if (config.getAcquireHostList()) {
+            scheduledUpdateHostListSubscription = Flux.interval(config.getAcquireHostListInterval())
                     .flatMap(it -> updateHostList())
                     .subscribe();
             return updateHostList();

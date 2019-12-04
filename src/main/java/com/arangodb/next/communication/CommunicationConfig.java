@@ -48,20 +48,33 @@ public interface CommunicationConfig {
     /**
      * @return connection configuration
      */
-    ConnectionConfig getConnectionConfig();
+    @Value.Default
+    default ConnectionConfig getConnectionConfig() {
+        return ConnectionConfig.builder().build();
+    }
 
     /**
      * @return network protocol
      */
-    ArangoProtocol getProtocol();
+    @Value.Default
+    default ArangoProtocol getProtocol() {
+        return ArangoProtocol.VST;
+    }
 
     /**
-     * @return interval at which the host list will be fetched, if {@code Duration.ZERO} the host list will never be
-     * fetched.
+     * @return whether to fetch the host list
+     */
+    @Value.Default
+    default boolean getAcquireHostList() {
+        return true;
+    }
+
+    /**
+     * @return interval at which the host list will be fetched
      */
     @Value.Default
     default Duration getAcquireHostListInterval() {
-        return Duration.ZERO;
+        return Duration.ofMinutes(1);
     }
 
     /**

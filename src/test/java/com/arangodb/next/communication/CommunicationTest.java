@@ -23,7 +23,6 @@ package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.*;
 import deployments.ContainerDeployment;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.testcontainers.junit.jupiter.Container;
@@ -54,11 +53,8 @@ class CommunicationTest {
     CommunicationTest() {
         hosts = deployment.getHosts();
         config = CommunicationConfig.builder()
-                .protocol(ArangoProtocol.VST)
                 .addAllHosts(hosts)
-                .authenticationMethod(deployment.getAuthentication())
-                .connectionConfig(ConnectionConfig.builder()
-                        .build());
+                .authenticationMethod(deployment.getAuthentication());
     }
 
     @ParameterizedTest
@@ -104,25 +100,14 @@ class CommunicationTest {
         communication.close().block();
     }
 
-    @Test
-    void wrongHostVstConnectionFailure() {
+    @ParameterizedTest
+    @EnumSource(ArangoProtocol.class)
+    void wrongHostConnectionFailure(ArangoProtocol protocol) {
         Throwable thrown = catchThrowable(() -> ArangoCommunication.create(config
-                .protocol(ArangoProtocol.VST)
+                .protocol(protocol)
                 .hosts(Collections.singleton(HostDescription.of("wrongHost", 8529)))
                 .build()).block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(UnknownHostException.class);
-    }
-
-    @Test
-    void wrongHostHttpRequestFailure() {
-        ArangoCommunication communication = ArangoCommunication.create(config
-                .protocol(ArangoProtocol.HTTP)
-                .hosts(Collections.singleton(HostDescription.of("wrongHost", 8529)))
-                .build()).block();
-        assertThat(communication).isNotNull();
-        Throwable thrown = catchThrowable(() -> communication.execute(ConnectionTestUtils.versionRequest).block());
-        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(UnknownHostException.class);
-        communication.close().block();
     }
 
 }
