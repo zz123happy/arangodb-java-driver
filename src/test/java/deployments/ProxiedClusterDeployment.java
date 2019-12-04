@@ -7,33 +7,33 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.ToxiproxyContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 
 import java.time.Duration;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class ClusterDeployment implements ContainerDeployment {
+public class ProxiedClusterDeployment implements ProxiedContainerDeployment {
 
-    private final Logger log = LoggerFactory.getLogger(ClusterDeployment.class);
+    private final Logger log = LoggerFactory.getLogger(ProxiedClusterDeployment.class);
     private final String DOCKER_COMMAND = "arangodb --auth.jwt-secret /jwtSecret ";
 
     private final Network network;
+    private final ToxiproxyContainer toxiproxy;
 
     private final List<GenericContainer<?>> agents;
     private final List<GenericContainer<?>> dbServers;
     private final Map<String, GenericContainer<?>> coordinators;
 
-    ClusterDeployment(int dbServers, int coordinators) {
+    ProxiedClusterDeployment(int dbServers, int coordinators) {
         network = Network.newNetwork();
+        toxiproxy = new ToxiproxyContainer().withNetwork(network);
 
         agents = IntStream.range(0, 3)
                 .mapToObj(this::createAgent)
@@ -53,7 +53,7 @@ public class ClusterDeployment implements ContainerDeployment {
 
     @Override
     public CompletableFuture<ContainerDeployment> asyncStart() {
-        return CompletableFuture.completedFuture(null)
+        return CompletableFuture.runAsync(toxiproxy::start).thenAccept((v) -> log.info("READY: toxiproxy"))
                 .thenCompose(v -> performActionOnGroup(agents, GenericContainer::start))
                 .thenCompose(v -> CompletableFuture.allOf(
                         performActionOnGroup(dbServers, GenericContainer::start),
@@ -78,6 +78,7 @@ public class ClusterDeployment implements ContainerDeployment {
                     }
                     return future;
                 })
+                .thenAccept(v -> coordinators.keySet().forEach(k -> toxiproxy.getProxy(k, 8529)))
                 .thenAccept(v -> log.info("Cluster is ready!"))
                 .thenApply(v -> this);
     }
@@ -93,18 +94,10 @@ public class ClusterDeployment implements ContainerDeployment {
                 .thenApply((v) -> this);
     }
 
-    private String getContainerIP(final GenericContainer<?> container) {
-        return container.getContainerInfo()
-                .getNetworkSettings()
-                .getNetworks()
-                .get(((Network.NetworkImpl) network).getName())
-                .getIpAddress();
-    }
-
     @Override
     public List<HostDescription> getHosts() {
-        return coordinators.values().stream()
-                .map(it -> HostDescription.of(getContainerIP(it), 8529))
+        return getProxiedHosts().stream()
+                .map(ProxiedHost::getHostDescription)
                 .collect(Collectors.toList());
     }
 
@@ -141,6 +134,17 @@ public class ClusterDeployment implements ContainerDeployment {
                         .map(it -> CompletableFuture.runAsync(() -> action.accept(it)))
                         .toArray(CompletableFuture[]::new)
         );
+    }
+
+    @Override
+    public List<ProxiedHost> getProxiedHosts() {
+        return coordinators.keySet().stream()
+                .map(genericContainer -> ProxiedHost.builder()
+                        .proxiedHost(genericContainer)
+                        .proxiedPort(8529)
+                        .toxiproxy(toxiproxy)
+                        .build())
+                .collect(Collectors.toList());
     }
 
 }

@@ -36,6 +36,10 @@ public interface ContainerDeployment extends Startable {
         return new SingleServerSslDeployment();
     }
 
+    static ContainerDeployment ofCluster(int dbServers, int coordinators) {
+        return new ClusterDeployment(dbServers, coordinators);
+    }
+
     default String getImage() {
         return ContainerUtils.getImage();
     }

@@ -29,11 +29,11 @@ import java.util.List;
 public interface ProxiedContainerDeployment extends ContainerDeployment {
 
     static ProxiedContainerDeployment ofSingleServer() {
-        return new SingleServerDeployment();
+        return new ProxiedSingleServerDeployment();
     }
 
     static ProxiedContainerDeployment ofCluster(int dbServers, int coordinators) {
-        return new ClusterDeployment(dbServers, coordinators);
+        return new ProxiedClusterDeployment(dbServers, coordinators);
     }
 
     List<ProxiedHost> getProxiedHosts();

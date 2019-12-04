@@ -14,19 +14,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class SingleServerDeployment implements ProxiedContainerDeployment {
+public class ProxiedSingleServerDeployment implements ProxiedContainerDeployment {
 
-    private static final Logger log = LoggerFactory.getLogger(SingleServerDeployment.class);
+    private static final Logger log = LoggerFactory.getLogger(ProxiedSingleServerDeployment.class);
 
     private final int PORT = 8529;
 
+    private final Network network;
     private final ToxiproxyContainer toxiproxy;
     private final GenericContainer<?> container;
 
     private ToxiproxyContainer.ContainerProxy proxy;
 
-    public SingleServerDeployment() {
-        Network network = Network.newNetwork();
+    public ProxiedSingleServerDeployment() {
+        network = Network.newNetwork();
         toxiproxy = new ToxiproxyContainer().withNetwork(network);
         container = new GenericContainer<>(getImage())
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
@@ -66,7 +67,9 @@ public class SingleServerDeployment implements ProxiedContainerDeployment {
         return CompletableFuture.allOf(
                 CompletableFuture.runAsync(container::stop).thenAccept((v) -> log.info("STOPPED: db")),
                 CompletableFuture.runAsync(toxiproxy::stop).thenAccept((v) -> log.info("STOPPED: toxiproxy"))
-        ).thenApply(v -> this);
+        )
+                .thenAcceptAsync(__ -> network.close())
+                .thenApply(__ -> this);
     }
 
     @Override
