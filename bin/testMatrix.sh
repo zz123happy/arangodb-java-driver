@@ -8,6 +8,7 @@ run_tests() {
   echo "=== $1 "
   echo "==================================================="
   mvn clean test -e -Dtest.docker.image="$1" -Darango.license.key="$ARANGO_LICENSE_KEY"
+  for container in $(docker ps -aq); do docker rm -f "$container"; done
 }
 
 for img in \

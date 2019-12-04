@@ -233,8 +233,10 @@ final public class VstConnection implements ArangoConnection {
             vstReceiver.clear();
             messageStore.clear(t);
             mId = 0L;
-            session.cancel();
-            session = null;
+            if (session != null) {
+                session.cancel();
+                session = null;
+            }
 
             // completes the closing process
             if (closing) {
