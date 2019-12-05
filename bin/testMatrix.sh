@@ -7,8 +7,11 @@ run_tests() {
   echo "==================================================="
   echo "=== $1 "
   echo "==================================================="
-  mvn clean test -e -Dtest.docker.image="$1" -Darango.license.key="$ARANGO_LICENSE_KEY"
-  for container in $(docker ps -aq); do docker rm -f "$container"; done
+
+  docker pull "$1"
+  logfile=out-$(date +%s%N).txt
+  mvn clean test -e -Dtest.docker.image="$1" -Darango.license.key="$ARANGO_LICENSE_KEY" >"$logfile" 2>&1
+  rm "$logfile"
 }
 
 for img in \
@@ -20,3 +23,8 @@ for img in \
   docker.io/arangodb/enterprise-test:devel-nightly; do
   run_tests $img
 done
+
+
+echo "***************"
+echo "*** SUCCESS ***"
+echo "***************"

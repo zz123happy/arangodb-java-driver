@@ -74,6 +74,10 @@ class CommunicationResiliencyTest {
     void retry(ArangoProtocol protocol) {
         ArangoCommunication communication = ArangoCommunication.create(config
                 .protocol(protocol)
+                .connectionConfig(
+                        ConnectionConfig.builder()
+                                .timeout(500)
+                                .build())
                 .build()).block();
         assertThat(communication).isNotNull();
 

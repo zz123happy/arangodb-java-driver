@@ -164,9 +164,8 @@ final public class VstConnection implements ArangoConnection {
                     );
                     return execute(connection, id, buffer)
                             .doOnNext(response -> {
-                                log.debug("in authenticate(): received response {}", response);
                                 if (response.getResponseCode() != 200) {
-                                    log.debug("in authenticate(): throwing ArangoConnectionAuthenticationException()");
+                                    log.warn("in authenticate(): received response {}", response);
                                     throw ArangoConnectionAuthenticationException.of(response);
                                 }
                             })
