@@ -30,6 +30,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,7 +46,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
     private static final Logger log = LoggerFactory.getLogger(ArangoCommunicationImpl.class);
 
     // TODO: mv to CommunicationConfig
-    private static final int OPERATIONS_RETRIES = 10;
+    private static final int CONNECTIONS_RETRIES = 10;
     private static final Duration OPERATIONS_TIMEOUT = Duration.ofSeconds(10);
 
     private volatile boolean initialized = false;
@@ -99,13 +100,15 @@ class ArangoCommunicationImpl implements ArangoCommunication {
     @Override
     public Mono<ArangoResponse> execute(ArangoRequest request) {
         return Mono.defer(() -> executeOnRandomHost(request))
-                .retry(OPERATIONS_RETRIES)
                 .timeout(OPERATIONS_TIMEOUT);
     }
 
     private Mono<ArangoResponse> executeOnRandomHost(ArangoRequest request) {
+        if (connectionsByHost.isEmpty()) {
+            return Mono.error(new IOException("No open connections!"));
+        }
         HostDescription host = getRandomItem(connectionsByHost.keySet());
-        log.debug("executeOnRandomHost: picked host {}", host);
+        log.info("executeOnRandomHost: picked host {}", host);
         ArangoConnection connection = getRandomItem(connectionsByHost.get(host));
         return connection.execute(request);
     }
@@ -208,15 +211,25 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         Set<HostDescription> currentHosts = connectionsByHost.keySet();
 
-        List<Mono<List<ArangoConnection>>> addedHosts = hostList.stream()
+        List<Mono<Void>> addedHosts = hostList.stream()
                 .filter(o -> !currentHosts.contains(o))
                 .map(host -> Flux.merge(createHostConnections(host)).collectList()
-                        .doOnNext(hostConnections -> connectionsByHost.put(host, hostConnections)))
+                        .flatMap(hostConnections -> {
+                            if (hostConnections.isEmpty()) {
+                                // could not create any connection to this host, eg. in case of dead coordinator
+                                return Optional.ofNullable(connectionsByHost.remove(host))
+                                        .map(this::closeHostConnections)
+                                        .orElse(Mono.empty());
+                            } else {
+                                connectionsByHost.put(host, hostConnections);
+                                return Mono.empty();
+                            }
+                        }))
                 .collect(Collectors.toList());
 
-        List<Mono<List<Void>>> removedHosts = currentHosts.stream()
+        List<Mono<Void>> removedHosts = currentHosts.stream()
                 .filter(o -> !hostList.contains(o))
-                .map(host -> Flux.merge(closeHostConnections(connectionsByHost.remove(host))).collectList())
+                .map(host -> closeHostConnections(connectionsByHost.remove(host)))
                 .collect(Collectors.toList());
 
         return Flux.merge(Flux.merge(addedHosts), Flux.merge(removedHosts))
@@ -241,17 +254,20 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         return IntStream.range(0, config.getConnectionsPerHost())
                 .mapToObj(i -> Mono.defer(() -> connectionFactory.create(host, authentication))
-                        .retry(OPERATIONS_RETRIES)
+                        .retry(CONNECTIONS_RETRIES)
+                        .onErrorResume(e -> Mono.empty()) // skips the failing connections
                 )
                 .collect(Collectors.toList());
     }
 
-    private List<Mono<Void>> closeHostConnections(List<ArangoConnection> connections) {
+    private Mono<Void> closeHostConnections(List<ArangoConnection> connections) {
         log.debug("closeHostConnections({})", connections);
 
-        return connections.stream()
-                .map(ArangoConnection::close)
-                .collect(Collectors.toList());
+        return Flux.merge(
+                connections.stream()
+                        .map(ArangoConnection::close)
+                        .collect(Collectors.toList())
+        ).then();
     }
 
 }

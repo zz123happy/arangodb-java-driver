@@ -29,7 +29,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
 
-import java.net.UnknownHostException;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -107,7 +107,7 @@ class CommunicationTest {
                 .protocol(protocol)
                 .hosts(Collections.singleton(HostDescription.of("wrongHost", 8529)))
                 .build()).block());
-        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(UnknownHostException.class);
+        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
     }
 
 }

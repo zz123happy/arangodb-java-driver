@@ -90,9 +90,15 @@ class CommunicationResiliencyTest {
 
         host0.disableProxy();
 
-        for (int i = 0; i < 10; i++) {
-            executeRequest(communication);
+        boolean succeeded = false;
+        for (int i = 0; !succeeded && i < 100; i++) {
+            try {
+                executeRequest(communication);
+                succeeded = true;
+            } catch (Exception ignored) {
+            }
         }
+        assertThat(succeeded).isTrue();
 
         host1.disableProxy();
 
@@ -100,6 +106,7 @@ class CommunicationResiliencyTest {
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
 
         host0.enableProxy();
+        host1.enableProxy();
 
         for (int i = 0; i < 10; i++) {
             executeRequest(communication);

@@ -27,6 +27,7 @@ import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.JdkSslContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoProcessor;
 import reactor.core.scheduler.Scheduler;
@@ -288,6 +289,9 @@ final public class VstConnection implements ArangoConnection {
 
     private void setSession(Connection connection) {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        if (session == null) {
+            throw Exceptions.bubble(new IOException("Connection closed!"));
+        }
         connectionState = ConnectionState.CONNECTED;
         session.onNext(connection);
     }
