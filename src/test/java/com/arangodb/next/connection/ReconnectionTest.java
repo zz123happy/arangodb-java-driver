@@ -142,12 +142,14 @@ class ReconnectionTest {
     @EnumSource(ArangoProtocol.class)
     void reconnect(ArangoProtocol protocol) {
         HostDescription host = deployment.getHosts().get(0);
-        ConnectionConfig testConfig = config.build();
+        ConnectionConfig testConfig = config
+                .timeout(500)
+                .build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             performRequest(connection);
             deployment.getProxiedHosts().forEach(ProxiedHost::disableProxy);
             Throwable thrown = catchThrowable(() -> performRequest(connection));

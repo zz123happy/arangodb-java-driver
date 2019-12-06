@@ -84,32 +84,33 @@ class CommunicationResiliencyTest {
         ProxiedHost host0 = deployment.getProxiedHosts().get(0);
         ProxiedHost host1 = deployment.getProxiedHosts().get(1);
 
-        for (int i = 0; i < 10; i++) {
-            executeRequest(communication);
-        }
+        for (int j = 0; j < 10; j++) {
 
-        host0.disableProxy();
-
-        boolean succeeded = false;
-        for (int i = 0; !succeeded && i < 100; i++) {
-            try {
+            for (int i = 0; i < 10; i++) {
                 executeRequest(communication);
-                succeeded = true;
-            } catch (Exception ignored) {
             }
-        }
-        assertThat(succeeded).isTrue();
 
-        host1.disableProxy();
+            host0.disableProxy();
 
-        Throwable thrown = catchThrowable(() -> executeRequest(communication));
-        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
+            boolean succeeded = false;
+            for (int i = 0; !succeeded && i < 100; i++) {
+                try {
+                    executeRequest(communication);
+                    succeeded = true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            assertThat(succeeded).isTrue();
 
-        host0.enableProxy();
-        host1.enableProxy();
+            host1.disableProxy();
 
-        for (int i = 0; i < 10; i++) {
-            executeRequest(communication);
+            Throwable thrown = catchThrowable(() -> executeRequest(communication));
+            assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
+
+            host0.enableProxy();
+            host1.enableProxy();
+
         }
 
         communication.close().block();
