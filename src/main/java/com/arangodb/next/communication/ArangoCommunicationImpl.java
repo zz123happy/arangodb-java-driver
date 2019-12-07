@@ -46,7 +46,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
     private static final Logger log = LoggerFactory.getLogger(ArangoCommunicationImpl.class);
 
     // TODO: mv to CommunicationConfig
-    private static final int CONNECTIONS_RETRIES = 10;
+    private static final int OPERATIONS_RETRIES = 10;
     private static final Duration OPERATIONS_TIMEOUT = Duration.ofSeconds(10);
 
     private volatile boolean initialized = false;
@@ -175,6 +175,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         return execute(acquireHostListRequest)
                 .map(this::parseAcquireHostListResponse)
+                .retry(OPERATIONS_RETRIES)
                 .doOnNext(it -> hostList = it)
                 .then(Mono.defer(this::updateConnections))
                 .doFinally(s -> updatingHostListSemaphore = false);
@@ -254,7 +255,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         return IntStream.range(0, config.getConnectionsPerHost())
                 .mapToObj(i -> Mono.defer(() -> connectionFactory.create(host, authentication))
-                        .retry(CONNECTIONS_RETRIES)
+                        .retry(OPERATIONS_RETRIES)
                         .onErrorResume(e -> Mono.empty()) // skips the failing connections
                 )
                 .collect(Collectors.toList());
