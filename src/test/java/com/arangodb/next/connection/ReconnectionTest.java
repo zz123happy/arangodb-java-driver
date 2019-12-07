@@ -143,7 +143,7 @@ class ReconnectionTest {
     void reconnect(ArangoProtocol protocol) {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config
-                .timeout(500)
+                .timeout(5000)
                 .build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
@@ -155,7 +155,7 @@ class ReconnectionTest {
             Throwable thrown = catchThrowable(() -> performRequest(connection));
             assertThat(Exceptions.unwrap(thrown)).isInstanceOfAny(IOException.class, TimeoutException.class);
             deployment.getProxiedHosts().forEach(ProxiedHost::enableProxy);
-            performRequest(connection);
+            performRequest(connection, 1);
         }
 
         connection.close().block();

@@ -36,8 +36,8 @@ public class ConnectionTestUtils {
             .putQueryParam("details", "true")
             .build();
 
-    public static void performRequest(ArangoConnection connection) {
-        ArangoResponse response = connection.execute(versionRequest).block();
+    public static void performRequest(ArangoConnection connection, int retries) {
+        ArangoResponse response = connection.execute(versionRequest).retry(retries).block();
 
         assertThat(response).isNotNull();
         assertThat(response.getVersion()).isEqualTo(1);
@@ -48,6 +48,10 @@ public class ConnectionTestUtils {
         assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
 
         response.getBody().release();
+    }
+
+    public static void performRequest(ArangoConnection connection) {
+        performRequest(connection, 0);
     }
 
 }

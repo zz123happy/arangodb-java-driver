@@ -92,16 +92,7 @@ class CommunicationResiliencyTest {
 
             host0.disableProxy();
 
-            boolean succeeded = false;
-            for (int i = 0; !succeeded && i < 100; i++) {
-                try {
-                    executeRequest(communication);
-                    succeeded = true;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            assertThat(succeeded).isTrue();
+            executeRequest(communication,100);
 
             host1.disableProxy();
 

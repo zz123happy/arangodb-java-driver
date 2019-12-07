@@ -32,8 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CommunicationTestUtils {
 
-    static void executeRequest(ArangoCommunication communication) {
-        ArangoResponse response = communication.execute(ConnectionTestUtils.versionRequest).block();
+    static void executeRequest(ArangoCommunication communication, int retries) {
+        ArangoResponse response = communication.execute(ConnectionTestUtils.versionRequest).retry(retries).block();
 
         assertThat(response).isNotNull();
         assertThat(response.getVersion()).isEqualTo(1);
@@ -44,6 +44,10 @@ class CommunicationTestUtils {
         assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
 
         response.getBody().release();
+    }
+
+    static void executeRequest(ArangoCommunication communication) {
+        executeRequest(communication, 0);
     }
 
 }
