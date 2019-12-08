@@ -76,7 +76,7 @@ class CommunicationResiliencyTest {
                 .protocol(protocol)
                 .connectionConfig(
                         ConnectionConfig.builder()
-                                .timeout(500)
+                                .timeout(5000)
                                 .build())
                 .build()).block();
         assertThat(communication).isNotNull();

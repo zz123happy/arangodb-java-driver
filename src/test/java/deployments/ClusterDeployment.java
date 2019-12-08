@@ -123,7 +123,7 @@ public class ClusterDeployment implements ContainerDeployment {
                 .withExposedPorts(port)
                 .withNetworkAliases(name)
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[" + name + "]"))
-                .waitingFor(Wait.forLogMessage(".*up and running.*", 1).withStartupTimeout(Duration.ofSeconds(300)));
+                .waitingFor(Wait.forLogMessage(".*up and running.*", 1).withStartupTimeout(Duration.ofSeconds(60)));
     }
 
     private GenericContainer<?> createAgent(int count) {
