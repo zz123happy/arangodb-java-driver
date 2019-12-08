@@ -29,14 +29,13 @@ jobs:
     strategy:
       matrix:
         docker-img:
-          - docker.io/arangodb:3.3.23
-          - docker.io/arangodb:3.4.8
-          - docker.io/arangodb:3.5.1
+          - docker.io/arangodb/arangodb:3.4.8
           - docker.io/arangodb/enterprise:3.4.8
-          - docker.io/arangodb/enterprise:3.5.1
-        topology:
-          - single
-          - cluster
+          - docker.io/arangodb/arangodb:3.5.3
+          - docker.io/arangodb/enterprise:3.5.3
+          - docker.io/arangodb/arangodb-preview:3.6.0-rc.1
+          - docker.io/arangodb/enterprise-preview:3.6.0-rc.1
+          - docker.io/arangodb/enterprise-preview:3.6.0-rc.1-ubi
 
     steps:
       - uses: actions/checkout@v1
@@ -44,9 +43,7 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: Start Database
-        run: ./docker/start_db_${{ matrix.topology }}.sh ${{ matrix.docker-img }}
-        env:
-          ARANGO_LICENSE_KEY: ${{ secrets.ARANGO_LICENSE_KEY }}
       - name: Test
-        run: mvn --no-transfer-progress test
+        run: mvn --no-transfer-progress test -Dtest.docker.image="${{matrix.docker-img}}" -Darango.license.key="$ARANGO_LICENSE_KEY"
+        env:
+          ARANGO_LICENSE_KEY: ${{secrets.ARANGO_LICENSE_KEY}}
