@@ -1,4 +1,4 @@
-package com.arangodb.next.connection;/*
+/*
  * DISCLAIMER
  *
  * Copyright 2016 ArangoDB GmbH, Cologne, Germany
@@ -18,8 +18,13 @@ package com.arangodb.next.connection;/*
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
+package com.arangodb.next.connection;
+
 
 import com.arangodb.velocypack.VPackSlice;
+
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,8 +42,18 @@ public class ConnectionTestUtils {
             .build();
 
     public static void performRequest(ArangoConnection connection, int retries) {
-        ArangoResponse response = connection.execute(versionRequest).retry(retries).block();
+        ArangoResponse response = connection.execute(versionRequest)
+                .retry(retries, t -> t instanceof IOException || t instanceof TimeoutException)
+                .block();
+        verifyAssertions(response);
+    }
 
+    public static void performRequest(ArangoConnection connection) {
+        ArangoResponse response = connection.execute(versionRequest).block();
+        verifyAssertions(response);
+    }
+
+    private static void verifyAssertions(ArangoResponse response) {
         assertThat(response).isNotNull();
         assertThat(response.getVersion()).isEqualTo(1);
         assertThat(response.getType()).isEqualTo(2);
@@ -48,10 +63,6 @@ public class ConnectionTestUtils {
         assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
 
         response.getBody().release();
-    }
-
-    public static void performRequest(ArangoConnection connection) {
-        performRequest(connection, 0);
     }
 
 }

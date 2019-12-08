@@ -78,6 +78,7 @@ public class ClusterDeployment implements ContainerDeployment {
                     }
                     return future;
                 })
+                .thenCompose(v -> CompletableFuture.runAsync(() -> ContainerUtils.waitForAuthenticationUpdate(this)))
                 .thenAccept(v -> log.info("Cluster is ready!"))
                 .thenApply(v -> this);
     }

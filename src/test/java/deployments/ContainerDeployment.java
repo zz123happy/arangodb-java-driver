@@ -54,6 +54,10 @@ public interface ContainerDeployment extends Startable {
         return "test";
     }
 
+    default String getBasicAuthentication() {
+        return "Basic cm9vdDp0ZXN0";
+    }
+
     default AuthenticationMethod getAuthentication() {
         return AuthenticationMethod.ofBasic(getUser(), getPassword());
     }

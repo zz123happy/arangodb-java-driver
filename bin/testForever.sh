@@ -1,6 +1,5 @@
 #!/bin/bash
 
-while :
-do
-	./bin/testMatrix.sh
+while :; do
+  ./bin/testMatrix.sh
 done

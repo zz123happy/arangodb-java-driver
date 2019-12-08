@@ -79,6 +79,7 @@ public class ProxiedClusterDeployment implements ProxiedContainerDeployment {
                     return future;
                 })
                 .thenAccept(v -> coordinators.keySet().forEach(k -> toxiproxy.getProxy(k, 8529)))
+                .thenCompose(v -> CompletableFuture.runAsync(() -> ContainerUtils.waitForAuthenticationUpdate(this)))
                 .thenAccept(v -> log.info("Cluster is ready!"))
                 .thenApply(v -> this);
     }

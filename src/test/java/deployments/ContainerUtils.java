@@ -21,8 +21,10 @@
 package deployments;
 
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.netty.http.client.HttpClient;
 
 /**
  * @author Michele Rastelli
@@ -45,4 +47,28 @@ class ContainerUtils {
         log.info("Using arango license key: {}", arangoLicenseKey.replaceAll(".", "*"));
         return arangoLicenseKey;
     }
+
+    static void waitForAuthenticationUpdate(ContainerDeployment deployment) {
+        boolean authErrors;
+        do {
+            authErrors = deployment.getHosts().stream()
+                    .map(h -> HttpClient.create()
+                            .headers(headers -> headers.add("Authorization", deployment.getBasicAuthentication()))
+                            .get()
+                            .uri("http://" + h.getHost() + ":" + h.getPort() + "/_api/version")
+                            .response()
+                            .block())
+                    .anyMatch(response -> response.status() != HttpResponseStatus.OK);
+
+            if (authErrors) {
+                log.warn("Authentication Error: retrying in 1s ...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        } while (authErrors);
+    }
+
 }

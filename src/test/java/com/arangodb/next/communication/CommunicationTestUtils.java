@@ -25,6 +25,9 @@ import com.arangodb.next.connection.ConnectionTestUtils;
 import com.arangodb.next.connection.IOUtils;
 import com.arangodb.velocypack.VPackSlice;
 
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -33,8 +36,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CommunicationTestUtils {
 
     static void executeRequest(ArangoCommunication communication, int retries) {
-        ArangoResponse response = communication.execute(ConnectionTestUtils.versionRequest).retry(retries).block();
+        ArangoResponse response = communication.execute(ConnectionTestUtils.versionRequest)
+                .retry(retries, t -> t instanceof IOException || t instanceof TimeoutException)
+                .block();
+        verifyAssertions(response);
+    }
 
+    static void executeRequest(ArangoCommunication communication) {
+        ArangoResponse response = communication.execute(ConnectionTestUtils.versionRequest).block();
+        verifyAssertions(response);
+    }
+
+    private static void verifyAssertions(ArangoResponse response) {
         assertThat(response).isNotNull();
         assertThat(response.getVersion()).isEqualTo(1);
         assertThat(response.getType()).isEqualTo(2);
@@ -44,10 +57,6 @@ class CommunicationTestUtils {
         assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
 
         response.getBody().release();
-    }
-
-    static void executeRequest(ArangoCommunication communication) {
-        executeRequest(communication, 0);
     }
 
 }
