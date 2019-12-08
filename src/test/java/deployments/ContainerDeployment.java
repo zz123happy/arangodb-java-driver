@@ -27,6 +27,7 @@ import org.testcontainers.lifecycle.Startable;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 /**
  * @author Michele Rastelli
@@ -71,10 +72,15 @@ public interface ContainerDeployment extends Startable {
     default void start() {
         try {
             asyncStart().join();
-        } catch (ContainerLaunchException e) {
+        } catch (CompletionException e) {
             System.out.println("Containers failed to start, retrying...");
-            stop();
-            start();
+            e.printStackTrace();
+            if (e.getCause() instanceof ContainerLaunchException) {
+                stop();
+                start();
+            } else {
+                throw e;
+            }
         }
     }
 
