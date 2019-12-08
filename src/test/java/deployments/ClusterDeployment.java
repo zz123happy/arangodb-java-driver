@@ -26,14 +26,13 @@ public class ClusterDeployment implements ContainerDeployment {
     private final Logger log = LoggerFactory.getLogger(ClusterDeployment.class);
     private final String DOCKER_COMMAND = "arangodb --auth.jwt-secret /jwtSecret ";
 
-    private final Network network;
+    private Network network;
 
     private final List<GenericContainer<?>> agents;
     private final List<GenericContainer<?>> dbServers;
     private final Map<String, GenericContainer<?>> coordinators;
 
     ClusterDeployment(int dbServers, int coordinators) {
-        network = Network.newNetwork();
 
         agents = IntStream.range(0, 3)
                 .mapToObj(this::createAgent)
@@ -53,13 +52,20 @@ public class ClusterDeployment implements ContainerDeployment {
 
     @Override
     public CompletableFuture<ContainerDeployment> asyncStart() {
-        return CompletableFuture.completedFuture(null)
-                .thenCompose(v -> performActionOnGroup(agents, GenericContainer::start))
-                .thenCompose(v -> CompletableFuture.allOf(
+        return CompletableFuture
+                .runAsync(() -> {
+                    network = Network.newNetwork();
+                    agents.forEach(agent -> agent.withNetwork(network));
+                    dbServers.forEach(agent -> agent.withNetwork(network));
+                    coordinators.values().forEach(agent -> agent.withNetwork(network));
+                })
+                .thenAccept(__ -> agents.forEach(agent -> agent.withNetwork(network)))
+                .thenCompose(__ -> performActionOnGroup(agents, GenericContainer::start))
+                .thenCompose(__ -> CompletableFuture.allOf(
                         performActionOnGroup(dbServers, GenericContainer::start),
                         performActionOnGroup(coordinators.values(), GenericContainer::start)
                 ))
-                .thenCompose(v -> {
+                .thenCompose(__ -> {
                     CompletableFuture<Void> future = new CompletableFuture<>();
                     try {
                         Container.ExecResult result = coordinators.values().iterator().next().execInContainer(
@@ -71,16 +77,16 @@ public class ClusterDeployment implements ContainerDeployment {
                             throw new RuntimeException(result.getStderr() + "\n" + result.getStdout());
                         }
 
-                        future.complete(v);
+                        future.complete(null);
                     } catch (Exception e) {
                         e.printStackTrace();
                         future.completeExceptionally(e);
                     }
                     return future;
                 })
-                .thenCompose(v -> CompletableFuture.runAsync(() -> ContainerUtils.waitForAuthenticationUpdate(this)))
-                .thenAccept(v -> log.info("Cluster is ready!"))
-                .thenApply(v -> this);
+                .thenCompose(__ -> CompletableFuture.runAsync(() -> ContainerUtils.waitForAuthenticationUpdate(this)))
+                .thenAccept(__ -> log.info("Cluster is ready!"))
+                .thenApply(__ -> this);
     }
 
     @Override
@@ -115,7 +121,6 @@ public class ClusterDeployment implements ContainerDeployment {
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
                 .withCopyFileToContainer(MountableFile.forClasspathResource("deployments/jwtSecret"), "/jwtSecret")
                 .withExposedPorts(port)
-                .withNetwork(network)
                 .withNetworkAliases(name)
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[" + name + "]"))
                 .waitingFor(Wait.forLogMessage(".*up and running.*", 1).withStartupTimeout(Duration.ofSeconds(300)));

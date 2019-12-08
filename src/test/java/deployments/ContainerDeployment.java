@@ -22,6 +22,7 @@ package deployments;
 
 import com.arangodb.next.connection.AuthenticationMethod;
 import com.arangodb.next.connection.HostDescription;
+import org.testcontainers.containers.ContainerLaunchException;
 import org.testcontainers.lifecycle.Startable;
 
 import java.util.List;
@@ -68,7 +69,13 @@ public interface ContainerDeployment extends Startable {
 
     @Override
     default void start() {
-        asyncStart().join();
+        try {
+            asyncStart().join();
+        } catch (ContainerLaunchException e) {
+            System.out.println("Containers failed to start, retrying...");
+            stop();
+            start();
+        }
     }
 
     @Override

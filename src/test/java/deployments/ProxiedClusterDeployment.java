@@ -24,16 +24,14 @@ public class ProxiedClusterDeployment implements ProxiedContainerDeployment {
     private final Logger log = LoggerFactory.getLogger(ProxiedClusterDeployment.class);
     private final String DOCKER_COMMAND = "arangodb --auth.jwt-secret /jwtSecret ";
 
-    private final Network network;
-    private final ToxiproxyContainer toxiproxy;
+    private Network network;
+    private ToxiproxyContainer toxiproxy;
 
     private final List<GenericContainer<?>> agents;
     private final List<GenericContainer<?>> dbServers;
     private final Map<String, GenericContainer<?>> coordinators;
 
     ProxiedClusterDeployment(int dbServers, int coordinators) {
-        network = Network.newNetwork();
-        toxiproxy = new ToxiproxyContainer().withNetwork(network);
 
         agents = IntStream.range(0, 3)
                 .mapToObj(this::createAgent)
@@ -53,13 +51,21 @@ public class ProxiedClusterDeployment implements ProxiedContainerDeployment {
 
     @Override
     public CompletableFuture<ContainerDeployment> asyncStart() {
-        return CompletableFuture.runAsync(toxiproxy::start).thenAccept((v) -> log.info("READY: toxiproxy"))
-                .thenCompose(v -> performActionOnGroup(agents, GenericContainer::start))
-                .thenCompose(v -> CompletableFuture.allOf(
+        return CompletableFuture
+                .runAsync(() -> {
+                    network = Network.newNetwork();
+                    agents.forEach(agent -> agent.withNetwork(network));
+                    dbServers.forEach(agent -> agent.withNetwork(network));
+                    coordinators.values().forEach(agent -> agent.withNetwork(network));
+                    toxiproxy = new ToxiproxyContainer().withNetwork(network);
+                })
+                .thenCompose(__ -> CompletableFuture.runAsync(toxiproxy::start).thenAccept(___ -> log.info("READY: toxiproxy")))
+                .thenCompose(__ -> performActionOnGroup(agents, GenericContainer::start))
+                .thenCompose(__ -> CompletableFuture.allOf(
                         performActionOnGroup(dbServers, GenericContainer::start),
                         performActionOnGroup(coordinators.values(), GenericContainer::start)
                 ))
-                .thenCompose(v -> {
+                .thenCompose(__ -> {
                     CompletableFuture<Void> future = new CompletableFuture<>();
                     try {
                         Container.ExecResult result = coordinators.values().iterator().next().execInContainer(
@@ -71,17 +77,17 @@ public class ProxiedClusterDeployment implements ProxiedContainerDeployment {
                             throw new RuntimeException(result.getStderr() + "\n" + result.getStdout());
                         }
 
-                        future.complete(v);
+                        future.complete(null);
                     } catch (Exception e) {
                         e.printStackTrace();
                         future.completeExceptionally(e);
                     }
                     return future;
                 })
-                .thenAccept(v -> coordinators.keySet().forEach(k -> toxiproxy.getProxy(k, 8529)))
-                .thenCompose(v -> CompletableFuture.runAsync(() -> ContainerUtils.waitForAuthenticationUpdate(this)))
-                .thenAccept(v -> log.info("Cluster is ready!"))
-                .thenApply(v -> this);
+                .thenAccept(__ -> coordinators.keySet().forEach(k -> toxiproxy.getProxy(k, 8529)))
+                .thenCompose(__ -> CompletableFuture.runAsync(() -> ContainerUtils.waitForAuthenticationUpdate(this)))
+                .thenAccept(__ -> log.info("Cluster is ready!"))
+                .thenApply(__ -> this);
     }
 
     @Override
@@ -92,8 +98,8 @@ public class ProxiedClusterDeployment implements ProxiedContainerDeployment {
                 performActionOnGroup(coordinators.values(), GenericContainer::stop)
         )
                 .thenAcceptAsync(__ -> network.close())
-                .thenAccept((v) -> log.info("Cluster has been shutdown!"))
-                .thenApply((v) -> this);
+                .thenAccept(__ -> log.info("Cluster has been shutdown!"))
+                .thenApply(__ -> this);
     }
 
     @Override
@@ -108,7 +114,6 @@ public class ProxiedClusterDeployment implements ProxiedContainerDeployment {
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
                 .withCopyFileToContainer(MountableFile.forClasspathResource("deployments/jwtSecret"), "/jwtSecret")
                 .withExposedPorts(port)
-                .withNetwork(network)
                 .withNetworkAliases(name)
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[" + name + "]"))
                 .waitingFor(Wait.forLogMessage(".*up and running.*", 1).withStartupTimeout(Duration.ofSeconds(300)));
