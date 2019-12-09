@@ -84,7 +84,7 @@ class CommunicationResiliencyTest {
         ProxiedHost host0 = deployment.getProxiedHosts().get(0);
         ProxiedHost host1 = deployment.getProxiedHosts().get(1);
 
-        for (int j = 0; j < 10; j++) {
+        for (int j = 0; j < 100; j++) {
 
             for (int i = 0; i < 10; i++) {
                 executeRequest(communication);

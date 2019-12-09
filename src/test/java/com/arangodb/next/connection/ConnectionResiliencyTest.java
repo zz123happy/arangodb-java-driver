@@ -43,16 +43,16 @@ import static org.assertj.core.api.Assertions.catchThrowable;
  * @author Michele Rastelli
  */
 @Testcontainers
-class ReconnectionTest {
+class ConnectionResiliencyTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReconnectionTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionResiliencyTest.class);
 
     private final ImmutableConnectionConfig.Builder config;
 
     @Container
     private static final ProxiedContainerDeployment deployment = ProxiedContainerDeployment.ofSingleServer();
 
-    ReconnectionTest() {
+    ConnectionResiliencyTest() {
         config = ConnectionConfig.builder();
     }
 
@@ -110,7 +110,7 @@ class ReconnectionTest {
     }
 
     @Test
-    void concurrentCloseConnection() {
+    void closeConnectionTwice() {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY)
@@ -149,7 +149,7 @@ class ReconnectionTest {
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 100; i++) {
             performRequest(connection);
             deployment.getProxiedHosts().forEach(ProxiedHost::disableProxy);
             Throwable thrown = catchThrowable(() -> performRequest(connection));
