@@ -87,12 +87,12 @@ class CommunicationResiliencyTest {
         for (int j = 0; j < 100; j++) {
 
             for (int i = 0; i < 10; i++) {
-                executeRequest(communication);
+                executeRequest(communication, 2); // retries at most once per host
             }
 
             host0.disableProxy();
 
-            executeRequest(communication,100);
+            executeRequest(communication, 100);
 
             host1.disableProxy();
 
