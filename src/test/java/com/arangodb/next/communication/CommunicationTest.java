@@ -87,7 +87,6 @@ class CommunicationTest {
 
         ArangoCommunication communication = ArangoCommunication.create(config
                 .protocol(protocol)
-                .acquireHostListInterval(Duration.ofSeconds(10))
                 .hosts(hosts.subList(0, 1))
                 .build()).block();
         assertThat(communication).isNotNull();
@@ -103,10 +102,14 @@ class CommunicationTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void wrongHostConnectionFailure(ArangoProtocol protocol) {
-        Throwable thrown = catchThrowable(() -> ArangoCommunication.create(config
-                .protocol(protocol)
-                .hosts(Collections.singleton(HostDescription.of("wrongHost", 8529)))
-                .build()).block());
+        Throwable thrown = catchThrowable(() -> {
+            ArangoCommunication communication = ArangoCommunication.create(config
+                    .protocol(protocol)
+                    .hosts(Collections.singleton(HostDescription.of("wrongHost", 8529)))
+                    .build()).block();
+            assertThat(communication).isNotNull();
+            CommunicationTestUtils.executeRequest(communication);
+        });
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
     }
 

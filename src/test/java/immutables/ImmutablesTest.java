@@ -20,7 +20,10 @@
 
 package immutables;
 
+import com.arangodb.next.communication.CommunicationConfig;
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -43,6 +46,18 @@ class ImmutablesTest {
         assertThatThrownBy(() -> myObj.getRoles().add("oo"))
                 .isInstanceOf(UnsupportedOperationException.class)
                 .hasStackTraceContaining("UnmodifiableCollection");
+    }
+
+    @Test
+    void crossValidation() {
+        Throwable thrown = catchThrowable(() -> CommunicationConfig.builder()
+                .acquireHostListInterval(Duration.ofSeconds(10))
+                .timeout(Duration.ofSeconds(10))
+                .build());
+
+        assertThat(thrown)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("timeout must be less than acquireHostListInterval");
     }
 
 }

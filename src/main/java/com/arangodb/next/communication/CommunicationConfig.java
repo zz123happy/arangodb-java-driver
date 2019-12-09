@@ -78,6 +78,22 @@ public interface CommunicationConfig {
     }
 
     /**
+     * @return number of retries for every management operation, like connections creations, acquireHostList, ...
+     */
+    @Value.Default
+    default int getRetries() {
+        return 10;
+    }
+
+    /**
+     * @return timeout for every management operation, like connections creations, acquireHostList, ...
+     */
+    @Value.Default
+    default Duration getTimeout() {
+        return Duration.ofSeconds(10);
+    }
+
+    /**
      * @return amount of connections that will be created for every host
      */
     @Value.Default
@@ -105,6 +121,13 @@ public interface CommunicationConfig {
     @Value.Default
     default boolean getNegotiateAuthentication() {
         return false;
+    }
+
+    @Value.Check
+    default void checkValid() {
+        if (getTimeout().compareTo(getAcquireHostListInterval()) >= 0) {
+            throw new IllegalStateException("timeout must be less than acquireHostListInterval!");
+        }
     }
 
 }

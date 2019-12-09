@@ -26,12 +26,12 @@ import com.arangodb.velocypack.VPackSlice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -44,10 +44,6 @@ import java.util.stream.IntStream;
 class ArangoCommunicationImpl implements ArangoCommunication {
 
     private static final Logger log = LoggerFactory.getLogger(ArangoCommunicationImpl.class);
-
-    // TODO: mv to CommunicationConfig
-    private static final int OPERATIONS_RETRIES = 10;
-    private static final Duration OPERATIONS_TIMEOUT = Duration.ofSeconds(10);
 
     private volatile boolean initialized = false;
     private volatile boolean updatingConnectionsSemaphore = false;
@@ -73,7 +69,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         log.debug("ArangoCommunicationImpl({})", config);
 
         this.config = config;
-        hostList = config.getHosts();
+        setHostList(config.getHosts());
         connectionsByHost = new ConcurrentHashMap<>();
         connectionFactory = new ArangoConnectionFactory(
                 config.getConnectionConfig(),
@@ -99,8 +95,9 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
     @Override
     public Mono<ArangoResponse> execute(ArangoRequest request) {
+        log.debug("execute({})", request);
         return Mono.defer(() -> executeOnRandomHost(request))
-                .timeout(OPERATIONS_TIMEOUT);
+                .timeout(config.getTimeout());
     }
 
     private Mono<ArangoResponse> executeOnRandomHost(ArangoRequest request) {
@@ -108,14 +105,16 @@ class ArangoCommunicationImpl implements ArangoCommunication {
             return Mono.error(new IOException("No open connections!"));
         }
         HostDescription host = getRandomItem(connectionsByHost.keySet());
-        log.info("executeOnRandomHost: picked host {}", host);
+        log.debug("executeOnRandomHost: picked host {}", host);
         ArangoConnection connection = getRandomItem(connectionsByHost.get(host));
         return connection.execute(request);
     }
 
     @Override
     public Mono<Void> close() {
-        Optional.ofNullable(scheduledUpdateHostListSubscription).ifPresent(Disposable::dispose);
+        log.debug("close()");
+        Optional.ofNullable(scheduledUpdateHostListSubscription)
+                .ifPresent(Disposable::dispose);
         List<Mono<Void>> closedConnections = connectionsByHost.values().stream()
                 .flatMap(Collection::stream)
                 .map(ArangoConnection::close)
@@ -125,11 +124,11 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
     private static <T> T getRandomItem(final Collection<T> collection) {
         int index = ThreadLocalRandom.current().nextInt(collection.size());
-        Iterator<T> iter = collection.iterator();
+        Iterator<T> iterator = collection.iterator();
         for (int i = 0; i < index; i++) {
-            iter.next();
+            iterator.next();
         }
-        return iter.next();
+        return iterator.next();
     }
 
     Map<HostDescription, List<ArangoConnection>> getConnectionsByHost() {
@@ -165,7 +164,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
      * - connections related to removed hosts have been closed
      * - connections related to added hosts have been initialized
      */
-    private synchronized Mono<Void> updateHostList() {
+    synchronized Mono<Void> updateHostList() {
         log.debug("updateHostList()");
 
         if (updatingHostListSemaphore) {
@@ -175,13 +174,19 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         return execute(acquireHostListRequest)
                 .map(this::parseAcquireHostListResponse)
-                .retry(OPERATIONS_RETRIES)
-                .doOnNext(it -> hostList = it)
+                .retry(config.getRetries())
+                .doOnNext(acquiredHostList -> log.debug("Acquired hosts: {}", acquiredHostList))
+                .doOnError(e -> log.warn("Error acquiring hostList: {}", e))
+                .onErrorReturn(config.getHosts())
+                .doOnNext(this::setHostList)
                 .then(Mono.defer(this::updateConnections))
+                .timeout(config.getTimeout())
                 .doFinally(s -> updatingHostListSemaphore = false);
     }
 
     private List<HostDescription> parseAcquireHostListResponse(ArangoResponse response) {
+        log.debug("parseAcquireHostListResponse({})", response);
+
         // TODO: handle exceptions           response.getResponseCode() != 200
         VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
         VPackSlice field = responseBodySlice.get("endpoints");
@@ -214,29 +219,48 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         List<Mono<Void>> addedHosts = hostList.stream()
                 .filter(o -> !currentHosts.contains(o))
-                .map(host -> Flux.merge(createHostConnections(host)).collectList()
+                .peek(host -> log.debug("adding host: {}", host))
+                .map(host -> Flux
+                        .merge(createHostConnections(host)).collectList()
                         .flatMap(hostConnections -> {
                             if (hostConnections.isEmpty()) {
+                                log.warn("not able to connect to host [{}], skipped adding host!", host);
                                 // could not create any connection to this host, eg. in case of dead coordinator
-                                return Optional.ofNullable(connectionsByHost.remove(host))
+                                return Optional.ofNullable(connectionsByHost.remove(host))  // FIXME: this should never happen
                                         .map(this::closeHostConnections)
                                         .orElse(Mono.empty());
                             } else {
                                 connectionsByHost.put(host, hostConnections);
+                                log.debug("added host: {}", host);
                                 return Mono.empty();
                             }
-                        }))
+                        })
+                )
                 .collect(Collectors.toList());
 
         List<Mono<Void>> removedHosts = currentHosts.stream()
                 .filter(o -> !hostList.contains(o))
+                .peek(host -> log.debug("removing host: {}", host))
                 .map(host -> closeHostConnections(connectionsByHost.remove(host)))
                 .collect(Collectors.toList());
 
         return Flux.merge(Flux.merge(addedHosts), Flux.merge(removedHosts))
-                .timeout(OPERATIONS_TIMEOUT)
-                .doFinally(s -> updatingConnectionsSemaphore = false)
-                .then();
+                .timeout(config.getTimeout())
+                .then(Mono.defer(() -> {
+                    if (connectionsByHost.isEmpty()) {
+                        return Mono.<Void>error(Exceptions.bubble(new IOException("Could not create any connection.")));
+                    } else {
+                        return Mono.empty();
+                    }
+                }))
+
+                // here we cannot use Flux::doFinally since the signal is propagated downstream before the callback is
+                // executed and this is a problem if a chained task re-invoke this method
+                .doOnTerminate(() -> {
+                    log.debug("updateConnections complete!");
+                    updatingConnectionsSemaphore = false;
+                })
+                .doOnCancel(() -> updatingConnectionsSemaphore = false);
     }
 
     private Mono<Void> scheduleUpdateHostList() {
@@ -255,7 +279,8 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         return IntStream.range(0, config.getConnectionsPerHost())
                 .mapToObj(i -> Mono.defer(() -> connectionFactory.create(host, authentication))
-                        .retry(OPERATIONS_RETRIES)
+                        .retry(config.getRetries())
+                        .doOnNext(it -> log.debug("created connection to host: {}", host))
                         .onErrorResume(e -> Mono.empty()) // skips the failing connections
                 )
                 .collect(Collectors.toList());
@@ -269,6 +294,11 @@ class ArangoCommunicationImpl implements ArangoCommunication {
                         .map(ArangoConnection::close)
                         .collect(Collectors.toList())
         ).then();
+    }
+
+    private void setHostList(List<HostDescription> hostList) {
+        log.debug("setHostList({})", hostList);
+        this.hostList = hostList;
     }
 
 }
