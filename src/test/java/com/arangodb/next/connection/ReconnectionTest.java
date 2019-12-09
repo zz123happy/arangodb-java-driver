@@ -68,7 +68,7 @@ class ReconnectionTest {
     @EnumSource(ArangoProtocol.class)
     void requestTimeout(ArangoProtocol protocol) {
         HostDescription host = deployment.getHosts().get(0);
-        ConnectionConfig testConfig = config.timeout(1000).build();
+        ConnectionConfig testConfig = config.timeout(2000).build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
@@ -89,7 +89,7 @@ class ReconnectionTest {
     @Test
     void VstConnectionTimeout() {
         HostDescription host = deployment.getHosts().get(0);
-        ConnectionConfig testConfig = config.timeout(1000).build();
+        ConnectionConfig testConfig = config.timeout(2000).build();
         deployment.getProxiedHosts().forEach(it -> it.getProxy().setConnectionCut(true));
         Throwable thrown = catchThrowable(() ->
                 new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY)
