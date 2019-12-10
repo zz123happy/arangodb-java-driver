@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class ClusterDeployment implements ContainerDeployment {
+public class ClusterDeployment extends ContainerDeployment {
 
     private final Logger log = LoggerFactory.getLogger(ClusterDeployment.class);
     private final String DOCKER_COMMAND = "arangodb --auth.jwt-secret /jwtSecret ";

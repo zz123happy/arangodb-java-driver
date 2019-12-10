@@ -26,6 +26,7 @@ package com.arangodb.next.connection;
 public class ConnectionUtils {
 
     public static final ArangoRequest endpointsRequest = ArangoRequest.builder()
+            .database("_system")
             .path("/_api/cluster/endpoints")
             .requestType(ArangoRequest.RequestType.GET)
             .build();

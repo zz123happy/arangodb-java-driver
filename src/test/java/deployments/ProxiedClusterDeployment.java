@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class ProxiedClusterDeployment implements ProxiedContainerDeployment {
+public class ProxiedClusterDeployment extends ProxiedContainerDeployment {
 
     private final Logger log = LoggerFactory.getLogger(ProxiedClusterDeployment.class);
     private final String DOCKER_COMMAND = "arangodb --auth.jwt-secret /jwtSecret ";

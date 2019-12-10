@@ -32,44 +32,22 @@ import java.util.concurrent.CompletionException;
 /**
  * @author Michele Rastelli
  */
-public interface ContainerDeployment extends Startable {
+public abstract class ContainerDeployment implements Startable {
 
-    static ContainerDeployment ofSingleServerWithSsl() {
+    public static ContainerDeployment ofSingleServerWithSsl() {
         return new SingleServerSslDeployment();
     }
 
-    static ContainerDeployment ofCluster(int dbServers, int coordinators) {
+    public static ContainerDeployment ofSingleServerNoAuth() {
+        return new SingleServerNoAuthDeployment();
+    }
+
+    public static ContainerDeployment ofCluster(int dbServers, int coordinators) {
         return new ClusterDeployment(dbServers, coordinators);
     }
 
-    default String getImage() {
-        return ContainerUtils.getImage();
-    }
-
-    List<HostDescription> getHosts();
-
-    default String getUser() {
-        return "root";
-    }
-
-    default String getPassword() {
-        return "test";
-    }
-
-    default String getBasicAuthentication() {
-        return "Basic cm9vdDp0ZXN0";
-    }
-
-    default AuthenticationMethod getAuthentication() {
-        return AuthenticationMethod.ofBasic(getUser(), getPassword());
-    }
-
-    CompletableFuture<? extends ContainerDeployment> asyncStart();
-
-    CompletableFuture<ContainerDeployment> asyncStop();
-
     @Override
-    default void start() {
+    public void start() {
         try {
             asyncStart().join();
         } catch (CompletionException e) {
@@ -85,8 +63,34 @@ public interface ContainerDeployment extends Startable {
     }
 
     @Override
-    default void stop() {
+    public void stop() {
         asyncStop().join();
     }
+
+    public AuthenticationMethod getAuthentication() {
+        return AuthenticationMethod.ofBasic(getUser(), getPassword());
+    }
+
+    public String getUser() {
+        return "root";
+    }
+
+    public String getPassword() {
+        return "test";
+    }
+
+    public String getBasicAuthentication() {
+        return "Basic cm9vdDp0ZXN0";
+    }
+
+    public abstract List<HostDescription> getHosts();
+
+    protected String getImage() {
+        return ContainerUtils.getImage();
+    }
+
+    protected abstract CompletableFuture<? extends ContainerDeployment> asyncStart();
+
+    protected abstract CompletableFuture<ContainerDeployment> asyncStop();
 
 }

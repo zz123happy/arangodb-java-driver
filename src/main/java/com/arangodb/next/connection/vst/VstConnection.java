@@ -23,6 +23,7 @@ package com.arangodb.next.connection.vst;
 import com.arangodb.next.connection.*;
 import com.arangodb.next.connection.exceptions.ArangoConnectionAuthenticationException;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.JdkSslContext;
 import org.slf4j.Logger;
@@ -103,7 +104,9 @@ final public class VstConnection implements ArangoConnection {
             throw new IllegalStateException("Already initialized!");
         }
         initialized = true;
-        return publishOnScheduler(this::connect).timeout(Duration.ofMillis(config.getTimeout())).map(it -> this);
+        return publishOnScheduler(this::connect).timeout(Duration.ofMillis(config.getTimeout()))
+                .then(Mono.defer(this::checkAuthenticated))
+                .map(it -> this);
     }
 
     @Override
@@ -165,26 +168,39 @@ final public class VstConnection implements ArangoConnection {
                     );
                     return execute(connection, id, buffer)
                             .doOnNext(response -> {
-                                if (response.getResponseCode() != 200) {
+                                if (response.getResponseCode() != HttpResponseStatus.OK.code()) {
+                                    response.getBody().release();
                                     log.warn("in authenticate(): received response {}", response);
                                     throw ArangoConnectionAuthenticationException.of(response);
                                 }
                             })
                             .then();
                 })
-                .orElse(Mono.defer(() ->
-                        // perform a request to /_api/cluster/endpoints to check if server has no authentication
-                        execute(ConnectionUtils.endpointsRequest).doOnNext(response -> {
-                            if (response.getResponseCode() == 401) {
-                                throw ArangoConnectionAuthenticationException.of(response);
-                            }
-                        }).then()
-                ));
+                .orElse(Mono.empty());
     }
 
     private Mono<ArangoResponse> execute(final Connection connection, long id, final ByteBuf buf) {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
         return send(connection, buf).then(messageStore.addRequest(id));
+    }
+
+    /**
+     * This check is only useful when the connection is configured without authentication. In such case the VST
+     * authentication does not happen, thus we need to check if the server is also configured without authentication.
+     *
+     * @return a Mono resolved if the test request is successful
+     */
+    private Mono<ArangoResponse> checkAuthenticated() {
+        return Mono.defer(() ->
+                // perform a request to /_api/cluster/endpoints
+                execute(ConnectionUtils.endpointsRequest)
+                        .doOnNext(response -> {
+                            if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
+                                response.getBody().release();
+                                throw ArangoConnectionAuthenticationException.of(response);
+                            }
+                        })
+        );
     }
 
     /**

@@ -21,9 +21,7 @@
 package com.arangodb.next.connection;
 
 import com.arangodb.next.connection.exceptions.ArangoConnectionAuthenticationException;
-import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
-import com.arangodb.velocypack.ValueType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import deployments.ContainerDeployment;
 import io.netty.buffer.Unpooled;
@@ -71,27 +69,11 @@ class BasicConnectionTest {
     private static String jwt;
 
     private final ConnectionConfig config;
-    private final ArangoRequest getRequest;
-    private final ArangoRequest postRequest;
 
     BasicConnectionTest() throws Exception {
         config = ConnectionConfig.builder()
                 .useSsl(true)
                 .sslContext(getSslContext())
-                .build();
-
-        getRequest = ArangoRequest.builder()
-                .database("_system")
-                .path("/_api/version")
-                .requestType(ArangoRequest.RequestType.GET)
-                .putQueryParam("details", "true")
-                .build();
-
-        postRequest = ArangoRequest.builder()
-                .database("_system")
-                .path("/_api/query")
-                .requestType(ArangoRequest.RequestType.POST)
-                .body(VPackUtils.extractBuffer(createParseQueryRequestBody()))
                 .build();
     }
 
@@ -153,7 +135,7 @@ class BasicConnectionTest {
         ArangoConnection connection = new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, authenticationMethod).block();
         assertThat(connection).isNotNull();
-        ArangoResponse response = connection.execute(getRequest).block();
+        ArangoResponse response = connection.execute(ConnectionTestUtils.versionRequest).block();
 
         assertThat(response).isNotNull();
         assertThat(response.getVersion()).isEqualTo(1);
@@ -175,7 +157,7 @@ class BasicConnectionTest {
         ArangoConnection connection = new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, authenticationMethod).block();
         assertThat(connection).isNotNull();
-        ArangoResponse response = connection.execute(postRequest).block();
+        ArangoResponse response = connection.execute(ConnectionTestUtils.postRequest()).block();
 
         assertThat(response).isNotNull();
         assertThat(response.getVersion()).isEqualTo(1);
@@ -197,7 +179,7 @@ class BasicConnectionTest {
         new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, deployment.getAuthentication())
                 .flatMapMany(c ->
                         Flux.range(0, 1_000)
-                                .flatMap(i -> c.execute(getRequest))
+                                .flatMap(i -> c.execute(ConnectionTestUtils.versionRequest))
                                 .doOnNext(response -> {
                                     assertThat(response).isNotNull();
                                     assertThat(response.getVersion()).isEqualTo(1);
@@ -212,7 +194,6 @@ class BasicConnectionTest {
                 .then().block();
     }
 
-
     @ParameterizedTest
     @MethodSource("wrongAuthenticationArgumentsProvider")
     void authenticationFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
@@ -222,7 +203,6 @@ class BasicConnectionTest {
         );
     }
 
-
     @ParameterizedTest
     @MethodSource("argumentsProvider")
     void wrongHostFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
@@ -230,14 +210,6 @@ class BasicConnectionTest {
         Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(wrongHost, authenticationMethod)
                 .block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
-    }
-
-    private VPackSlice createParseQueryRequestBody() {
-        final VPackBuilder builder = new VPackBuilder();
-        builder.add(ValueType.OBJECT);
-        builder.add("query", "FOR i IN 1..100 RETURN i * 3");
-        builder.close();
-        return builder.slice();
     }
 
     private SSLContext getSslContext() throws Exception {

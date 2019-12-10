@@ -26,16 +26,16 @@ import java.util.List;
 /**
  * @author Michele Rastelli
  */
-public interface ProxiedContainerDeployment extends ContainerDeployment {
+public abstract class ProxiedContainerDeployment extends ContainerDeployment {
 
-    static ProxiedContainerDeployment ofSingleServer() {
+    public static ProxiedContainerDeployment ofSingleServer() {
         return new ProxiedSingleServerDeployment();
     }
 
-    static ProxiedContainerDeployment ofCluster(int dbServers, int coordinators) {
+    public static ProxiedContainerDeployment ofCluster(int dbServers, int coordinators) {
         return new ProxiedClusterDeployment(dbServers, coordinators);
     }
 
-    List<ProxiedHost> getProxiedHosts();
+    public abstract List<ProxiedHost> getProxiedHosts();
 
 }

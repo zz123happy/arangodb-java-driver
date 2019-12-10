@@ -89,7 +89,8 @@ final public class HttpConnection implements ArangoConnection {
 
         // perform a request to /_api/cluster/endpoints to check if server has no authentication
         return execute(ConnectionUtils.endpointsRequest).doOnNext(response -> {
-            if (response.getResponseCode() == 401) {
+            response.getBody().release();
+            if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
                 throw ArangoConnectionAuthenticationException.of(response);
             }
         }).map(it -> this);
@@ -105,6 +106,7 @@ final public class HttpConnection implements ArangoConnection {
                 .responseSingle(this::buildResponse)
                 .doOnNext(response -> {
                     if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
+                        response.getBody().release();
                         log.debug("in execute(): throwing ArangoConnectionAuthenticationException()");
                         throw ArangoConnectionAuthenticationException.of(response);
                     }

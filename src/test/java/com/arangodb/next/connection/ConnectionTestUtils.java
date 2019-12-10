@@ -21,7 +21,9 @@
 package com.arangodb.next.connection;
 
 
+import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
+import com.arangodb.velocypack.ValueType;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
@@ -40,6 +42,15 @@ public class ConnectionTestUtils {
             .requestType(ArangoRequest.RequestType.GET)
             .putQueryParam("details", "true")
             .build();
+
+    public static ArangoRequest postRequest() {
+        return ArangoRequest.builder()
+                .database("_system")
+                .path("/_api/query")
+                .requestType(ArangoRequest.RequestType.POST)
+                .body(VPackUtils.extractBuffer(createParseQueryRequestBody()))
+                .build();
+    }
 
     public static void performRequest(ArangoConnection connection, int retries) {
         ArangoResponse response = connection.execute(versionRequest)
@@ -63,6 +74,14 @@ public class ConnectionTestUtils {
         assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
 
         response.getBody().release();
+    }
+
+    private static VPackSlice createParseQueryRequestBody() {
+        final VPackBuilder builder = new VPackBuilder();
+        builder.add(ValueType.OBJECT);
+        builder.add("query", "FOR i IN 1..100 RETURN i * 3");
+        builder.close();
+        return builder.slice();
     }
 
 }

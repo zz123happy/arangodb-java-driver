@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class ProxiedSingleServerDeployment implements ProxiedContainerDeployment {
+public class ProxiedSingleServerDeployment extends ProxiedContainerDeployment {
 
     private static final Logger log = LoggerFactory.getLogger(ProxiedSingleServerDeployment.class);
 
