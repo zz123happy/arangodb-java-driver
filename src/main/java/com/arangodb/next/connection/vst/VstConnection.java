@@ -172,7 +172,14 @@ final public class VstConnection implements ArangoConnection {
                             })
                             .then();
                 })
-                .orElse(Mono.empty());
+                .orElse(Mono.defer(() ->
+                        // perform a request to /_api/cluster/endpoints to check if server has no authentication
+                        execute(ConnectionUtils.endpointsRequest).doOnNext(response -> {
+                            if (response.getResponseCode() == 401) {
+                                throw ArangoConnectionAuthenticationException.of(response);
+                            }
+                        }).then()
+                ));
     }
 
     private Mono<ArangoResponse> execute(final Connection connection, long id, final ByteBuf buf) {

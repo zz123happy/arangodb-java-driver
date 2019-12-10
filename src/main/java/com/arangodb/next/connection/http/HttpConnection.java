@@ -86,7 +86,13 @@ final public class HttpConnection implements ArangoConnection {
             throw new IllegalStateException("Already initialized!");
         }
         initialized = true;
-        return Mono.just(this);
+
+        // perform a request to /_api/cluster/endpoints to check if server has no authentication
+        return execute(ConnectionUtils.endpointsRequest).doOnNext(response -> {
+            if (response.getResponseCode() == 401) {
+                throw ArangoConnectionAuthenticationException.of(response);
+            }
+        }).map(it -> this);
     }
 
     @Override
