@@ -36,7 +36,7 @@ class VPackVstSerializers {
         builder.add(ValueType.ARRAY);
         builder.add(request.getVersion());
         builder.add(request.getType());
-        builder.add(request.getDatabase());
+        builder.add(request.getDatabase().orElse(null));
         builder.add(request.getRequestType().getType());
         builder.add(request.getPath());
         builder.add(ValueType.OBJECT);

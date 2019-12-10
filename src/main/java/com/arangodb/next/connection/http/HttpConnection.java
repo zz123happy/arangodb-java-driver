@@ -154,10 +154,7 @@ final public class HttpConnection implements ArangoConnection {
 
     private static String buildUrl(final ArangoRequest request) {
         final StringBuilder sb = new StringBuilder();
-        final String database = request.getDatabase();
-        if (database != null && !database.isEmpty()) {
-            sb.append("/_db/").append(database);
-        }
+        request.getDatabase().ifPresent(database -> sb.append("/_db/").append(database));
         sb.append(request.getPath());
 
         if (!request.getQueryParam().isEmpty()) {

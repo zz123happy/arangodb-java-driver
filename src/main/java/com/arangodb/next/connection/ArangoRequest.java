@@ -25,6 +25,7 @@ import io.netty.buffer.Unpooled;
 import org.immutables.value.Value;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Mark Vollmary
@@ -47,7 +48,7 @@ public interface ArangoRequest {
         return 1;
     }
 
-    String getDatabase();
+    Optional<String> getDatabase();
 
     RequestType getRequestType();
 
