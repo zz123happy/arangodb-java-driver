@@ -20,20 +20,18 @@ public class ProxiedSingleServerDeployment extends ProxiedContainerDeployment {
 
     private final int PORT = 8529;
 
-    private final Network network;
-    private final ToxiproxyContainer toxiproxy;
+    private volatile Network network;
+    private volatile ToxiproxyContainer toxiproxy;
     private final GenericContainer<?> container;
 
     private ToxiproxyContainer.ContainerProxy proxy;
 
     public ProxiedSingleServerDeployment() {
-        network = Network.newNetwork();
-        toxiproxy = new ToxiproxyContainer().withNetwork(network);
+        toxiproxy = new ToxiproxyContainer();
         container = new GenericContainer<>(getImage())
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
                 .withEnv("ARANGO_ROOT_PASSWORD", getPassword())
                 .withExposedPorts(PORT)
-                .withNetwork(network)
                 .withNetworkAliases("db")
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[DB_LOG]"))
                 .waitingFor(Wait.forHttp("/_api/version")
@@ -53,12 +51,18 @@ public class ProxiedSingleServerDeployment extends ProxiedContainerDeployment {
 
     @Override
     public CompletableFuture<ProxiedContainerDeployment> asyncStart() {
-        return CompletableFuture.allOf(
-                CompletableFuture.runAsync(container::start).thenAccept((v) -> log.info("READY: db")),
-                CompletableFuture.runAsync(toxiproxy::start).thenAccept((v) -> log.info("READY: toxiproxy"))
-        )
-                .thenCompose(v -> CompletableFuture.runAsync(() -> proxy = toxiproxy.getProxy("db", PORT)))
-                .thenApply(v -> this);
+        return CompletableFuture
+                .runAsync(() -> {
+                    network = Network.newNetwork();
+                    toxiproxy.withNetwork(network);
+                    container.withNetwork(network);
+                })
+                .thenCompose(__ -> CompletableFuture.allOf(
+                        CompletableFuture.runAsync(container::start).thenAccept((v) -> log.info("READY: db")),
+                        CompletableFuture.runAsync(toxiproxy::start).thenAccept((v) -> log.info("READY: toxiproxy"))
+                ))
+                .thenCompose(__ -> CompletableFuture.runAsync(() -> proxy = toxiproxy.getProxy("db", PORT)))
+                .thenApply(__ -> this);
     }
 
 

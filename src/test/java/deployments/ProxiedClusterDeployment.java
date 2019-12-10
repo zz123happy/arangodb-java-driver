@@ -24,8 +24,8 @@ public class ProxiedClusterDeployment extends ProxiedContainerDeployment {
     private final Logger log = LoggerFactory.getLogger(ProxiedClusterDeployment.class);
     private final String DOCKER_COMMAND = "arangodb --auth.jwt-secret /jwtSecret ";
 
-    private Network network;
-    private ToxiproxyContainer toxiproxy;
+    private volatile Network network;
+    private volatile ToxiproxyContainer toxiproxy;
 
     private final List<GenericContainer<?>> agents;
     private final List<GenericContainer<?>> dbServers;

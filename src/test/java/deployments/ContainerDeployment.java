@@ -51,9 +51,9 @@ public abstract class ContainerDeployment implements Startable {
         try {
             asyncStart().join();
         } catch (CompletionException e) {
-            System.out.println("Containers failed to start, retrying...");
             e.printStackTrace();
             if (e.getCause() instanceof ContainerLaunchException) {
+                System.out.println("Containers failed to start, retrying...");
                 stop();
                 start();
             } else {

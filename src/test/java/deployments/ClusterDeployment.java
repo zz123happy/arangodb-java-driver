@@ -26,7 +26,7 @@ public class ClusterDeployment extends ContainerDeployment {
     private final Logger log = LoggerFactory.getLogger(ClusterDeployment.class);
     private final String DOCKER_COMMAND = "arangodb --auth.jwt-secret /jwtSecret ";
 
-    private Network network;
+    private volatile Network network;
 
     private final List<GenericContainer<?>> agents;
     private final List<GenericContainer<?>> dbServers;

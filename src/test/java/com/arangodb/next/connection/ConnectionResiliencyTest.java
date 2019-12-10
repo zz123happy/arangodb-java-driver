@@ -150,6 +150,8 @@ class ConnectionResiliencyTest {
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
 
+        performRequest(connection);
+
         for (int i = 0; i < 100; i++) {
             performRequest(connection);
             deployment.getProxiedHosts().forEach(ProxiedHost::disableProxy);
