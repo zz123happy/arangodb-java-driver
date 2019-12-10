@@ -86,13 +86,14 @@ class ConnectionResiliencyTest {
     }
 
 
-    @Test
-    void VstConnectionTimeout() {
+    @ParameterizedTest
+    @EnumSource(ArangoProtocol.class)
+    void VstConnectionTimeout(ArangoProtocol protocol) {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.timeout(2000).build();
         deployment.getProxiedHosts().forEach(it -> it.getProxy().setConnectionCut(true));
         Throwable thrown = catchThrowable(() ->
-                new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY)
+                new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                         .create(host, deployment.getAuthentication()).block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
     }
@@ -126,7 +127,7 @@ class ConnectionResiliencyTest {
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
-    void closeConnectionWhenDisconnected(ArangoProtocol protocol) {
+    void requestWhenDisconnected(ArangoProtocol protocol) {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)

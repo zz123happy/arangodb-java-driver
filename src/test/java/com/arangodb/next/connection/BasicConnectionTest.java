@@ -218,7 +218,6 @@ class BasicConnectionTest {
     void authenticationFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
         assertThrows(ArangoConnectionAuthenticationException.class, () ->
                 new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authenticationMethod)
-                        .flatMap(connection -> connection.execute(getRequest))
                         .block()
         );
     }
@@ -229,7 +228,6 @@ class BasicConnectionTest {
     void wrongHostFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
         HostDescription wrongHost = HostDescription.of("wrongHost", 8529);
         Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(wrongHost, authenticationMethod)
-                .flatMap(connection -> connection.execute(getRequest))
                 .block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
     }
