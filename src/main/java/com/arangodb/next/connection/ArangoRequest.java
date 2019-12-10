@@ -48,7 +48,7 @@ public interface ArangoRequest {
         return 1;
     }
 
-    Optional<String> getDatabase();
+    String getDatabase();
 
     RequestType getRequestType();
 
