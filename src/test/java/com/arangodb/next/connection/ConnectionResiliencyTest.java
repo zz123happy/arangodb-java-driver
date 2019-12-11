@@ -114,21 +114,19 @@ class ConnectionResiliencyTest {
         assertThat(connection.isConnected().block()).isFalse();
     }
 
-    @Test
-    void closeConnectionTwice() {
+    @ParameterizedTest
+    @EnumSource(ArangoProtocol.class)
+    void closeConnectionTwice(ArangoProtocol protocol) {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
-        ArangoConnection connection = new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY)
+        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
         assertThat(connection.isConnected().block()).isTrue();
 
-        Mono<ArangoResponse> response = connection.execute(versionRequest);
+        connection.execute(versionRequest);
         connection.close().block();
-        assertThat(connection.isConnected().block()).isFalse();
-
-        Throwable thrown = catchThrowable(response::block);
-        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        connection.close().block();
         assertThat(connection.isConnected().block()).isFalse();
     }
 

@@ -129,7 +129,7 @@ final public class VstConnection implements ArangoConnection {
     @Override
     public synchronized Mono<Void> close() {
         if (closing) {
-            return Mono.error(new IllegalStateException("Connection has been already closed!"));
+            return closed;
         }
         closing = true;
 

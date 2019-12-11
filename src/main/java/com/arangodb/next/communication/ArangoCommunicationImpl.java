@@ -225,10 +225,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
                         .flatMap(hostConnections -> {
                             if (hostConnections.isEmpty()) {
                                 log.warn("not able to connect to host [{}], skipped adding host!", host);
-                                // could not create any connection to this host, eg. in case of dead coordinator
-                                return Optional.ofNullable(connectionsByHost.remove(host))  // FIXME: this should never happen
-                                        .map(this::closeHostConnections)
-                                        .orElse(Mono.empty());
+                                return removeHost(host);
                             } else {
                                 connectionsByHost.put(host, hostConnections);
                                 log.debug("added host: {}", host);
@@ -240,11 +237,11 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         List<Mono<Void>> removedHosts = currentHosts.stream()
                 .filter(o -> !hostList.contains(o))
-                .peek(host -> log.debug("removing host: {}", host))
-                .map(host -> closeHostConnections(connectionsByHost.remove(host)))
+                .map(this::removeHost)
                 .collect(Collectors.toList());
 
         return Flux.merge(Flux.merge(addedHosts), Flux.merge(removedHosts))
+                .then(Mono.defer(this::removeDisconnectedHosts))
                 .timeout(config.getTimeout())
                 .then(Mono.defer(() -> {
                     if (connectionsByHost.isEmpty()) {
@@ -261,6 +258,50 @@ class ArangoCommunicationImpl implements ArangoCommunication {
                     updatingConnectionsSemaphore = false;
                 })
                 .doOnCancel(() -> updatingConnectionsSemaphore = false);
+    }
+
+    /**
+     * removes all the hosts that are disconnected
+     *
+     * @return a Mono completing when the hosts have been removed
+     */
+    private Mono<Void> removeDisconnectedHosts() {
+        List<Mono<HostDescription>> hostsToRemove = connectionsByHost.entrySet().stream()
+                .map(hostConnections -> checkAllDisconnected(hostConnections.getValue())
+                        .flatMap(hostDisconnected -> {
+                            if (hostDisconnected) {
+                                return Mono.just(hostConnections.getKey());
+                            } else {
+                                return Mono.empty();
+                            }
+                        }))
+                .collect(Collectors.toList());
+
+        return Flux.merge(hostsToRemove)
+                .flatMap(this::removeHost)
+                .then();
+    }
+
+    private Mono<Void> removeHost(HostDescription host) {
+        log.debug("removing host: {}", host);
+        return Optional.ofNullable(connectionsByHost.remove(host))
+                .map(this::closeHostConnections)
+                .orElse(Mono.empty());
+    }
+
+    /**
+     * @param connections to check
+     * @return Mono<True> if all the provided connections are disconnected
+     */
+    private Mono<Boolean> checkAllDisconnected(List<ArangoConnection> connections) {
+        return Flux
+                .merge(
+                        connections.stream()
+                                .map(ArangoConnection::isConnected)
+                                .collect(Collectors.toList())
+                )
+                .collectList()
+                .map(areConnected -> areConnected.stream().noneMatch(i -> i));
     }
 
     private Mono<Void> scheduleUpdateHostList() {
