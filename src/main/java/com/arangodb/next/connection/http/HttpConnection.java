@@ -59,6 +59,8 @@ final public class HttpConnection implements ArangoConnection {
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";
 
     private volatile boolean initialized = false;
+    private volatile boolean connected = false;
+
     private final HostDescription host;
     @Nullable
     private final AuthenticationMethod authentication;
@@ -111,15 +113,24 @@ final public class HttpConnection implements ArangoConnection {
                         throw ArangoConnectionAuthenticationException.of(response);
                     }
                 })
-                .doOnError(e -> close().subscribe())
-                .timeout(Duration.ofMillis(config.getTimeout()));
+                .timeout(Duration.ofMillis(config.getTimeout()))
+                .doOnNext(__ -> connected = true)
+                .doOnError(__ -> close().subscribe());
+    }
+
+    @Override
+    public Mono<Boolean> isConnected() {
+        return Mono.just(connected);
     }
 
     @Override
     public Mono<Void> close() {
         log.debug("close()");
         return connectionProvider.disposeLater()
-                .doOnTerminate(cookieStore::clear);
+                .doOnTerminate(() -> {
+                    connected = false;
+                    cookieStore.clear();
+                });
     }
 
     private ConnectionProvider createConnectionProvider() {

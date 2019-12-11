@@ -112,10 +112,18 @@ final public class VstConnection implements ArangoConnection {
     @Override
     public Mono<ArangoResponse> execute(ArangoRequest request) {
         log.debug("execute({})", request);
-        return publishOnScheduler(this::connect).flatMap(c -> {
-            final long id = increaseAndGetMessageCounter();
-            return execute(c, id, RequestConverter.encodeRequest(id, request, config.getChunkSize()));
-        }).timeout(Duration.ofMillis(config.getTimeout()));
+        return publishOnScheduler(this::connect)
+                .flatMap(c -> {
+                    final long id = increaseAndGetMessageCounter();
+                    return execute(c, id, RequestConverter.encodeRequest(id, request, config.getChunkSize()));
+                })
+                .timeout(Duration.ofMillis(config.getTimeout()))
+                .doOnError(this::handleError);
+    }
+
+    @Override
+    public Mono<Boolean> isConnected() {
+        return publishOnScheduler(() -> Mono.just(connectionState == ConnectionState.CONNECTED));
     }
 
     @Override

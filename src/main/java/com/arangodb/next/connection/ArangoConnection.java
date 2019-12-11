@@ -44,6 +44,11 @@ public interface ArangoConnection {
     Mono<ArangoResponse> execute(final ArangoRequest request);
 
     /**
+     * @return whether the connection is open or closed
+     */
+    Mono<Boolean> isConnected();
+
+    /**
      * @return a mono completing once the connection is closed
      */
     Mono<Void> close();

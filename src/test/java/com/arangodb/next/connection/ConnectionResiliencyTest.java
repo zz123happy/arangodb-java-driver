@@ -78,6 +78,7 @@ class ConnectionResiliencyTest {
         deployment.getProxiedHosts().forEach(it -> it.getProxy().setConnectionCut(true));
         Throwable thrown = catchThrowable(() -> performRequest(connection));
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
+        assertThat(connection.isConnected().block()).isFalse();
 
         deployment.getProxiedHosts().forEach(it -> it.getProxy().setConnectionCut(false));
         performRequest(connection);
@@ -106,8 +107,11 @@ class ConnectionResiliencyTest {
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
+        assertThat(connection.isConnected().block()).isTrue();
         performRequest(connection);
+        assertThat(connection.isConnected().block()).isTrue();
         connection.close().block();
+        assertThat(connection.isConnected().block()).isFalse();
     }
 
     @Test
@@ -117,12 +121,15 @@ class ConnectionResiliencyTest {
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
+        assertThat(connection.isConnected().block()).isTrue();
 
         Mono<ArangoResponse> response = connection.execute(versionRequest);
         connection.close().block();
+        assertThat(connection.isConnected().block()).isFalse();
 
         Throwable thrown = catchThrowable(response::block);
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        assertThat(connection.isConnected().block()).isFalse();
     }
 
     @ParameterizedTest
@@ -136,7 +143,9 @@ class ConnectionResiliencyTest {
         deployment.getProxiedHosts().forEach(ProxiedHost::disableProxy);
         Throwable thrown = catchThrowable(() -> performRequest(connection));
         assertThat(Exceptions.unwrap(thrown)).isInstanceOfAny(IOException.class, TimeoutException.class);
+        assertThat(connection.isConnected().block()).isFalse();
         connection.close().block();
+        assertThat(connection.isConnected().block()).isFalse();
     }
 
     @ParameterizedTest
@@ -149,19 +158,22 @@ class ConnectionResiliencyTest {
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
-
-        performRequest(connection);
+        assertThat(connection.isConnected().block()).isTrue();
 
         for (int i = 0; i < 100; i++) {
             performRequest(connection);
+            assertThat(connection.isConnected().block()).isTrue();
             deployment.getProxiedHosts().forEach(ProxiedHost::disableProxy);
             Throwable thrown = catchThrowable(() -> performRequest(connection));
             assertThat(Exceptions.unwrap(thrown)).isInstanceOfAny(IOException.class, TimeoutException.class);
+            assertThat(connection.isConnected().block()).isFalse();
             deployment.getProxiedHosts().forEach(ProxiedHost::enableProxy);
             performRequest(connection, 1);
+            assertThat(connection.isConnected().block()).isTrue();
         }
 
         connection.close().block();
+        assertThat(connection.isConnected().block()).isFalse();
     }
 
 }
