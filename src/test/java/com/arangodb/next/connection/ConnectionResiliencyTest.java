@@ -66,7 +66,7 @@ class ConnectionResiliencyTest {
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
-    void requestTimeout(ArangoProtocol protocol) {
+    void requestTimeout(ArangoProtocol protocol) throws InterruptedException {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.timeout(2000).build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
@@ -78,6 +78,9 @@ class ConnectionResiliencyTest {
         deployment.getProxiedHosts().forEach(it -> it.getProxy().setConnectionCut(true));
         Throwable thrown = catchThrowable(() -> performRequest(connection));
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
+
+        // wait for errorHandling fallback to set the connection to disconnected
+        Thread.sleep(100);
         assertThat(connection.isConnected().block()).isFalse();
 
         deployment.getProxiedHosts().forEach(it -> it.getProxy().setConnectionCut(false));
@@ -101,7 +104,7 @@ class ConnectionResiliencyTest {
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
-    void closeConnection(ArangoProtocol protocol) {
+    void closeConnection(ArangoProtocol protocol) throws InterruptedException {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
@@ -111,12 +114,15 @@ class ConnectionResiliencyTest {
         performRequest(connection);
         assertThat(connection.isConnected().block()).isTrue();
         connection.close().block();
+
+        // wait for errorHandling fallback to set the connection to disconnected
+        Thread.sleep(100);
         assertThat(connection.isConnected().block()).isFalse();
     }
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
-    void closeConnectionTwice(ArangoProtocol protocol) {
+    void closeConnectionTwice(ArangoProtocol protocol) throws InterruptedException {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
@@ -127,12 +133,15 @@ class ConnectionResiliencyTest {
         connection.execute(versionRequest);
         connection.close().block();
         connection.close().block();
+
+        // wait for errorHandling fallback to set the connection to disconnected
+        Thread.sleep(100);
         assertThat(connection.isConnected().block()).isFalse();
     }
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
-    void requestWhenDisconnected(ArangoProtocol protocol) {
+    void requestWhenDisconnected(ArangoProtocol protocol) throws InterruptedException {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
         ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
@@ -141,6 +150,9 @@ class ConnectionResiliencyTest {
         deployment.getProxiedHosts().forEach(ProxiedHost::disableProxy);
         Throwable thrown = catchThrowable(() -> performRequest(connection));
         assertThat(Exceptions.unwrap(thrown)).isInstanceOfAny(IOException.class, TimeoutException.class);
+
+        // wait for errorHandling fallback to set the connection to disconnected
+        Thread.sleep(100);
         assertThat(connection.isConnected().block()).isFalse();
         connection.close().block();
         assertThat(connection.isConnected().block()).isFalse();
@@ -148,7 +160,7 @@ class ConnectionResiliencyTest {
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
-    void reconnect(ArangoProtocol protocol) {
+    void reconnect(ArangoProtocol protocol) throws InterruptedException {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config
                 .timeout(5000)
@@ -164,13 +176,15 @@ class ConnectionResiliencyTest {
             deployment.getProxiedHosts().forEach(ProxiedHost::disableProxy);
             Throwable thrown = catchThrowable(() -> performRequest(connection));
             assertThat(Exceptions.unwrap(thrown)).isInstanceOfAny(IOException.class, TimeoutException.class);
-            assertThat(connection.isConnected().block()).isFalse();
             deployment.getProxiedHosts().forEach(ProxiedHost::enableProxy);
             performRequest(connection, 1);
             assertThat(connection.isConnected().block()).isTrue();
         }
 
         connection.close().block();
+
+        // wait for errorHandling fallback to set the connection to disconnected
+        Thread.sleep(100);
         assertThat(connection.isConnected().block()).isFalse();
     }
 
