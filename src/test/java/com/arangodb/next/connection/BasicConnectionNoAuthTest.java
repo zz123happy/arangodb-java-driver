@@ -66,7 +66,7 @@ class BasicConnectionNoAuthTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void getRequest(ArangoProtocol protocol) {
-        ArangoConnection connection = new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY)
+        ArangoConnection connection = new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, null).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(ConnectionTestUtils.versionRequest).block();
@@ -88,7 +88,7 @@ class BasicConnectionNoAuthTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void postRequest(ArangoProtocol protocol) {
-        ArangoConnection connection = new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY)
+        ArangoConnection connection = new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, null).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(ConnectionTestUtils.postRequest()).block();
@@ -110,7 +110,7 @@ class BasicConnectionNoAuthTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void parallelLoop(ArangoProtocol protocol) {
-        new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, deployment.getAuthentication())
+        new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, deployment.getAuthentication())
                 .flatMapMany(c ->
                         Flux.range(0, 1_000)
                                 .flatMap(i -> c.execute(ConnectionTestUtils.versionRequest))
@@ -132,7 +132,7 @@ class BasicConnectionNoAuthTest {
     @EnumSource(ArangoProtocol.class)
     void wrongHostFailure(ArangoProtocol protocol) {
         HostDescription wrongHost = HostDescription.of("wrongHost", 8529);
-        Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(wrongHost, null)
+        Throwable thrown = catchThrowable(() -> new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(wrongHost, null)
                 .block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
     }

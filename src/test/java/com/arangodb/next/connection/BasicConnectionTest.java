@@ -132,7 +132,7 @@ class BasicConnectionTest {
     @ParameterizedTest
     @MethodSource("argumentsProvider")
     void getRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
-        ArangoConnection connection = new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY)
+        ArangoConnection connection = new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, authenticationMethod).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(ConnectionTestUtils.versionRequest).block();
@@ -154,7 +154,7 @@ class BasicConnectionTest {
     @ParameterizedTest
     @MethodSource("argumentsProvider")
     void postRequest(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
-        ArangoConnection connection = new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY)
+        ArangoConnection connection = new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, authenticationMethod).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(ConnectionTestUtils.postRequest()).block();
@@ -176,7 +176,7 @@ class BasicConnectionTest {
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
     void parallelLoop(ArangoProtocol protocol) {
-        new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, deployment.getAuthentication())
+        new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, deployment.getAuthentication())
                 .flatMapMany(c ->
                         Flux.range(0, 1_000)
                                 .flatMap(i -> c.execute(ConnectionTestUtils.versionRequest))
@@ -198,7 +198,7 @@ class BasicConnectionTest {
     @MethodSource("wrongAuthenticationArgumentsProvider")
     void authenticationFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
         assertThrows(ArangoConnectionAuthenticationException.class, () ->
-                new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authenticationMethod)
+                new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authenticationMethod)
                         .block()
         );
     }
@@ -207,7 +207,7 @@ class BasicConnectionTest {
     @MethodSource("argumentsProvider")
     void wrongHostFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
         HostDescription wrongHost = HostDescription.of("wrongHost", 8529);
-        Throwable thrown = catchThrowable(() -> new ArangoConnectionFactory(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(wrongHost, authenticationMethod)
+        Throwable thrown = catchThrowable(() -> new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(wrongHost, authenticationMethod)
                 .block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
     }

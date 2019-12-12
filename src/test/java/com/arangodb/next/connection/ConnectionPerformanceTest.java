@@ -66,7 +66,7 @@ class ConnectionPerformanceTest {
     }
 
     private CompletableFuture<Void> requestBatch(int requests) {
-        return new ArangoConnectionFactory(config, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY).create(host, authentication)
+        return new ConnectionFactoryImpl(config, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY).create(host, authentication)
                 .flatMapMany(connection -> Flux.range(0, requests)
                         .doOnNext(i -> {
                             if (i % 100_000 == 0)

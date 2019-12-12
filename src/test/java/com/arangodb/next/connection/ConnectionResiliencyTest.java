@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
-import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
@@ -69,7 +68,7 @@ class ConnectionResiliencyTest {
     void requestTimeout(ArangoProtocol protocol) throws InterruptedException {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.timeout(2000).build();
-        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
+        ArangoConnection connection = new ConnectionFactoryImpl(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
 
@@ -97,7 +96,7 @@ class ConnectionResiliencyTest {
         ConnectionConfig testConfig = config.timeout(2000).build();
         deployment.getProxiedHosts().forEach(it -> it.getProxy().setConnectionCut(true));
         Throwable thrown = catchThrowable(() ->
-                new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
+                new ConnectionFactoryImpl(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                         .create(host, deployment.getAuthentication()).block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(TimeoutException.class);
     }
@@ -107,7 +106,7 @@ class ConnectionResiliencyTest {
     void closeConnection(ArangoProtocol protocol) throws InterruptedException {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
-        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
+        ArangoConnection connection = new ConnectionFactoryImpl(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
         assertThat(connection.isConnected().block()).isTrue();
@@ -125,7 +124,7 @@ class ConnectionResiliencyTest {
     void closeConnectionTwice(ArangoProtocol protocol) throws InterruptedException {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
-        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
+        ArangoConnection connection = new ConnectionFactoryImpl(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
         assertThat(connection.isConnected().block()).isTrue();
@@ -144,7 +143,7 @@ class ConnectionResiliencyTest {
     void requestWhenDisconnected(ArangoProtocol protocol) throws InterruptedException {
         HostDescription host = deployment.getHosts().get(0);
         ConnectionConfig testConfig = config.build();
-        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
+        ArangoConnection connection = new ConnectionFactoryImpl(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
         deployment.getProxiedHosts().forEach(ProxiedHost::disableProxy);
@@ -165,7 +164,7 @@ class ConnectionResiliencyTest {
         ConnectionConfig testConfig = config
                 .timeout(5000)
                 .build();
-        ArangoConnection connection = new ArangoConnectionFactory(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
+        ArangoConnection connection = new ConnectionFactoryImpl(testConfig, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, deployment.getAuthentication()).block();
         assertThat(connection).isNotNull();
         assertThat(connection.isConnected().block()).isTrue();

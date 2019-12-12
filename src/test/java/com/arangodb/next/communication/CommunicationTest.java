@@ -73,8 +73,10 @@ class CommunicationTest {
                 .containsOnlyKeys(expectedKeys);
 
         // check if every connection is connected
-        connectionsByHost.forEach((key, value) ->
-                value.forEach(ConnectionTestUtils::performRequest));
+        connectionsByHost.forEach((key, value) -> value.forEach(connection -> {
+            assertThat(connection.isConnected().block()).isTrue();
+            ConnectionTestUtils.performRequest(connection);
+        }));
 
         CommunicationTestUtils.executeRequest(communication);
         communication.close().block();
@@ -93,6 +95,11 @@ class CommunicationTest {
         Map<HostDescription, List<ArangoConnection>> currentHosts = ((ArangoCommunicationImpl) communication).getConnectionsByHost();
         assertThat(currentHosts).hasSize(2);
         assertThat(currentHosts.keySet()).containsExactlyInAnyOrderElementsOf(hosts);
+
+        // check if every connection is connected
+        currentHosts.forEach((key, value) -> value.forEach(connection -> {
+            assertThat(connection.isConnected().block()).isTrue();
+        }));
 
         CommunicationTestUtils.executeRequest(communication);
         communication.close().block();

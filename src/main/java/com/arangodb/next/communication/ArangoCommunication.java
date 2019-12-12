@@ -21,8 +21,10 @@
 package com.arangodb.next.communication;
 
 
+import com.arangodb.next.connection.ConnectionFactoryImpl;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
+import com.arangodb.next.connection.ConnectionSchedulerFactory;
 import reactor.core.publisher.Mono;
 
 /**
@@ -31,7 +33,12 @@ import reactor.core.publisher.Mono;
 public interface ArangoCommunication {
 
     static Mono<ArangoCommunication> create(CommunicationConfig config) {
-        return new ArangoCommunicationImpl(config).initialize();
+        ConnectionFactoryImpl connectionFactory = new ConnectionFactoryImpl(
+                config.getConnectionConfig(),
+                config.getProtocol(),
+                new ConnectionSchedulerFactory(config.getMaxThreads())
+        );
+        return new ArangoCommunicationImpl(config, connectionFactory).initialize();
     }
 
     /**

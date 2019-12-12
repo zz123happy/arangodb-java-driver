@@ -29,7 +29,7 @@ import reactor.core.publisher.Mono;
 /**
  * @author Michele Rastelli
  */
-public class ArangoConnectionFactory {
+public class ConnectionFactoryImpl implements ConnectionFactory {
 
     private final ConnectionConfig config;
     private final ArangoProtocol protocol;
@@ -40,9 +40,9 @@ public class ArangoConnectionFactory {
      * @param config           connection config
      * @param schedulerFactory scheduler factory to use for VST connections
      */
-    public ArangoConnectionFactory(final ConnectionConfig config,
-                                   final ArangoProtocol protocol,
-                                   final ConnectionSchedulerFactory schedulerFactory) {
+    public ConnectionFactoryImpl(final ConnectionConfig config,
+                                 final ArangoProtocol protocol,
+                                 final ConnectionSchedulerFactory schedulerFactory) {
         this.config = config;
         this.protocol = protocol;
         this.schedulerFactory = schedulerFactory;
@@ -52,6 +52,7 @@ public class ArangoConnectionFactory {
      * @param host host
      * @return a Mono which will produce a new connection already initialized
      */
+    @Override
     public Mono<ArangoConnection> create(final HostDescription host, final AuthenticationMethod authentication) {
 
         ArangoConnection connection;
@@ -70,6 +71,7 @@ public class ArangoConnectionFactory {
                 .doOnError(e -> connection.close().subscribe());
     }
 
+    @Override
     public void close() {
         schedulerFactory.close();
     }

@@ -56,7 +56,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
     private volatile Disposable scheduledUpdateHostListSubscription;
     private volatile List<HostDescription> hostList;
     private final CommunicationConfig config;
-    private final ArangoConnectionFactory connectionFactory;
+    private final ConnectionFactory connectionFactory;
     private final Map<HostDescription, List<ArangoConnection>> connectionsByHost;
 
     private static final ArangoRequest acquireHostListRequest = ArangoRequest.builder()
@@ -65,17 +65,13 @@ class ArangoCommunicationImpl implements ArangoCommunication {
             .requestType(ArangoRequest.RequestType.GET)
             .build();
 
-    ArangoCommunicationImpl(CommunicationConfig config) {
+    ArangoCommunicationImpl(CommunicationConfig config, ConnectionFactory connectionFactory) {
         log.debug("ArangoCommunicationImpl({})", config);
 
         this.config = config;
+        this.connectionFactory = connectionFactory;
         setHostList(config.getHosts());
         connectionsByHost = new ConcurrentHashMap<>();
-        connectionFactory = new ArangoConnectionFactory(
-                config.getConnectionConfig(),
-                config.getProtocol(),
-                new ConnectionSchedulerFactory(config.getMaxThreads())
-        );
     }
 
     @Override
@@ -131,8 +127,13 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         return iterator.next();
     }
 
+    /**
+     * @return a copy of connectionsByHost
+     */
     Map<HostDescription, List<ArangoConnection>> getConnectionsByHost() {
-        return connectionsByHost;
+        return connectionsByHost.entrySet().stream()
+                .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), new LinkedList<>(e.getValue())))
+                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
     }
 
     /**
@@ -188,7 +189,9 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         log.debug("parseAcquireHostListResponse({})", response);
 
         // TODO: handle exceptions           response.getResponseCode() != 200
-        VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
+        byte[] responseBuffer = IOUtils.getByteArray(response.getBody());
+        VPackSlice responseBodySlice = new VPackSlice(responseBuffer);
+        response.getBody().release();
         VPackSlice field = responseBodySlice.get("endpoints");
         final Collection<Map<String, String>> entity = new VPack.Builder().build().deserialize(field, Collection.class);
         return entity.stream()
@@ -254,7 +257,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
                 // here we cannot use Flux::doFinally since the signal is propagated downstream before the callback is
                 // executed and this is a problem if a chained task re-invoke this method
                 .doOnTerminate(() -> {
-                    log.debug("updateConnections complete!");
+                    log.debug("updateConnections complete: {}", connectionsByHost.keySet());
                     updatingConnectionsSemaphore = false;
                 })
                 .doOnCancel(() -> updatingConnectionsSemaphore = false);
