@@ -21,8 +21,8 @@
 package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.*;
-import com.arangodb.velocypack.VPack;
-import com.arangodb.velocypack.VPackSlice;
+import com.arangodb.next.entity.ClusterEndpoints;
+import com.arangodb.next.entity.codec.ArangoDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
@@ -58,6 +58,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
     private final CommunicationConfig config;
     private final ConnectionFactory connectionFactory;
     private final Map<HostDescription, List<ArangoConnection>> connectionsByHost;
+    private final ArangoDeserializer deserializer;
 
     private static final ArangoRequest acquireHostListRequest = ArangoRequest.builder()
             .database("_system")
@@ -72,6 +73,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         this.connectionFactory = connectionFactory;
         setHostList(config.getHosts());
         connectionsByHost = new ConcurrentHashMap<>();
+        deserializer = ArangoDeserializer.of(config.getContentType());
     }
 
     @Override
@@ -187,19 +189,11 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
     private List<HostDescription> parseAcquireHostListResponse(ArangoResponse response) {
         log.debug("parseAcquireHostListResponse({})", response);
-
         // TODO: handle exceptions           response.getResponseCode() != 200
         byte[] responseBuffer = IOUtils.getByteArray(response.getBody());
-        VPackSlice responseBodySlice = new VPackSlice(responseBuffer);
         response.getBody().release();
-        VPackSlice field = responseBodySlice.get("endpoints");
-        final Collection<Map<String, String>> entity = new VPack.Builder().build().deserialize(field, Collection.class);
-        return entity.stream()
-                .map(it -> it.get("endpoint"))
-                // TODO: support ipv6 addresses
-                .map(it -> it.replaceFirst(".*://", "").split(":"))
-                .map(it -> HostDescription.of(it[0], Integer.parseInt(it[1])))
-                .collect(Collectors.toList());
+        return deserializer.deserialize(responseBuffer, ClusterEndpoints.class)
+                .getHostDescriptions();
     }
 
     /**
