@@ -21,6 +21,8 @@
 package com.arangodb.next.connection;
 
 
+import com.arangodb.next.entity.Version;
+import com.arangodb.next.entity.codec.ArangoDeserializer;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
@@ -56,22 +58,36 @@ public class ConnectionTestUtils {
         ArangoResponse response = connection.execute(versionRequest)
                 .retry(retries, t -> t instanceof IOException || t instanceof TimeoutException)
                 .block();
-        verifyAssertions(response);
+        verifyGetResponseVPack(response);
     }
 
     public static void performRequest(ArangoConnection connection) {
         ArangoResponse response = connection.execute(versionRequest).block();
-        verifyAssertions(response);
+        verifyGetResponseVPack(response);
     }
 
-    private static void verifyAssertions(ArangoResponse response) {
+    public static void verifyGetResponseVPack(ArangoResponse response) {
+        assertThat(response).isNotNull();
+        assertThat(response.getVersion()).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(2);
+        assertThat(response.getResponseCode()).isEqualTo(200);
+
+        ArangoDeserializer deserializer = ArangoDeserializer.of(ContentType.VPACK);
+        Version version = deserializer.deserialize(IOUtils.getByteArray(response.getBody()), Version.class);
+        assertThat(version.getServer()).isEqualTo("arango");
+
+        response.getBody().release();
+    }
+
+    public static void verifyPostResponseVPack(ArangoResponse response) {
         assertThat(response).isNotNull();
         assertThat(response.getVersion()).isEqualTo(1);
         assertThat(response.getType()).isEqualTo(2);
         assertThat(response.getResponseCode()).isEqualTo(200);
 
         VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
-        assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
+        assertThat(responseBodySlice.get("parsed").getAsBoolean()).isEqualTo(true);
+        System.out.println(responseBodySlice);
 
         response.getBody().release();
     }
