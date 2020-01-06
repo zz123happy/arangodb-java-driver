@@ -55,6 +55,8 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: ${{matrix.java-version}}
+      - name: Info
+        run: mvn -version
       - name: Test
         run: mvn -e --no-transfer-progress test -Dtest.docker.image="${{matrix.docker-img}}" -Darango.license.key="$ARANGO_LICENSE_KEY"
         env:
