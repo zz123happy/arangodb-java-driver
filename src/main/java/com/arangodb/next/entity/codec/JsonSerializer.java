@@ -21,6 +21,7 @@
 package com.arangodb.next.entity.codec;
 
 import com.arangodb.next.entity.ClusterEndpoints;
+import com.arangodb.next.entity.ErrorEntity;
 import com.arangodb.next.entity.Version;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -42,6 +43,8 @@ public class JsonSerializer implements ArangoSerializer {
                 return doSerialize((Version) value);
             } else if (value instanceof ClusterEndpoints) {
                 return doSerialize((ClusterEndpoints) value);
+            } else if (value instanceof ErrorEntity) {
+                return doSerialize((ErrorEntity) value);
             } else {
                 throw new IllegalArgumentException("Unsupported type: " + value.getClass().getName());
             }
@@ -93,6 +96,21 @@ public class JsonSerializer implements ArangoSerializer {
             generator.writeEndObject();
         }
         generator.writeEndArray();
+
+        generator.writeEndObject();
+        generator.close();
+        return stream.toByteArray();
+    }
+
+    private byte[] doSerialize(final ErrorEntity value) throws IOException {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        JsonGenerator generator = new JsonFactory().createGenerator(stream, JsonEncoding.UTF8);
+
+        generator.writeStartObject();
+        generator.writeNumberField("code", value.getCode());
+        generator.writeBooleanField("error", value.getError());
+        generator.writeStringField("errorMessage", value.getErrorMessage());
+        generator.writeNumberField("errorNum", value.getErrorNum());
 
         generator.writeEndObject();
         generator.close();

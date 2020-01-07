@@ -21,10 +21,7 @@
 package com.arangodb.next.entity.codec;
 
 import com.arangodb.next.connection.ContentType;
-import com.arangodb.next.entity.ClusterEndpoints;
-import com.arangodb.next.entity.ImmutableClusterEndpoints;
-import com.arangodb.next.entity.ImmutableVersion;
-import com.arangodb.next.entity.Version;
+import com.arangodb.next.entity.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -49,11 +46,7 @@ class SerializationTest {
 
         byte[] serialized = ArangoSerializer.of(contentType).serialize(original);
         Version deserialized = ArangoDeserializer.of(contentType).deserialize(serialized, Version.class);
-
-        assertThat(deserialized.getServer()).isEqualTo(original.getServer());
-        assertThat(deserialized.getLicense()).isEqualTo(original.getLicense());
-        assertThat(deserialized.getVersion()).isEqualTo(original.getVersion());
-        assertThat(deserialized.getDetails()).isEqualTo(original.getDetails());
+        assertThat(deserialized).isEqualTo(original);
     }
 
     @ParameterizedTest
@@ -71,10 +64,23 @@ class SerializationTest {
 
         byte[] serialized = ArangoSerializer.of(contentType).serialize(original);
         ClusterEndpoints deserialized = ArangoDeserializer.of(contentType).deserialize(serialized, ClusterEndpoints.class);
+        assertThat(deserialized).isEqualTo(original);
+    }
 
-        assertThat(deserialized.getError()).isEqualTo(original.getError());
-        assertThat(deserialized.getCode()).isEqualTo(original.getCode());
-        assertThat(deserialized.getEndpoints()).isEqualTo(original.getEndpoints());
+    @ParameterizedTest
+    @EnumSource(ContentType.class)
+    void errorEntity(ContentType contentType) {
+        ErrorEntity original =
+                ImmutableErrorEntity.builder()
+                        .error(false)
+                        .code(200)
+                        .errorNum(109)
+                        .errorMessage("error 109")
+                        .build();
+
+        byte[] serialized = ArangoSerializer.of(contentType).serialize(original);
+        ErrorEntity deserialized = ArangoDeserializer.of(contentType).deserialize(serialized, ErrorEntity.class);
+        assertThat(deserialized).isEqualTo(original);
     }
 
 }

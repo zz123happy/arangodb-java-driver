@@ -29,6 +29,10 @@ import org.immutables.value.Value;
 @Value.Immutable
 public abstract class ArangoServerException extends ArangoException {
 
+    public static ImmutableArangoServerException.Builder builder() {
+        return ImmutableArangoServerException.builder();
+    }
+
     public abstract ErrorEntity getEntity();
 
     public abstract int getResponseCode();

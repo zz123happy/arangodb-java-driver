@@ -22,7 +22,9 @@ package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.*;
 import com.arangodb.next.entity.ClusterEndpoints;
+import com.arangodb.next.entity.ErrorEntity;
 import com.arangodb.next.entity.codec.ArangoDeserializer;
+import com.arangodb.next.exceptions.ArangoServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
@@ -189,9 +191,14 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
     private List<HostDescription> parseAcquireHostListResponse(ArangoResponse response) {
         log.debug("parseAcquireHostListResponse({})", response);
-        // TODO: handle exceptions           response.getResponseCode() != 200
         byte[] responseBuffer = IOUtils.getByteArray(response.getBody());
         response.getBody().release();
+        if (response.getResponseCode() != 200) {
+            throw ArangoServerException.builder()
+                    .responseCode(response.getResponseCode())
+                    .entity(deserializer.deserialize(responseBuffer, ErrorEntity.class))
+                    .build();
+        }
         return deserializer.deserialize(responseBuffer, ClusterEndpoints.class)
                 .getHostDescriptions();
     }

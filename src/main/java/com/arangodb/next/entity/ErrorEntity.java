@@ -28,7 +28,5 @@ import org.immutables.value.Value;
 @Value.Immutable
 public interface ErrorEntity extends ArangoEntity {
     String getErrorMessage();
-    String getException();
-    int getCode();
     int getErrorNum();
 }

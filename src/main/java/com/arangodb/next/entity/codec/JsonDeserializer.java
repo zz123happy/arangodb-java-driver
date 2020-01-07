@@ -20,10 +20,7 @@
 
 package com.arangodb.next.entity.codec;
 
-import com.arangodb.next.entity.ClusterEndpoints;
-import com.arangodb.next.entity.ImmutableClusterEndpoints;
-import com.arangodb.next.entity.ImmutableVersion;
-import com.arangodb.next.entity.Version;
+import com.arangodb.next.entity.*;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -43,6 +40,8 @@ public class JsonDeserializer implements ArangoDeserializer {
                 return clazz.cast(deserializeVersion(buffer));
             } else if (clazz.equals(ClusterEndpoints.class)) {
                 return clazz.cast(deserializeClusterEndpoints(buffer));
+            } else if (clazz.equals(ErrorEntity.class)) {
+                return clazz.cast(deserializeErrorEntity(buffer));
             } else {
                 throw new IllegalArgumentException("Unsupported type: " + clazz.getName());
             }
@@ -106,6 +105,34 @@ public class JsonDeserializer implements ArangoDeserializer {
                         builder.addEndpoints(Collections.singletonMap(key, parser.getText()));
                     }
                 }
+            }
+        }
+
+        parser.close();
+        return builder.build();
+    }
+
+    private ErrorEntity deserializeErrorEntity(byte[] buffer) throws IOException {
+        JsonParser parser = new JsonFactory().createParser(buffer);
+        ImmutableErrorEntity.Builder builder = ImmutableErrorEntity.builder();
+
+        parser.nextToken();
+
+        while (parser.nextToken() != JsonToken.END_OBJECT) {
+            String name = parser.getCurrentName();
+
+            if ("code" .equals(name)) {
+                parser.nextToken();
+                builder.code(parser.getIntValue());
+            } else if ("error" .equals(name)) {
+                parser.nextToken();
+                builder.error(parser.getBooleanValue());
+            } else if ("errorMessage" .equals(name)) {
+                parser.nextToken();
+                builder.errorMessage(parser.getText());
+            } else if ("errorNum" .equals(name)) {
+                parser.nextToken();
+                builder.errorNum(parser.getIntValue());
             }
         }
 

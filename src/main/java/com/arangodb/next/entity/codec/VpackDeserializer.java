@@ -21,10 +21,7 @@
 package com.arangodb.next.entity.codec;
 
 
-import com.arangodb.next.entity.ClusterEndpoints;
-import com.arangodb.next.entity.ImmutableClusterEndpoints;
-import com.arangodb.next.entity.ImmutableVersion;
-import com.arangodb.next.entity.Version;
+import com.arangodb.next.entity.*;
 import com.arangodb.velocypack.VPackSlice;
 
 import java.util.Collections;
@@ -40,6 +37,8 @@ public class VpackDeserializer implements ArangoDeserializer {
             return clazz.cast(deserializeVersion(buffer));
         } else if (clazz.equals(ClusterEndpoints.class)) {
             return clazz.cast(deserializeClusterEndpoints(buffer));
+        } else if (clazz.equals(ErrorEntity.class)) {
+            return clazz.cast(deserializeErrorEntity(buffer));
         } else {
             throw new IllegalArgumentException("Unsupported type: " + clazz.getName());
         }
@@ -83,6 +82,28 @@ public class VpackDeserializer implements ArangoDeserializer {
                     field.getValue().arrayIterator().forEachRemaining(endpointMap ->
                             endpointMap.objectIterator().forEachRemaining(endpoint ->
                                     builder.addEndpoints(Collections.singletonMap(endpoint.getKey(), endpoint.getValue().getAsString()))));
+                    break;
+            }
+        });
+        return builder.build();
+    }
+
+    private ErrorEntity deserializeErrorEntity(byte[] buffer) {
+        ImmutableErrorEntity.Builder builder = ImmutableErrorEntity.builder();
+        VPackSlice slice = new VPackSlice(buffer);
+        slice.objectIterator().forEachRemaining(field -> {
+            switch (field.getKey()) {
+                case "code":
+                    builder.code(field.getValue().getAsInt());
+                    break;
+                case "error":
+                    builder.error(field.getValue().getAsBoolean());
+                    break;
+                case "errorMessage":
+                    builder.errorMessage(field.getValue().getAsString());
+                    break;
+                case "errorNum":
+                    builder.errorNum(field.getValue().getAsInt());
                     break;
             }
         });
