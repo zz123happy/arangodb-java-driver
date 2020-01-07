@@ -34,13 +34,21 @@ import java.util.stream.Collectors;
 @Value.Immutable
 public interface ClusterEndpoints extends ArangoEntity {
 
+
     List<Map<String, String>> getEndpoints();
 
     default List<HostDescription> getHostDescriptions() {
         return getEndpoints().stream()
                 .map(it -> it.get("endpoint"))
-                // TODO: support ipv6 addresses
-                .map(it -> it.replaceFirst(".*://", "").split(":"))
+                .map(it -> it.replaceFirst(".*://", ""))
+                .map(it -> {
+                    if (it.matches("\\[.*\\]:.*")) {    // ipv6
+                        return it
+                                .replaceFirst("\\[", "")
+                                .split("\\]:");
+                    }
+                    return it.split(":");
+                })
                 .map(it -> HostDescription.of(it[0], Integer.parseInt(it[1])))
                 .collect(Collectors.toList());
     }

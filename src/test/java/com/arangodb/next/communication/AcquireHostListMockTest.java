@@ -70,6 +70,24 @@ public class AcquireHostListMockTest {
             when(connection.isConnected()).thenReturn(Mono.just(true));
         }
 
+        private static String getHostUrl(HostDescription hostDescription) {
+            final boolean isIpv6 = hostDescription.getHost().contains(":");
+            String hostUrl = "tcp://";
+
+            if (isIpv6) {
+                hostUrl += "[";
+            }
+
+            hostUrl += hostDescription.getHost();
+
+            if (isIpv6) {
+                hostUrl += "]";
+            }
+
+            hostUrl += ":" + hostDescription.getPort();
+            return hostUrl;
+        }
+
         protected Mono<ArangoResponse> getClusterEndpointsResponse() {
             byte[] responseBody = ArangoSerializer
                     .of(contentType)
@@ -78,7 +96,7 @@ public class AcquireHostListMockTest {
                                     .error(false)
                                     .code(200)
                                     .endpoints(getHosts().stream()
-                                            .map(it -> Collections.singletonMap("endpoint", "tcp://" + it.getHost() + ":" + it.getPort()))
+                                            .map(it -> Collections.singletonMap("endpoint", getHostUrl(it)))
                                             .collect(Collectors.toList()))
                                     .build()
                     );
@@ -309,6 +327,26 @@ public class AcquireHostListMockTest {
                                         .build()
                         ))
                         .thenReturn(getClusterEndpointsResponse());
+            }
+        };
+
+        ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
+        communication.initialize().block();
+
+        assertThat(communication.getConnectionsByHost().keySet()).containsExactlyInAnyOrder(factory.getHosts().toArray(new HostDescription[0]));
+        communication.getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
+    }
+
+    @ParameterizedTest
+    @EnumSource(ContentType.class)
+    void acquireHostListWithIpV6Response(ContentType contentType) {
+        MockConnectionFactory factory = new MockConnectionFactory(contentType) {
+            @Override
+            List<HostDescription> getHosts() {
+                return Arrays.asList(
+                        HostDescription.of("0:0:0:0:0:0:0:1", 1111),
+                        HostDescription.of("0:0:0:0:0:0:0:2", 2222)
+                );
             }
         };
 
