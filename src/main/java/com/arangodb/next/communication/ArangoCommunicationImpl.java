@@ -176,9 +176,10 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         return execute(acquireHostListRequest)
                 .map(this::parseAcquireHostListResponse)
+                .doOnError(e -> log.warn("Error acquiring hostList, retrying...", e))
                 .retry(config.getRetries())
                 .doOnNext(acquiredHostList -> log.debug("Acquired hosts: {}", acquiredHostList))
-                .doOnError(e -> log.warn("Error acquiring hostList: {}", e))
+                .doOnError(e -> log.warn("Error acquiring hostList:", e))
                 .onErrorReturn(config.getHosts())   // use the hosts from config
                 .doOnNext(this::setHostList)
                 .then(Mono.defer(this::updateConnections))
@@ -319,6 +320,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
                 .mapToObj(i -> Mono.defer(() -> connectionFactory.create(host, authentication))
                         .retry(config.getRetries())
                         .doOnNext(it -> log.debug("created connection to host: {}", host))
+                        .doOnError(e -> log.warn("Error creating connection:", e))
                         .onErrorResume(e -> Mono.empty()) // skips the failing connections
                 )
                 .collect(Collectors.toList());
