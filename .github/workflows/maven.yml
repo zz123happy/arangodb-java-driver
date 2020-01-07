@@ -9,16 +9,24 @@ on:
       - next
 
 jobs:
+
   package:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        java-version:
+          - 8
+          - 11
+          - 13
+
     steps:
       - uses: actions/checkout@v1
-      - name: Set up JDK 1.8
+      - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 1.8
+          java-version: ${{matrix.java-version}}
       - name: Package
         run: mvn --no-transfer-progress -DskipTests=true package
 
@@ -28,22 +36,28 @@ jobs:
 
     strategy:
       matrix:
+        java-version:
+          - 8
+          - 11
+          - 13
         docker-img:
           - docker.io/arangodb/arangodb:3.4.8
           - docker.io/arangodb/enterprise:3.4.8
           - docker.io/arangodb/arangodb:3.5.3
           - docker.io/arangodb/enterprise:3.5.3
-          - docker.io/arangodb/arangodb-preview:3.6.0-rc.1
-          - docker.io/arangodb/enterprise-preview:3.6.0-rc.1
-          - docker.io/arangodb/enterprise-preview:3.6.0-rc.1-ubi
+          - docker.io/arangodb/arangodb-preview:3.6.0-rc.2
+          - docker.io/arangodb/enterprise-preview:3.6.0-rc.2
+          - docker.io/arangodb/enterprise-preview:3.6.0-rc.2-ubi
 
     steps:
       - uses: actions/checkout@v1
-      - name: Set up JDK 1.8
+      - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 1.8
+          java-version: ${{matrix.java-version}}
+      - name: Info
+        run: mvn -version
       - name: Test
-        run: mvn --no-transfer-progress test -Dtest.docker.image="${{matrix.docker-img}}" -Darango.license.key="$ARANGO_LICENSE_KEY"
+        run: mvn -e --no-transfer-progress test -Dtest.docker.image="${{matrix.docker-img}}" -Darango.license.key="$ARANGO_LICENSE_KEY"
         env:
           ARANGO_LICENSE_KEY: ${{secrets.ARANGO_LICENSE_KEY}}

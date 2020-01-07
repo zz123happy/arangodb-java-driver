@@ -1,7 +1,7 @@
 /*
  * DISCLAIMER
  *
- * Copyright 2018 ArangoDB GmbH, Cologne, Germany
+ * Copyright 2016 ArangoDB GmbH, Cologne, Germany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,19 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity;
+package com.arangodb.next.entity.codec;
 
-import org.immutables.value.Value;
+
+import com.arangodb.velocypack.VPack;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
-public interface ArangoEntity {
+public class VpackSerializer implements ArangoSerializer {
 
-    boolean getError();
-
-    int getCode();
+    @Override
+    public byte[] serialize(Object value) {
+        return new VPack.Builder().build().serialize(value).getBuffer();
+    }
 
 }

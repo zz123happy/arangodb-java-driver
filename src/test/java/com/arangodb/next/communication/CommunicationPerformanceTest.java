@@ -21,18 +21,16 @@
 
 package com.arangodb.next.communication;
 
-import com.arangodb.next.connection.*;
+import com.arangodb.next.connection.ArangoRequest;
+import com.arangodb.next.connection.AuthenticationMethod;
+import com.arangodb.next.connection.HostDescription;
+import com.arangodb.next.connection.IOUtils;
 import com.arangodb.velocypack.VPackSlice;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 import java.util.Date;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static com.arangodb.next.connection.ConnectionTestUtils.DEFAULT_SCHEDULER_FACTORY;
 
 /**
  * @author Michele Rastelli

@@ -21,8 +21,8 @@
 package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.*;
-import com.arangodb.velocypack.VPack;
-import com.arangodb.velocypack.VPackSlice;
+import com.arangodb.next.entity.ClusterEndpoints;
+import com.arangodb.next.entity.codec.ArangoDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
@@ -45,19 +45,19 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
     private static final Logger log = LoggerFactory.getLogger(ArangoCommunicationImpl.class);
 
-    private volatile boolean initialized = false;
-    private volatile boolean updatingConnectionsSemaphore = false;
-    private volatile boolean updatingHostListSemaphore = false;
-
-    @Nullable
-    private volatile AuthenticationMethod authentication;
-
-    @Nullable
-    private volatile Disposable scheduledUpdateHostListSubscription;
-    private volatile List<HostDescription> hostList;
     private final CommunicationConfig config;
     private final ConnectionFactory connectionFactory;
     private final Map<HostDescription, List<ArangoConnection>> connectionsByHost;
+    private final ArangoDeserializer deserializer;
+
+    private volatile boolean initialized = false;
+    private volatile boolean updatingConnectionsSemaphore = false;
+    private volatile boolean updatingHostListSemaphore = false;
+    @Nullable
+    private volatile AuthenticationMethod authentication;
+    @Nullable
+    private volatile Disposable scheduledUpdateHostListSubscription;
+    private volatile List<HostDescription> hostList = Collections.emptyList();
 
     private static final ArangoRequest acquireHostListRequest = ArangoRequest.builder()
             .database("_system")
@@ -72,6 +72,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         this.connectionFactory = connectionFactory;
         setHostList(config.getHosts());
         connectionsByHost = new ConcurrentHashMap<>();
+        deserializer = ArangoDeserializer.of(config.getContentType());
     }
 
     @Override
@@ -178,7 +179,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
                 .retry(config.getRetries())
                 .doOnNext(acquiredHostList -> log.debug("Acquired hosts: {}", acquiredHostList))
                 .doOnError(e -> log.warn("Error acquiring hostList: {}", e))
-                .onErrorReturn(config.getHosts())
+                .onErrorReturn(config.getHosts())   // use the hosts from config
                 .doOnNext(this::setHostList)
                 .then(Mono.defer(this::updateConnections))
                 .timeout(config.getTimeout())
@@ -187,19 +188,11 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
     private List<HostDescription> parseAcquireHostListResponse(ArangoResponse response) {
         log.debug("parseAcquireHostListResponse({})", response);
-
         // TODO: handle exceptions           response.getResponseCode() != 200
         byte[] responseBuffer = IOUtils.getByteArray(response.getBody());
-        VPackSlice responseBodySlice = new VPackSlice(responseBuffer);
         response.getBody().release();
-        VPackSlice field = responseBodySlice.get("endpoints");
-        final Collection<Map<String, String>> entity = new VPack.Builder().build().deserialize(field, Collection.class);
-        return entity.stream()
-                .map(it -> it.get("endpoint"))
-                // TODO: support ipv6 addresses
-                .map(it -> it.replaceFirst(".*://", "").split(":"))
-                .map(it -> HostDescription.of(it[0], Integer.parseInt(it[1])))
-                .collect(Collectors.toList());
+        return deserializer.deserialize(responseBuffer, ClusterEndpoints.class)
+                .getHostDescriptions();
     }
 
     /**
@@ -224,7 +217,8 @@ class ArangoCommunicationImpl implements ArangoCommunication {
                 .filter(o -> !currentHosts.contains(o))
                 .peek(host -> log.debug("adding host: {}", host))
                 .map(host -> Flux
-                        .merge(createHostConnections(host)).collectList()
+                        .merge(createHostConnections(host))
+                        .collectList()
                         .flatMap(hostConnections -> {
                             if (hostConnections.isEmpty()) {
                                 log.warn("not able to connect to host [{}], skipped adding host!", host);
@@ -255,7 +249,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
                 }))
 
                 // here we cannot use Flux::doFinally since the signal is propagated downstream before the callback is
-                // executed and this is a problem if a chained task re-invoke this method
+                // executed and this is a problem if a chained task re-invoke this method, eg. during {@link this#initialize}
                 .doOnTerminate(() -> {
                     log.debug("updateConnections complete: {}", connectionsByHost.keySet());
                     updatingConnectionsSemaphore = false;

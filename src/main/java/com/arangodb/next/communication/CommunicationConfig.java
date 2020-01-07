@@ -21,10 +21,7 @@
 package com.arangodb.next.communication;
 
 
-import com.arangodb.next.connection.ArangoProtocol;
-import com.arangodb.next.connection.AuthenticationMethod;
-import com.arangodb.next.connection.ConnectionConfig;
-import com.arangodb.next.connection.HostDescription;
+import com.arangodb.next.connection.*;
 import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
@@ -51,6 +48,11 @@ public interface CommunicationConfig {
     @Value.Default
     default ConnectionConfig getConnectionConfig() {
         return ConnectionConfig.builder().build();
+    }
+
+    @Value.Default
+    default ContentType getContentType() {
+        return ContentType.VPACK;
     }
 
     /**

@@ -1,7 +1,7 @@
 /*
  * DISCLAIMER
  *
- * Copyright 2018 ArangoDB GmbH, Cologne, Germany
+ * Copyright 2016 ArangoDB GmbH, Cologne, Germany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,25 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity;
+package com.arangodb.next.entity.codec;
 
-import org.immutables.value.Value;
+import com.arangodb.next.connection.ContentType;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
-public interface ArangoEntity {
+public interface ArangoSerializer {
 
-    boolean getError();
+    static ArangoSerializer of(ContentType contentType) {
+        switch (contentType) {
+            case VPACK:
+                return new VpackSerializer();
+            case JSON:
+                return new JsonSerializer();
+            default:
+                throw new IllegalArgumentException(String.valueOf(contentType));
+        }
+    }
 
-    int getCode();
-
+    byte[] serialize(final Object value);
 }

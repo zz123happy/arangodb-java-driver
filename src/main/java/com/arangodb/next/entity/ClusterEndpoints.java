@@ -1,7 +1,7 @@
 /*
  * DISCLAIMER
  *
- * Copyright 2018 ArangoDB GmbH, Cologne, Germany
+ * Copyright 2016 ArangoDB GmbH, Cologne, Germany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,29 @@
 
 package com.arangodb.next.entity;
 
+
+import com.arangodb.next.connection.HostDescription;
 import org.immutables.value.Value;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Michele Rastelli
  */
 @Value.Immutable
-public interface ArangoEntity {
+public interface ClusterEndpoints extends ArangoEntity {
 
-    boolean getError();
+    List<Map<String, String>> getEndpoints();
 
-    int getCode();
+    default List<HostDescription> getHostDescriptions() {
+        return getEndpoints().stream()
+                .map(it -> it.get("endpoint"))
+                // TODO: support ipv6 addresses
+                .map(it -> it.replaceFirst(".*://", "").split(":"))
+                .map(it -> HostDescription.of(it[0], Integer.parseInt(it[1])))
+                .collect(Collectors.toList());
+    }
 
 }

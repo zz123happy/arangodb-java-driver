@@ -21,7 +21,6 @@
 
 package com.arangodb.next.connection;
 
-import com.arangodb.velocypack.VPackSlice;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -67,14 +66,15 @@ class ConnectionPerformanceTest {
 
     private CompletableFuture<Void> requestBatch(int requests) {
         return new ConnectionFactoryImpl(config, ArangoProtocol.VST, DEFAULT_SCHEDULER_FACTORY).create(host, authentication)
-                .flatMapMany(connection -> Flux.range(0, requests)
-                        .doOnNext(i -> {
-                            if (i % 100_000 == 0)
-                                System.out.println(i);
-                        })
-                        .flatMap(i -> connection.execute(getRequest))
-                        .doOnNext(v -> new VPackSlice(IOUtils.getByteArray(v.getBody())).get("server"))
-                        .doOnNext(v -> v.getBody().release()))
+                .flatMapMany(connection ->
+                        Flux.range(0, requests)
+                                .doOnNext(i -> {
+                                    if (i % 100_000 == 0)
+                                        System.out.println(i);
+                                })
+                                .flatMap(i -> connection.execute(getRequest))
+                                .doOnNext(ConnectionTestUtils::verifyGetResponseVPack)
+                )
                 .then().toFuture();
     }
 

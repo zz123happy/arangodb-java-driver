@@ -20,7 +20,6 @@
 
 package com.arangodb.next.connection;
 
-import com.arangodb.velocypack.VPackSlice;
 import deployments.ContainerDeployment;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,7 +33,7 @@ import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 
-import static com.arangodb.next.connection.ConnectionTestUtils.DEFAULT_SCHEDULER_FACTORY;
+import static com.arangodb.next.connection.ConnectionTestUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
@@ -70,18 +69,7 @@ class BasicConnectionNoAuthTest {
                 .create(host, null).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(ConnectionTestUtils.versionRequest).block();
-
-        assertThat(response).isNotNull();
-        assertThat(response.getVersion()).isEqualTo(1);
-        assertThat(response.getType()).isEqualTo(2);
-        assertThat(response.getResponseCode()).isEqualTo(200);
-        System.out.println(response);
-
-        VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
-        assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
-        System.out.println(responseBodySlice);
-
-        response.getBody().release();
+        verifyGetResponseVPack(response);
         connection.close().block();
     }
 
@@ -92,18 +80,7 @@ class BasicConnectionNoAuthTest {
                 .create(host, null).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(ConnectionTestUtils.postRequest()).block();
-
-        assertThat(response).isNotNull();
-        assertThat(response.getVersion()).isEqualTo(1);
-        assertThat(response.getType()).isEqualTo(2);
-        assertThat(response.getResponseCode()).isEqualTo(200);
-        System.out.println(response);
-
-        VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
-        assertThat(responseBodySlice.get("parsed").getAsBoolean()).isEqualTo(true);
-        System.out.println(responseBodySlice);
-
-        response.getBody().release();
+        verifyPostResponseVPack(response);
         connection.close().block();
     }
 
@@ -114,17 +91,7 @@ class BasicConnectionNoAuthTest {
                 .flatMapMany(c ->
                         Flux.range(0, 1_000)
                                 .flatMap(i -> c.execute(ConnectionTestUtils.versionRequest))
-                                .doOnNext(response -> {
-                                    assertThat(response).isNotNull();
-                                    assertThat(response.getVersion()).isEqualTo(1);
-                                    assertThat(response.getType()).isEqualTo(2);
-                                    assertThat(response.getResponseCode()).isEqualTo(200);
-
-                                    VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
-                                    assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
-
-                                    response.getBody().release();
-                                }))
+                                .doOnNext(ConnectionTestUtils::verifyGetResponseVPack))
                 .then().block();
     }
 
@@ -136,6 +103,5 @@ class BasicConnectionNoAuthTest {
                 .block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
     }
-
 
 }

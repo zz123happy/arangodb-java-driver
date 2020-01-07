@@ -1,7 +1,7 @@
 /*
  * DISCLAIMER
  *
- * Copyright 2018 ArangoDB GmbH, Cologne, Germany
+ * Copyright 2016 ArangoDB GmbH, Cologne, Germany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,25 @@
 
 package com.arangodb.next.entity;
 
+
 import org.immutables.value.Value;
+
+import javax.annotation.Nullable;
+import java.util.Map;
 
 /**
  * @author Michele Rastelli
  */
 @Value.Immutable
-public interface ArangoEntity {
+public interface Version {
 
-    boolean getError();
+    String getServer();
 
-    int getCode();
+    String getLicense();
+
+    String getVersion();
+
+    @Nullable
+    Map<String, String> getDetails();
 
 }

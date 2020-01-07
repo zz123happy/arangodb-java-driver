@@ -21,7 +21,6 @@
 package com.arangodb.next.connection;
 
 import com.arangodb.next.connection.exceptions.ArangoConnectionAuthenticationException;
-import com.arangodb.velocypack.VPackSlice;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import deployments.ContainerDeployment;
 import io.netty.buffer.Unpooled;
@@ -50,7 +49,7 @@ import java.io.IOException;
 import java.security.KeyStore;
 import java.util.stream.Stream;
 
-import static com.arangodb.next.connection.ConnectionTestUtils.DEFAULT_SCHEDULER_FACTORY;
+import static com.arangodb.next.connection.ConnectionTestUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -136,18 +135,7 @@ class BasicConnectionTest {
                 .create(host, authenticationMethod).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(ConnectionTestUtils.versionRequest).block();
-
-        assertThat(response).isNotNull();
-        assertThat(response.getVersion()).isEqualTo(1);
-        assertThat(response.getType()).isEqualTo(2);
-        assertThat(response.getResponseCode()).isEqualTo(200);
-        System.out.println(response);
-
-        VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
-        assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
-        System.out.println(responseBodySlice);
-
-        response.getBody().release();
+        verifyGetResponseVPack(response);
         connection.close().block();
     }
 
@@ -158,18 +146,7 @@ class BasicConnectionTest {
                 .create(host, authenticationMethod).block();
         assertThat(connection).isNotNull();
         ArangoResponse response = connection.execute(ConnectionTestUtils.postRequest()).block();
-
-        assertThat(response).isNotNull();
-        assertThat(response.getVersion()).isEqualTo(1);
-        assertThat(response.getType()).isEqualTo(2);
-        assertThat(response.getResponseCode()).isEqualTo(200);
-        System.out.println(response);
-
-        VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
-        assertThat(responseBodySlice.get("parsed").getAsBoolean()).isEqualTo(true);
-        System.out.println(responseBodySlice);
-
-        response.getBody().release();
+        verifyPostResponseVPack(response);
         connection.close().block();
     }
 
@@ -185,11 +162,7 @@ class BasicConnectionTest {
                                     assertThat(response.getVersion()).isEqualTo(1);
                                     assertThat(response.getType()).isEqualTo(2);
                                     assertThat(response.getResponseCode()).isEqualTo(200);
-
-                                    VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
-                                    assertThat(responseBodySlice.get("server").getAsString()).isEqualTo("arango");
-
-                                    response.getBody().release();
+                                    verifyGetResponseVPack(response);
                                 }))
                 .then().block();
     }
