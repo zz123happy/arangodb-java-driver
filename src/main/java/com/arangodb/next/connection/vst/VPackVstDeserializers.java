@@ -22,6 +22,7 @@ package com.arangodb.next.connection.vst;
 
 
 import com.arangodb.next.connection.ArangoResponse;
+import com.arangodb.next.connection.IOUtils;
 import com.arangodb.next.connection.ImmutableArangoResponse;
 import com.arangodb.velocypack.VPackSlice;
 import io.netty.buffer.ByteBuf;
@@ -35,21 +36,24 @@ import java.util.Map;
 class VPackVstDeserializers {
 
      static ArangoResponse deserializeArangoResponse(VPackSlice vpack, ByteBuf body) {
-        ImmutableArangoResponse.Builder builder = ArangoResponse.builder()
-                .body(body)
-                .version(vpack.get(0).getAsInt())
-                .type(vpack.get(1).getAsInt())
-                .responseCode(vpack.get(2).getAsInt());
+         byte[] bodyBytes = IOUtils.getByteArray(body);
+         body.release();
 
-        if (vpack.size() > 3) {
-            Iterator<Map.Entry<String, VPackSlice>> metaIterator = vpack.get(3).objectIterator();
-            while (metaIterator.hasNext()) {
-                Map.Entry<String, VPackSlice> meta = metaIterator.next();
-                builder.putMeta(meta.getKey(), meta.getValue().getAsString());
-            }
-        }
+         ImmutableArangoResponse.Builder builder = ArangoResponse.builder()
+                 .body(bodyBytes)
+                 .version(vpack.get(0).getAsInt())
+                 .type(vpack.get(1).getAsInt())
+                 .responseCode(vpack.get(2).getAsInt());
 
-        return builder.build();
-    }
+         if (vpack.size() > 3) {
+             Iterator<Map.Entry<String, VPackSlice>> metaIterator = vpack.get(3).objectIterator();
+             while (metaIterator.hasNext()) {
+                 Map.Entry<String, VPackSlice> meta = metaIterator.next();
+                 builder.putMeta(meta.getKey(), meta.getValue().getAsString());
+             }
+         }
+
+         return builder.build();
+     }
 
 }

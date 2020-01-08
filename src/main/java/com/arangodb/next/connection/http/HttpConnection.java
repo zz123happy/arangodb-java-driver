@@ -91,7 +91,6 @@ final public class HttpConnection implements ArangoConnection {
 
         // perform a request to /_api/cluster/endpoints to check if server has no authentication
         return execute(ConnectionUtils.endpointsRequest).doOnNext(response -> {
-            response.getBody().release();
             if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
                 throw ArangoConnectionAuthenticationException.of(response);
             }
@@ -102,13 +101,12 @@ final public class HttpConnection implements ArangoConnection {
     public Mono<ArangoResponse> execute(final ArangoRequest request) {
         log.debug("execute({})", request);
         final String url = buildUrl(request);
-        return createHttpClient(request, request.getBody().readableBytes())
+        return createHttpClient(request, request.getBody().length)
                 .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
-                .send(Mono.just(request.getBody()))
+                .send(Mono.just(IOUtils.createBuffer(request.getBody())))
                 .responseSingle(this::buildResponse)
                 .doOnNext(response -> {
                     if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
-                        response.getBody().release();
                         log.debug("in execute(): throwing ArangoConnectionAuthenticationException()");
                         throw ArangoConnectionAuthenticationException.of(response);
                     }
@@ -237,11 +235,16 @@ final public class HttpConnection implements ArangoConnection {
     private Mono<ArangoResponse> buildResponse(HttpClientResponse resp, ByteBufMono bytes) {
         return bytes
                 .switchIfEmpty(Mono.just(Unpooled.EMPTY_BUFFER))
-                .map(byteBuf -> (ArangoResponse) ArangoResponse.builder()
+                .map(byteBuf -> {
+                    byte[] buffer = IOUtils.getByteArray(byteBuf);
+                    byteBuf.release();
+                    return buffer;
+                })
+                .map(buffer -> (ArangoResponse) ArangoResponse.builder()
                         .responseCode(resp.status().code())
                         .putAllMeta(resp.responseHeaders().entries().stream()
                                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue)))
-                        .body(IOUtils.copyOf(byteBuf))
+                        .body(buffer)
                         .build())
                 .doOnNext(it -> {
                     log.debug("received response {}", it);

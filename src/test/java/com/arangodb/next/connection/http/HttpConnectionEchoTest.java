@@ -24,7 +24,6 @@ import com.arangodb.next.connection.*;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
-import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -54,7 +53,7 @@ class HttpConnectionEchoTest {
             .putHeaderParam("headerParamKey", "headerParamValue")
             .putQueryParam("queryParamKey", "queryParamValue")
             .requestType(ArangoRequest.RequestType.POST)
-            .body(Unpooled.wrappedBuffer(body.getBytes()))
+            .body(body.getBytes())
             .build();
 
     @BeforeAll
@@ -79,8 +78,7 @@ class HttpConnectionEchoTest {
         assertThat(response.getMeta().get("authorization")).isEqualTo("Bearer token");
 
         // body
-        String receivedString = new String(IOUtils.getByteArray(response.getBody()));
-        response.getBody().release();
+        String receivedString = new String(response.getBody());
 
         assertThat(receivedString).isEqualTo(body);
 
@@ -117,13 +115,12 @@ class HttpConnectionEchoTest {
         final VPackSlice slice = builder.slice();
 
         ArangoResponse response = connection.execute(ArangoRequest.builder().from(request)
-                .body(Unpooled.wrappedBuffer(slice.getBuffer()))
+                .body(slice.getBuffer())
                 .build()).block();
 
         // body
         assertThat(response).isNotNull();
-        VPackSlice receivedSlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
-        response.getBody().release();
+        VPackSlice receivedSlice = new VPackSlice(response.getBody());
 
         assertThat(receivedSlice).isEqualTo(slice);
         assertThat(receivedSlice.get("message").getAsString()).isEqualTo("Hello World!");
@@ -137,12 +134,11 @@ class HttpConnectionEchoTest {
     void executeEmptyBody() {
         HttpConnection connection = new HttpConnection(host, AuthenticationMethod.ofBasic("user", "password"), config);
 
-        ArangoResponse response = connection.execute(ArangoRequest.builder().from(request).body(IOUtils.createBuffer()).build()).block();
+        ArangoResponse response = connection.execute(ArangoRequest.builder().from(request).body().build()).block();
 
         // body
         assertThat(response).isNotNull();
-        assertThat(response.getBody().readableBytes()).isEqualTo(0);
-        response.getBody().release();
+        assertThat(response.getBody().length).isEqualTo(0);
     }
 
     @Test
@@ -155,8 +151,6 @@ class HttpConnectionEchoTest {
         assertThat(response).isNotNull();
         assertThat(response.getMeta()).containsKey("authorization");
         assertThat(response.getMeta().get("authorization")).isEqualTo("Basic dXNlcjpwYXNzd29yZA==");
-
-        response.getBody().release();
     }
 
 }

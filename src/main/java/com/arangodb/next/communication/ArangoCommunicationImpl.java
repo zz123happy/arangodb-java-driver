@@ -191,15 +191,13 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
     private List<HostDescription> parseAcquireHostListResponse(ArangoResponse response) {
         log.debug("parseAcquireHostListResponse({})", response);
-        byte[] responseBuffer = IOUtils.getByteArray(response.getBody());
-        response.getBody().release();
         if (response.getResponseCode() != 200) {
             throw ArangoServerException.builder()
                     .responseCode(response.getResponseCode())
-                    .entity(deserializer.deserialize(responseBuffer, ErrorEntity.class))
+                    .entity(deserializer.deserialize(response.getBody(), ErrorEntity.class))
                     .build();
         }
-        return deserializer.deserialize(responseBuffer, ClusterEndpoints.class)
+        return deserializer.deserialize(response.getBody(), ClusterEndpoints.class)
                 .getHostDescriptions();
     }
 

@@ -24,7 +24,6 @@ package com.arangodb.next.communication;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.AuthenticationMethod;
 import com.arangodb.next.connection.HostDescription;
-import com.arangodb.next.connection.IOUtils;
 import com.arangodb.velocypack.VPackSlice;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -65,8 +64,8 @@ class CommunicationPerformanceTest {
                                 System.out.println(i);
                         })
                         .flatMap(i -> communication.execute(getRequest))
-                        .doOnNext(v -> new VPackSlice(IOUtils.getByteArray(v.getBody())).get("server"))
-                        .doOnNext(v -> v.getBody().release()))
+                        .doOnNext(v -> new VPackSlice(v.getBody()).get("server"))
+                )
                 .then()
                 .block();
 

@@ -177,7 +177,6 @@ final public class VstConnection implements ArangoConnection {
                     return execute(connection, id, buffer)
                             .doOnNext(response -> {
                                 if (response.getResponseCode() != HttpResponseStatus.OK.code()) {
-                                    response.getBody().release();
                                     log.warn("in authenticate(): received response {}", response);
                                     throw ArangoConnectionAuthenticationException.of(response);
                                 }
@@ -204,7 +203,6 @@ final public class VstConnection implements ArangoConnection {
                 execute(ConnectionUtils.endpointsRequest)
                         .doOnNext(response -> {
                             if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
-                                response.getBody().release();
                                 throw ArangoConnectionAuthenticationException.of(response);
                             }
                         })

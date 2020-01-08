@@ -78,10 +78,9 @@ final class RequestConverter {
     private static ByteBuf createVstPayload(ArangoRequest request) {
         VPackSlice headSlice = VPackVstSerializers.serialize(request);
         int headSize = headSlice.getByteSize();
-        ByteBuf payload = IOUtils.createBuffer(headSize + request.getBody().readableBytes());
+        ByteBuf payload = IOUtils.createBuffer(headSize + request.getBody().length);
         payload.writeBytes(headSlice.getBuffer(), 0, headSize);
         payload.writeBytes(request.getBody());
-        request.getBody().release();
         return payload;
     }
 

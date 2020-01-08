@@ -20,12 +20,9 @@
 
 package com.arangodb.next.connection;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import org.immutables.value.Value;
 
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * @author Mark Vollmary
@@ -58,10 +55,9 @@ public interface ArangoRequest {
 
     Map<String, String> getHeaderParam();
 
-    // TODO: refactor to Publisher<ByteBuf>
     @Value.Default
-    default ByteBuf getBody() {
-        return Unpooled.EMPTY_BUFFER;
+    default byte[] getBody() {
+        return new byte[0];
     }
 
 

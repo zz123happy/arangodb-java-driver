@@ -28,13 +28,14 @@ import io.netty.buffer.ByteBuf;
  * @author Michele Rastelli
  */
 class VPackUtils {
+
     /**
      * @param slice input
      * @return a ByteBuf from VPackSlice buffer, truncating final null bytes
      */
-    public static ByteBuf extractBuffer(VPackSlice slice) {
+    public static ByteBuf extractBuffer(final VPackSlice slice) {
         int size = slice.getByteSize();
-        ByteBuf buffer = IOUtils.createBuffer(size);
+        ByteBuf buffer = IOUtils.createBuffer(size, size);
         buffer.writeBytes(slice.getBuffer(), 0, size);
         return buffer;
     }

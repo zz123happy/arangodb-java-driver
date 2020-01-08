@@ -43,6 +43,12 @@ public class IOUtils {
         return Unpooled.buffer(initialCapacity, maxCapacity);
     }
 
+    public static ByteBuf createBuffer(byte[] bytes) {
+        ByteBuf buffer = createBuffer(bytes.length, bytes.length);
+        buffer.writeBytes(bytes);
+        return buffer;
+    }
+
     public static ByteBuf copyOf(final ByteBuf orig) {
         ByteBuf created = IOUtils.createBuffer(orig.readableBytes());
         orig.readBytes(created);

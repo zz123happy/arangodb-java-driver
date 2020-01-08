@@ -20,7 +20,6 @@
 
 package com.arangodb.next.connection;
 
-import io.netty.buffer.ByteBuf;
 import org.immutables.value.Value;
 
 import java.util.Map;
@@ -51,7 +50,8 @@ public interface ArangoResponse {
 
     Map<String, String> getMeta();
 
-    // TODO: refactor to Publisher<ByteBuf>
-    ByteBuf getBody();
-
+    @Value.Default
+    default byte[] getBody() {
+        return new byte[0];
+    }
 }

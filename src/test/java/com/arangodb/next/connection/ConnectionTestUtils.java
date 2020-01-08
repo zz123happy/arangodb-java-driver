@@ -28,6 +28,7 @@ import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,12 +46,20 @@ public class ConnectionTestUtils {
             .putQueryParam("details", "true")
             .build();
 
+    /**
+     * @param slice input
+     * @return a byte array from VPackSlice buffer, truncating final null bytes
+     */
+    private static byte[] extractBytes(final VPackSlice slice) {
+        return Arrays.copyOf(slice.getBuffer(), slice.getByteSize());
+    }
+
     public static ArangoRequest postRequest() {
         return ArangoRequest.builder()
                 .database("_system")
                 .path("/_api/query")
                 .requestType(ArangoRequest.RequestType.POST)
-                .body(VPackUtils.extractBuffer(createParseQueryRequestBody()))
+                .body(extractBytes(createParseQueryRequestBody()))
                 .build();
     }
 
@@ -73,10 +82,8 @@ public class ConnectionTestUtils {
         assertThat(response.getResponseCode()).isEqualTo(200);
 
         ArangoDeserializer deserializer = ArangoDeserializer.of(ContentType.VPACK);
-        Version version = deserializer.deserialize(IOUtils.getByteArray(response.getBody()), Version.class);
+        Version version = deserializer.deserialize(response.getBody(), Version.class);
         assertThat(version.getServer()).isEqualTo("arango");
-
-        response.getBody().release();
     }
 
     public static void verifyPostResponseVPack(ArangoResponse response) {
@@ -85,11 +92,9 @@ public class ConnectionTestUtils {
         assertThat(response.getType()).isEqualTo(2);
         assertThat(response.getResponseCode()).isEqualTo(200);
 
-        VPackSlice responseBodySlice = new VPackSlice(IOUtils.getByteArray(response.getBody()));
+        VPackSlice responseBodySlice = new VPackSlice(response.getBody());
         assertThat(responseBodySlice.get("parsed").getAsBoolean()).isEqualTo(true);
         System.out.println(responseBodySlice);
-
-        response.getBody().release();
     }
 
     private static VPackSlice createParseQueryRequestBody() {

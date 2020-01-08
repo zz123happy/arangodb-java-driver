@@ -36,7 +36,7 @@ public interface ArangoConnection {
     Mono<ArangoConnection> initialize();
 
     /**
-     * Note: the consumer is responsible to call release() on Response body
+     * Performs a request
      *
      * @param request to send
      * @return response from the server

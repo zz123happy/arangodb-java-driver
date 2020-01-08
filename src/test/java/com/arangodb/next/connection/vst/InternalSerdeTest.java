@@ -46,7 +46,6 @@ class InternalSerdeTest {
                 .type(2)
                 .responseCode(200)
                 .putMeta("metaKey", "metaValue")
-                .body(Unpooled.EMPTY_BUFFER)
                 .build();
 
         final VPackBuilder builder = new VPackBuilder();
@@ -62,7 +61,6 @@ class InternalSerdeTest {
         final VPackSlice vpack = builder.slice();
         Map.Entry<String, VPackSlice> metaEntry = vpack.get(3).objectIterator().next();
         ArangoResponse deserializedResponse = ArangoResponse.builder()
-                .body(Unpooled.EMPTY_BUFFER)
                 .version(vpack.get(0).getAsInt())
                 .type(vpack.get(1).getAsInt())
                 .responseCode(vpack.get(2).getAsInt())
@@ -78,7 +76,6 @@ class InternalSerdeTest {
                 .database("database")
                 .requestType(ArangoRequest.RequestType.GET)
                 .path("path")
-                .body(Unpooled.EMPTY_BUFFER)
                 .putHeaderParam("headerParamKey", "headerParamValue")
                 .putQueryParam("queryParamKey", "queryParamValue")
                 .build();

@@ -104,7 +104,7 @@ public class AcquireHostListMockTest {
             return Mono.just(
                     ArangoResponse.builder()
                             .responseCode(200)
-                            .body(IOUtils.createBuffer().writeBytes(responseBody))
+                            .body(responseBody)
                             .build()
             );
         }
@@ -274,14 +274,13 @@ public class AcquireHostListMockTest {
                         ArangoResponse.builder()
                                 .responseCode(500)
                                 .body(
-                                        IOUtils.createBuffer().writeBytes(
                                                 ArangoSerializer.of(contentType).serialize(ImmutableErrorEntity
                                                         .builder()
                                                         .errorMessage("Error 8000")
                                                         .errorNum(8000)
                                                         .code(500)
                                                         .error(true)
-                                                        .build()))
+                                                        .build())
                                 )
                                 .build()
                 ));
@@ -315,14 +314,13 @@ public class AcquireHostListMockTest {
                                 ArangoResponse.builder()
                                         .responseCode(500)
                                         .body(
-                                                IOUtils.createBuffer().writeBytes(
                                                         ArangoSerializer.of(contentType).serialize(ImmutableErrorEntity
                                                                 .builder()
                                                                 .errorMessage("Error 8000")
                                                                 .errorNum(8000)
                                                                 .code(500)
                                                                 .error(true)
-                                                                .build()))
+                                                                .build())
                                         )
                                         .build()
                         ))
