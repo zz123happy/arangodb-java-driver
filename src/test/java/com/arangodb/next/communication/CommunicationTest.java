@@ -65,7 +65,7 @@ class CommunicationTest {
         assertThat(communication).isNotNull();
 
         Map<HostDescription, List<ArangoConnection>> connectionsByHost =
-                ((ArangoCommunicationImpl) communication).getConnectionsByHost();
+                ((ArangoCommunicationImpl) communication).getConnectionPool().getConnectionsByHost();
         HostDescription[] expectedKeys = hosts.toArray(new HostDescription[0]);
 
         assertThat(connectionsByHost)
@@ -92,7 +92,7 @@ class CommunicationTest {
                 .build()).block();
         assertThat(communication).isNotNull();
 
-        Map<HostDescription, List<ArangoConnection>> currentHosts = ((ArangoCommunicationImpl) communication).getConnectionsByHost();
+        Map<HostDescription, List<ArangoConnection>> currentHosts = ((ArangoCommunicationImpl) communication).getConnectionPool().getConnectionsByHost();
         assertThat(currentHosts).hasSize(2);
         assertThat(currentHosts.keySet()).containsExactlyInAnyOrderElementsOf(hosts);
 
