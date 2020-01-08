@@ -52,16 +52,25 @@ class CommunicationPerformanceTest {
             .requestType(ArangoRequest.RequestType.GET)
             .build();
 
+    private volatile long chunkStart;
+
     @Test
     void infiniteParallelLoop() {
         int requests = 10_000_000;
+        int chunkSize = 1_000_000;
+        chunkStart = new Date().getTime();
+
         long start = new Date().getTime();
 
         ArangoCommunication.create(config)
-                .flatMapMany(communication -> Flux.range(0, requests)
+                .flatMapMany(communication -> Flux.range(1, requests)
                         .doOnNext(i -> {
-                            if (i % 100_000 == 0)
+                            if (i % chunkSize == 0) {
                                 System.out.println(i);
+                                long chunkRate = chunkSize * 1000 / (new Date().getTime() - chunkStart);
+                                System.out.println("rate: " + chunkRate + " reqs/s");
+                                chunkStart = new Date().getTime();
+                            }
                         })
                         .flatMap(i -> communication.execute(getRequest))
                         .doOnNext(v -> new VPackSlice(v.getBody()).get("server"))
