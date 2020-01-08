@@ -20,12 +20,9 @@
 
 package com.arangodb.next.entity;
 
-import org.immutables.value.Value;
-
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
 public interface ArangoEntity {
 
     boolean getError();

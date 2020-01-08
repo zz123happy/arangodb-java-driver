@@ -26,4 +26,12 @@ package com.arangodb.next.exceptions;
  */
 public abstract class ArangoException extends RuntimeException {
 
+    @Override
+    public abstract String toString();
+
+    @Override
+    public String getMessage() {
+        return toString();
+    }
+
 }

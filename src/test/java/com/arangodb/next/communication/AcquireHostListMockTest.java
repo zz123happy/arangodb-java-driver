@@ -286,9 +286,8 @@ public class AcquireHostListMockTest {
         ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
         Throwable thrown = catchThrowable(() -> communication.initialize().block());
         assertThat(Exceptions.unwrap(thrown))
-                .isInstanceOf(ArangoServerException.class);
-        // FIXME:
-//                .hasMessageContaining("Could not create any connection");
+                .isInstanceOf(ArangoServerException.class)
+                .hasMessageContaining("Error 8000");
 
         assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).isEmpty();
     }
