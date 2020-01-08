@@ -25,6 +25,7 @@ import com.arangodb.next.connection.*;
 import com.arangodb.next.entity.ImmutableClusterEndpoints;
 import com.arangodb.next.entity.ImmutableErrorEntity;
 import com.arangodb.next.entity.codec.ArangoSerializer;
+import com.arangodb.next.exceptions.ArangoServerException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import reactor.core.Exceptions;
@@ -220,11 +221,6 @@ public class AcquireHostListMockTest {
                 .hasMessageContaining("Could not create any connection");
 
         assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).isEmpty();
-        communication.updateHostList().block();
-
-        // FIXME: this should be empty
-        assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).containsExactly(initialHost);
-        communication.getConnectionPool().getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
     }
 
     @ParameterizedTest
@@ -288,11 +284,13 @@ public class AcquireHostListMockTest {
         };
 
         ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
-        communication.initialize().block();
+        Throwable thrown = catchThrowable(() -> communication.initialize().block());
+        assertThat(Exceptions.unwrap(thrown))
+                .isInstanceOf(ArangoServerException.class);
+        // FIXME:
+//                .hasMessageContaining("Could not create any connection");
 
-        // FIXME: this should be empty
-        assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).containsExactly(initialHost);
-        communication.getConnectionPool().getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
+        assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).isEmpty();
     }
 
     @ParameterizedTest

@@ -32,7 +32,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,8 +43,13 @@ class ArangoCommunicationImpl implements ArangoCommunication {
     private static final Logger log = LoggerFactory.getLogger(ArangoCommunicationImpl.class);
 
     private final CommunicationConfig config;
-    private final ConnectionPool connectionPool;
     private final ArangoDeserializer deserializer;
+    private final ConnectionFactory connectionFactory;
+
+    // connection pool used to acquireHostList
+    private volatile ConnectionPool contactConnectionPool;
+    // connection pool used for all other operations
+    private volatile ConnectionPool connectionPool;
 
     private volatile boolean initialized = false;
     private volatile boolean updatingHostListSemaphore = false;
@@ -53,7 +57,6 @@ class ArangoCommunicationImpl implements ArangoCommunication {
     private volatile AuthenticationMethod authentication;
     @Nullable
     private volatile Disposable scheduledUpdateHostListSubscription;
-    private volatile List<HostDescription> hostList = Collections.emptyList();
 
     private static final ArangoRequest acquireHostListRequest = ArangoRequest.builder()
             .database("_system")
@@ -65,8 +68,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         log.debug("ArangoCommunicationImpl({}, {})", config, connectionFactory);
 
         this.config = config;
-        setHostList(config.getHosts());
-        connectionPool = ConnectionPool.create(config, config.getAuthenticationMethod(), connectionFactory);
+        this.connectionFactory = connectionFactory;
         deserializer = ArangoDeserializer.of(config.getContentType());
     }
 
@@ -80,7 +82,18 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         initialized = true;
 
         return negotiateAuthentication()
-                .then(Mono.defer(() -> connectionPool.updateConnections(hostList)))
+                .doOnSuccess(__ -> {
+                    CommunicationConfig contactPoolConfig = CommunicationConfig.builder().from(config).connectionsPerHost(1).build();
+                    contactConnectionPool = ConnectionPool.create(contactPoolConfig, authentication, connectionFactory);
+                    connectionPool = ConnectionPool.create(config, authentication, connectionFactory);
+                })
+                .then(Mono.defer(() -> {
+                    if (config.getAcquireHostList()) {
+                        return contactConnectionPool.updateConnections(config.getHosts());
+                    } else {
+                        return connectionPool.updateConnections(config.getHosts());
+                    }
+                }))
                 .then(Mono.defer(this::scheduleUpdateHostList))
                 .then(Mono.just(this));
     }
@@ -88,8 +101,12 @@ class ArangoCommunicationImpl implements ArangoCommunication {
     @Override
     public Mono<ArangoResponse> execute(ArangoRequest request) {
         log.debug("execute({})", request);
-        return Mono.defer(() -> connectionPool.executeOnRandomHost(request))
-                .timeout(config.getTimeout());
+        return execute(request, connectionPool);
+    }
+
+    private Mono<ArangoResponse> execute(ArangoRequest request, ConnectionPool cp) {
+        log.debug("execute({}, {})", request, cp);
+        return Mono.defer(() -> cp.executeOnRandomHost(request)).timeout(config.getTimeout());
     }
 
     @Override
@@ -140,15 +157,13 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         }
         updatingHostListSemaphore = true;
 
-        return execute(acquireHostListRequest)
+        return execute(acquireHostListRequest, contactConnectionPool)
                 .map(this::parseAcquireHostListResponse)
                 .doOnError(e -> log.warn("Error acquiring hostList, retrying...", e))
                 .retry(config.getRetries())
                 .doOnNext(acquiredHostList -> log.debug("Acquired hosts: {}", acquiredHostList))
                 .doOnError(e -> log.warn("Error acquiring hostList:", e))
-                .onErrorReturn(config.getHosts())   // use the hosts from config
-                .doOnNext(this::setHostList)
-                .then(Mono.defer(() -> connectionPool.updateConnections(hostList)))
+                .flatMap(hostList -> connectionPool.updateConnections(hostList))
                 .timeout(config.getTimeout())
                 .doFinally(s -> updatingHostListSemaphore = false);
     }
@@ -174,11 +189,6 @@ class ArangoCommunicationImpl implements ArangoCommunication {
         } else {
             return Mono.empty();
         }
-    }
-
-    private void setHostList(List<HostDescription> hostList) {
-        log.debug("setHostList({})", hostList);
-        this.hostList = hostList;
     }
 
 }
