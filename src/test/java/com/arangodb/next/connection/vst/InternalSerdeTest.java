@@ -26,7 +26,6 @@ import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
-import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;

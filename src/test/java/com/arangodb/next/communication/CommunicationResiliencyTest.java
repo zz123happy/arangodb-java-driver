@@ -23,7 +23,6 @@ package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.ArangoProtocol;
 import com.arangodb.next.connection.ConnectionConfig;
-import com.arangodb.next.connection.HostDescription;
 import deployments.ProxiedContainerDeployment;
 import deployments.ProxiedHost;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +33,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
 
 import java.io.IOException;
-import java.util.List;
 
 import static com.arangodb.next.communication.CommunicationTestUtils.executeRequest;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,15 +45,13 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 class CommunicationResiliencyTest {
 
     private final ImmutableCommunicationConfig.Builder config;
-    private final List<HostDescription> hosts;
 
     @Container
     private final static ProxiedContainerDeployment deployment = ProxiedContainerDeployment.ofCluster(2, 2);
 
     CommunicationResiliencyTest() {
-        hosts = deployment.getHosts();
         config = CommunicationConfig.builder()
-                .addAllHosts(hosts)
+                .addAllHosts(deployment.getHosts())
                 .authenticationMethod(deployment.getAuthentication())
                 // use proxied hostDescriptions
                 .acquireHostList(false);

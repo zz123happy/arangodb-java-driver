@@ -21,7 +21,7 @@ public class ProxiedSingleServerDeployment extends ProxiedContainerDeployment {
     private final int PORT = 8529;
 
     private volatile Network network;
-    private volatile ToxiproxyContainer toxiproxy;
+    private final ToxiproxyContainer toxiproxy;
     private final GenericContainer<?> container;
 
     private ToxiproxyContainer.ContainerProxy proxy;

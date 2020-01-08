@@ -24,8 +24,6 @@ import deployments.ContainerDeployment;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
@@ -42,8 +40,6 @@ import static org.assertj.core.api.Assertions.catchThrowable;
  */
 @Testcontainers
 class BasicConnectionNoAuthTest {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(BasicConnectionNoAuthTest.class);
 
     private static HostDescription host;
 

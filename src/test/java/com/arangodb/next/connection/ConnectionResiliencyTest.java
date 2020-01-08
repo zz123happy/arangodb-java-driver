@@ -22,11 +22,9 @@ package com.arangodb.next.connection;
 
 import deployments.ProxiedContainerDeployment;
 import deployments.ProxiedHost;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
@@ -43,8 +41,6 @@ import static org.assertj.core.api.Assertions.catchThrowable;
  */
 @Testcontainers
 class ConnectionResiliencyTest {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionResiliencyTest.class);
 
     private final ImmutableConnectionConfig.Builder config;
 

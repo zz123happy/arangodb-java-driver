@@ -42,10 +42,10 @@ public interface ClusterEndpoints extends ArangoEntity {
                 .map(it -> it.get("endpoint"))
                 .map(it -> it.replaceFirst(".*://", ""))
                 .map(it -> {
-                    if (it.matches("\\[.*\\]:.*")) {    // ipv6
+                    if (it.matches("\\[.*]:.*")) {    // ipv6
                         return it
                                 .replaceFirst("\\[", "")
-                                .split("\\]:");
+                                .split("]:");
                     }
                     return it.split(":");
                 })

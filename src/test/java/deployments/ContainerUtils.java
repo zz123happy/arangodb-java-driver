@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.netty.http.client.HttpClient;
 
+import java.util.Objects;
+
 /**
  * @author Michele Rastelli
  */
@@ -58,7 +60,7 @@ class ContainerUtils {
                             .uri("http://" + h.getHost() + ":" + h.getPort() + "/_api/version")
                             .response()
                             .block())
-                    .anyMatch(response -> response.status() != HttpResponseStatus.OK);
+                    .anyMatch(response -> Objects.requireNonNull(response).status() != HttpResponseStatus.OK);
 
             if (authErrors) {
                 log.warn("Authentication Error: retrying in 1s ...");

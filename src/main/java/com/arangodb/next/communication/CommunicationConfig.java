@@ -32,6 +32,7 @@ import java.util.List;
  * @author Michele Rastelli
  */
 @Value.Immutable
+@SuppressWarnings("SameReturnValue")
 public interface CommunicationConfig {
     static ImmutableCommunicationConfig.Builder builder() {
         return ImmutableCommunicationConfig.builder();

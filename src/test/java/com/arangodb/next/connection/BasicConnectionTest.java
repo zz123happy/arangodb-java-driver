@@ -33,8 +33,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
@@ -60,7 +58,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Testcontainers
 class BasicConnectionTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BasicConnectionTest.class);
     private static final String SSL_TRUSTSTORE = "/example.truststore";
     private static final String SSL_TRUSTSTORE_PASSWORD = "12345678";
 
