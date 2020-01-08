@@ -22,7 +22,7 @@ package com.arangodb.next.connection;
 
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.PooledByteBufAllocator;
 
 /**
  * @author Michele Rastelli
@@ -40,7 +40,7 @@ public class IOUtils {
     }
 
     public static ByteBuf createBuffer(int initialCapacity, int maxCapacity) {
-        return Unpooled.buffer(initialCapacity, maxCapacity);
+        return PooledByteBufAllocator.DEFAULT.directBuffer(initialCapacity, maxCapacity);
     }
 
     public static ByteBuf createBuffer(byte[] bytes) {
