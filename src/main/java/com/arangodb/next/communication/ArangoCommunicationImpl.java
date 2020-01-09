@@ -83,7 +83,10 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
         return negotiateAuthentication()
                 .doOnSuccess(__ -> {
-                    CommunicationConfig contactPoolConfig = CommunicationConfig.builder().from(config).connectionsPerHost(1).build();
+                    CommunicationConfig contactPoolConfig = CommunicationConfig.builder().from(config)
+                            .topology(ArangoTopology.SINGLE_SERVER)
+                            .connectionsPerHost(1)
+                            .build();
                     contactConnectionPool = ConnectionPool.create(contactPoolConfig, authentication, connectionFactory);
                     connectionPool = ConnectionPool.create(config, authentication, connectionFactory);
                 })

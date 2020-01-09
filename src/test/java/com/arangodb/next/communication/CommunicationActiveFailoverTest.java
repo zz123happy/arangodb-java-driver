@@ -21,10 +21,7 @@
 
 package com.arangodb.next.communication;
 
-import com.arangodb.next.connection.ArangoConnection;
-import com.arangodb.next.connection.ArangoProtocol;
-import com.arangodb.next.connection.ConnectionTestUtils;
-import com.arangodb.next.connection.HostDescription;
+import com.arangodb.next.connection.*;
 import deployments.ContainerDeployment;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -44,17 +41,18 @@ import static org.assertj.core.api.Assertions.catchThrowable;
  * @author Michele Rastelli
  */
 @Testcontainers
-class CommunicationTest {
+class CommunicationActiveFailoverTest {
 
     private final ImmutableCommunicationConfig.Builder config;
     private final List<HostDescription> hosts;
 
     @Container
-    private final static ContainerDeployment deployment = ContainerDeployment.ofCluster(2, 2);
+    private final static ContainerDeployment deployment = ContainerDeployment.ofActiveFailover(3);
 
-    CommunicationTest() {
+    CommunicationActiveFailoverTest() {
         hosts = deployment.getHosts();
         config = CommunicationConfig.builder()
+                .topology(ArangoTopology.ACTIVE_FAILOVER)
                 .addAllHosts(hosts)
                 .authenticationMethod(deployment.getAuthentication());
     }
@@ -68,13 +66,15 @@ class CommunicationTest {
         assertThat(communication).isNotNull();
 
         ArangoCommunicationImpl communicationImpl = ((ArangoCommunicationImpl) communication);
-        ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communicationImpl.getConnectionPool();
+        LeaderFollowerConnectionPool connectionPool = (LeaderFollowerConnectionPool) communicationImpl.getConnectionPool();
         Map<HostDescription, List<ArangoConnection>> connectionsByHost = connectionPool.getConnectionsByHost();
         HostDescription[] expectedKeys = hosts.toArray(new HostDescription[0]);
-
         assertThat(connectionsByHost)
                 .containsKeys(expectedKeys)
                 .containsOnlyKeys(expectedKeys);
+
+        HostDescription leader = connectionPool.getLeader();
+        assertThat(hosts).contains(leader);
 
         // check if every connection is connected
         connectionsByHost.forEach((key, value) -> value.forEach(connection -> {
@@ -97,10 +97,13 @@ class CommunicationTest {
         assertThat(communication).isNotNull();
 
         ArangoCommunicationImpl communicationImpl = ((ArangoCommunicationImpl) communication);
-        ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communicationImpl.getConnectionPool();
+        LeaderFollowerConnectionPool connectionPool = (LeaderFollowerConnectionPool) communicationImpl.getConnectionPool();
         Map<HostDescription, List<ArangoConnection>> currentHosts = connectionPool.getConnectionsByHost();
-        assertThat(currentHosts).hasSize(2);
+        assertThat(currentHosts).hasSize(hosts.size());
         assertThat(currentHosts.keySet()).containsExactlyInAnyOrderElementsOf(hosts);
+
+        HostDescription leader = connectionPool.getLeader();
+        assertThat(hosts).contains(leader);
 
         // check if every connection is connected
         currentHosts.forEach((key, value) -> value.forEach(connection -> {

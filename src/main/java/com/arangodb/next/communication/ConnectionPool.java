@@ -25,7 +25,6 @@ import com.arangodb.next.connection.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Michele Rastelli
@@ -36,7 +35,18 @@ interface ConnectionPool {
             final CommunicationConfig config,
             final AuthenticationMethod authentication,
             final ConnectionFactory connectionFactory) {
-        return new ConnectionPoolImpl(config, authentication, connectionFactory);
+
+        switch (config.topology()) {
+            case MASTER_SLAVE:
+            case ACTIVE_FAILOVER:
+                return new LeaderFollowerConnectionPool(config, authentication, connectionFactory);
+            case SINGLE_SERVER:
+            case CLUSTER:
+                return new ConnectionPoolImpl(config, authentication, connectionFactory);
+            default:
+                throw new IllegalArgumentException();
+        }
+
     }
 
     /**
@@ -51,11 +61,6 @@ interface ConnectionPool {
      * @return db response
      */
     Mono<ArangoResponse> executeOnRandomHost(ArangoRequest request);
-
-    /**
-     * @return a copy of connectionsByHost
-     */
-    Map<HostDescription, List<ArangoConnection>> getConnectionsByHost();
 
     /**
      * Updates the connectionsByHost map, making it consistent with the current hostList

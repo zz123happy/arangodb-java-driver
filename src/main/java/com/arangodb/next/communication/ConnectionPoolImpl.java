@@ -42,13 +42,13 @@ class ConnectionPoolImpl implements ConnectionPool {
 
     private static final Logger log = LoggerFactory.getLogger(ConnectionPoolImpl.class);
 
+    protected final Map<HostDescription, List<ArangoConnection>> connectionsByHost;
     private final CommunicationConfig config;
     private final ConnectionFactory connectionFactory;
     private final AuthenticationMethod authentication;
-    private final Map<HostDescription, List<ArangoConnection>> connectionsByHost;
     private volatile boolean updatingConnectionsSemaphore = false;
 
-    private static <T> T getRandomItem(final Collection<T> collection) {
+    protected static <T> T getRandomItem(final Collection<T> collection) {
         int index = ThreadLocalRandom.current().nextInt(collection.size());
         Iterator<T> iterator = collection.iterator();
         for (int i = 0; i < index; i++) {
@@ -92,8 +92,7 @@ class ConnectionPoolImpl implements ConnectionPool {
         return Flux.merge(closedConnections).doFinally(v -> connectionFactory.close()).then();
     }
 
-    @Override
-    public Map<HostDescription, List<ArangoConnection>> getConnectionsByHost() {
+    Map<HostDescription, List<ArangoConnection>> getConnectionsByHost() {
         return connectionsByHost.entrySet().stream()
                 .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), new LinkedList<>(e.getValue())))
                 .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));

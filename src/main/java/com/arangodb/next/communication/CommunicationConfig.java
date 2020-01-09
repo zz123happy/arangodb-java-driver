@@ -44,6 +44,15 @@ public interface CommunicationConfig {
     List<HostDescription> getHosts();
 
     /**
+     * @return database deployment topology
+     * @see <a href=https://www.arangodb.com/docs/stable/architecture-deployment-modes.html>Deployment Modes</a>
+     */
+    @Value.Default
+    default ArangoTopology topology() {
+        return ArangoTopology.SINGLE_SERVER;
+    }
+
+    /**
      * @return connection configuration
      */
     @Value.Default

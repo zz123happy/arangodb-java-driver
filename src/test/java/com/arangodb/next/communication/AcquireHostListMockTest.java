@@ -145,8 +145,9 @@ public class AcquireHostListMockTest {
         ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
         communication.initialize().block();
 
-        assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).containsExactlyInAnyOrder(factory.getHosts().toArray(new HostDescription[0]));
-        communication.getConnectionPool().getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
+        ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communication.getConnectionPool();
+        assertThat(connectionPool.getConnectionsByHost().keySet()).containsExactlyInAnyOrder(factory.getHosts().toArray(new HostDescription[0]));
+        connectionPool.getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
     }
 
     @ParameterizedTest
@@ -161,8 +162,9 @@ public class AcquireHostListMockTest {
         ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
         communication.initialize().block();
 
-        assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).containsExactly(factory.getHosts().toArray(new HostDescription[0]));
-        communication.getConnectionPool().getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
+        ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communication.getConnectionPool();
+        assertThat(connectionPool.getConnectionsByHost().keySet()).containsExactly(factory.getHosts().toArray(new HostDescription[0]));
+        connectionPool.getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
     }
 
     @ParameterizedTest
@@ -189,7 +191,8 @@ public class AcquireHostListMockTest {
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("Could not create any connection");
 
-        assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).isEmpty();
+        ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communication.getConnectionPool();
+        assertThat(connectionPool.getConnectionsByHost().keySet()).isEmpty();
     }
 
     @ParameterizedTest
@@ -220,7 +223,8 @@ public class AcquireHostListMockTest {
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("Could not create any connection");
 
-        assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).isEmpty();
+        ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communication.getConnectionPool();
+        assertThat(connectionPool.getConnectionsByHost().keySet()).isEmpty();
     }
 
     @ParameterizedTest
@@ -248,8 +252,9 @@ public class AcquireHostListMockTest {
         ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
         communication.initialize().block();
 
-        assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).containsExactly(reachableHosts.toArray(new HostDescription[0]));
-        communication.getConnectionPool().getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
+        ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communication.getConnectionPool();
+        assertThat(connectionPool.getConnectionsByHost().keySet()).containsExactly(reachableHosts.toArray(new HostDescription[0]));
+        connectionPool.getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
     }
 
     @ParameterizedTest
@@ -289,7 +294,8 @@ public class AcquireHostListMockTest {
                 .isInstanceOf(ArangoServerException.class)
                 .hasMessageContaining("Error 8000");
 
-        assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).isEmpty();
+        ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communication.getConnectionPool();
+        assertThat(connectionPool.getConnectionsByHost().keySet()).isEmpty();
     }
 
     @ParameterizedTest
@@ -328,8 +334,9 @@ public class AcquireHostListMockTest {
         ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
         communication.initialize().block();
 
-        assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).containsExactlyInAnyOrder(factory.getHosts().toArray(new HostDescription[0]));
-        communication.getConnectionPool().getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
+        ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communication.getConnectionPool();
+        assertThat(connectionPool.getConnectionsByHost().keySet()).containsExactlyInAnyOrder(factory.getHosts().toArray(new HostDescription[0]));
+        connectionPool.getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
     }
 
     @ParameterizedTest
@@ -348,8 +355,9 @@ public class AcquireHostListMockTest {
         ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
         communication.initialize().block();
 
-        assertThat(communication.getConnectionPool().getConnectionsByHost().keySet()).containsExactlyInAnyOrder(factory.getHosts().toArray(new HostDescription[0]));
-        communication.getConnectionPool().getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
+        ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communication.getConnectionPool();
+        assertThat(connectionPool.getConnectionsByHost().keySet()).containsExactlyInAnyOrder(factory.getHosts().toArray(new HostDescription[0]));
+        connectionPool.getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(10));
     }
 
 }
