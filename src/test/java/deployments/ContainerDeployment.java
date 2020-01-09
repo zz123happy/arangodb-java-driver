@@ -46,6 +46,10 @@ public abstract class ContainerDeployment implements Startable {
         return new ClusterDeployment(dbServers, coordinators);
     }
 
+    public static ContainerDeployment ofActiveFailover(int servers) {
+        return new ActiveFailoverDeployment(servers);
+    }
+
     @Override
     public void start() {
         try {
