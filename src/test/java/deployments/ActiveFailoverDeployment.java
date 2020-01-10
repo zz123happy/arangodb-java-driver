@@ -23,7 +23,7 @@ import java.util.stream.IntStream;
 public class ActiveFailoverDeployment extends ContainerDeployment {
 
     private final Logger log = LoggerFactory.getLogger(ActiveFailoverDeployment.class);
-    private final String DOCKER_COMMAND = "arangodb --auth.jwt-secret /jwtSecret --starter.mode=activefailover --starter.join server1,server2,server3";
+    private final String DOCKER_COMMAND = "arangodb --starter.address=$(hostname -i) --auth.jwt-secret /jwtSecret --starter.mode=activefailover --starter.join server1,server2,server3";
 
     private volatile Network network;
 
@@ -106,7 +106,7 @@ public class ActiveFailoverDeployment extends ContainerDeployment {
 
     private GenericContainer<?> createServer(String name) {
         return createContainer(name, 8529)
-                .withCommand(DOCKER_COMMAND);
+                .withCommand("sh", "-c", DOCKER_COMMAND);
     }
 
     private CompletableFuture<Void> performActionOnGroup(Collection<GenericContainer<?>> group, Consumer<GenericContainer<?>> action) {
