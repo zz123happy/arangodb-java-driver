@@ -37,7 +37,6 @@ interface ConnectionPool {
             final ConnectionFactory connectionFactory) {
 
         switch (config.topology()) {
-            case MASTER_SLAVE:
             case ACTIVE_FAILOVER:
                 return new LeaderFollowerConnectionPool(config, authentication, connectionFactory);
             case SINGLE_SERVER:

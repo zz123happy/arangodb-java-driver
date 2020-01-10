@@ -25,5 +25,5 @@ package com.arangodb.next.communication;
  * @author Michele Rastelli
  */
 public enum ArangoTopology {
-    SINGLE_SERVER, MASTER_SLAVE, ACTIVE_FAILOVER, CLUSTER
+    SINGLE_SERVER, ACTIVE_FAILOVER, CLUSTER
 }
