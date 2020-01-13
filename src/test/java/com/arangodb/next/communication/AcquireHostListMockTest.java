@@ -21,17 +21,13 @@
 package com.arangodb.next.communication;
 
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import com.arangodb.next.connection.*;
 import com.arangodb.next.entity.ImmutableClusterEndpoints;
 import com.arangodb.next.entity.ImmutableErrorEntity;
 import com.arangodb.next.entity.codec.ArangoSerializer;
 import com.arangodb.next.exceptions.ArangoServerException;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.slf4j.LoggerFactory;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
@@ -53,12 +49,6 @@ public class AcquireHostListMockTest {
 
     private static final HostDescription initialHost = HostDescription.of("initialHost", 8529);
     private static int CONNECTIONS_PER_HOST = 3;
-
-    @BeforeAll
-    static void setup() {
-        Logger root = (Logger) LoggerFactory.getLogger(ArangoCommunicationImpl.class);
-        root.setLevel(Level.ERROR);
-    }
 
     private static CommunicationConfig getConfig(ContentType contentType) {
         return CommunicationConfig.builder()
