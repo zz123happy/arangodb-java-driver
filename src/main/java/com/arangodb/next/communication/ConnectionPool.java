@@ -38,7 +38,7 @@ interface ConnectionPool {
 
         switch (config.topology()) {
             case ACTIVE_FAILOVER:
-                return new LeaderFollowerConnectionPool(config, authentication, connectionFactory);
+                return new ActiveFailoverConnectionPool(config, authentication, connectionFactory);
             case SINGLE_SERVER:
             case CLUSTER:
                 return new ConnectionPoolImpl(config, authentication, connectionFactory);

@@ -66,7 +66,7 @@ class CommunicationActiveFailoverTest {
         assertThat(communication).isNotNull();
 
         ArangoCommunicationImpl communicationImpl = ((ArangoCommunicationImpl) communication);
-        LeaderFollowerConnectionPool connectionPool = (LeaderFollowerConnectionPool) communicationImpl.getConnectionPool();
+        ActiveFailoverConnectionPool connectionPool = (ActiveFailoverConnectionPool) communicationImpl.getConnectionPool();
         Map<HostDescription, List<ArangoConnection>> connectionsByHost = connectionPool.getConnectionsByHost();
         HostDescription[] expectedKeys = hosts.toArray(new HostDescription[0]);
         assertThat(connectionsByHost)
@@ -97,7 +97,7 @@ class CommunicationActiveFailoverTest {
         assertThat(communication).isNotNull();
 
         ArangoCommunicationImpl communicationImpl = ((ArangoCommunicationImpl) communication);
-        LeaderFollowerConnectionPool connectionPool = (LeaderFollowerConnectionPool) communicationImpl.getConnectionPool();
+        ActiveFailoverConnectionPool connectionPool = (ActiveFailoverConnectionPool) communicationImpl.getConnectionPool();
         Map<HostDescription, List<ArangoConnection>> currentHosts = connectionPool.getConnectionsByHost();
         assertThat(currentHosts).hasSize(hosts.size());
         assertThat(currentHosts.keySet()).containsExactlyInAnyOrderElementsOf(hosts);

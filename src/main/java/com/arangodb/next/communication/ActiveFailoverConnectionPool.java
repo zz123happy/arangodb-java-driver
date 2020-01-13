@@ -32,9 +32,9 @@ import java.util.List;
 /**
  * @author Michele Rastelli
  */
-public class LeaderFollowerConnectionPool extends ConnectionPoolImpl {
+public class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
 
-    private static final Logger log = LoggerFactory.getLogger(LeaderFollowerConnectionPool.class);
+    private static final Logger log = LoggerFactory.getLogger(ActiveFailoverConnectionPool.class);
 
     private static final ArangoRequest currentDatabaseRequest = ArangoRequest.builder()
             .database("_system")
@@ -44,7 +44,7 @@ public class LeaderFollowerConnectionPool extends ConnectionPoolImpl {
 
     private volatile HostDescription leader;
 
-    LeaderFollowerConnectionPool(
+    ActiveFailoverConnectionPool(
             final CommunicationConfig config,
             final AuthenticationMethod authentication,
             final ConnectionFactory connectionFactory
