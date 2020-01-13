@@ -23,7 +23,6 @@ import java.util.stream.IntStream;
 public class ActiveFailoverDeployment extends ContainerDeployment {
 
     private final Logger log = LoggerFactory.getLogger(ActiveFailoverDeployment.class);
-    private final String DOCKER_COMMAND = "arangodb --starter.address=$(hostname -i) --auth.jwt-secret /jwtSecret --starter.mode=activefailover --starter.join server1,server2,server3";
 
     private volatile Network network;
 
@@ -94,18 +93,19 @@ public class ActiveFailoverDeployment extends ContainerDeployment {
                 .collect(Collectors.toList());
     }
 
-    private GenericContainer<?> createContainer(String name, int port) {
+    private GenericContainer<?> createContainer(String name) {
         return new GenericContainer<>(getImage())
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
                 .withCopyFileToContainer(MountableFile.forClasspathResource("deployments/jwtSecret"), "/jwtSecret")
-                .withExposedPorts(port)
+                .withExposedPorts(8529)
                 .withNetworkAliases(name)
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[" + name + "]"))
                 .waitingFor(Wait.forLogMessage(".*resilientsingle up and running.*", 1).withStartupTimeout(Duration.ofSeconds(60)));
     }
 
     private GenericContainer<?> createServer(String name) {
-        return createContainer(name, 8529)
+        String DOCKER_COMMAND = "arangodb --starter.address=$(hostname -i) --auth.jwt-secret /jwtSecret --starter.mode=activefailover --starter.join server1,server2,server3";
+        return createContainer(name)
                 .withCommand("sh", "-c", DOCKER_COMMAND);
     }
 

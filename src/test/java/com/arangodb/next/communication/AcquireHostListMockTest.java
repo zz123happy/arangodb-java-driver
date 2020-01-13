@@ -48,7 +48,7 @@ import static org.mockito.Mockito.*;
 public class AcquireHostListMockTest {
 
     private static final HostDescription initialHost = HostDescription.of("initialHost", 8529);
-    private static int CONNECTIONS_PER_HOST = 3;
+    private static final int CONNECTIONS_PER_HOST = 3;
 
     private static CommunicationConfig getConfig(ContentType contentType) {
         return CommunicationConfig.builder()
