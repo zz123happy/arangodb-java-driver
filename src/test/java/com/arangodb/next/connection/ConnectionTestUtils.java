@@ -94,7 +94,6 @@ public class ConnectionTestUtils {
 
         VPackSlice responseBodySlice = new VPackSlice(response.getBody());
         assertThat(responseBodySlice.get("parsed").getAsBoolean()).isEqualTo(true);
-        System.out.println(responseBodySlice);
     }
 
     private static VPackSlice createParseQueryRequestBody() {

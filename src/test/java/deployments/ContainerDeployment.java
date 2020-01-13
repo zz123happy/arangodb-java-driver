@@ -22,6 +22,8 @@ package deployments;
 
 import com.arangodb.next.connection.AuthenticationMethod;
 import com.arangodb.next.connection.HostDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.ContainerLaunchException;
 import org.testcontainers.lifecycle.Startable;
 
@@ -33,6 +35,8 @@ import java.util.concurrent.CompletionException;
  * @author Michele Rastelli
  */
 public abstract class ContainerDeployment implements Startable {
+
+    private static final Logger log = LoggerFactory.getLogger(ContainerDeployment.class);
 
     public static ContainerDeployment ofSingleServerWithSsl() {
         return new SingleServerSslDeployment();
@@ -57,7 +61,7 @@ public abstract class ContainerDeployment implements Startable {
         } catch (CompletionException e) {
             e.printStackTrace();
             if (e.getCause() instanceof ContainerLaunchException) {
-                System.out.println("Containers failed to start, retrying...");
+                log.info("Containers failed to start, retrying...");
                 stop();
                 start();
             } else {
