@@ -24,7 +24,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <arangodb.velocypack.version>2.1.1</arangodb.velocypack.version>
+        <arangodb.velocypack.version>2.1.0</arangodb.velocypack.version>
 
         <!-- javadoc-->
         <javadoc.opts/>
