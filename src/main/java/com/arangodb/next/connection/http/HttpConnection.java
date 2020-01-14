@@ -26,8 +26,6 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.ssl.ClientAuth;
-import io.netty.handler.ssl.JdkSslContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -156,8 +154,7 @@ final public class HttpConnection implements ArangoConnection {
 
     private HttpClient applySslContext(HttpClient httpClient) {
         if (config.getUseSsl() && config.getSslContext().isPresent()) {
-            return httpClient.secure(spec ->
-                    spec.sslContext(new JdkSslContext(config.getSslContext().get(), true, ClientAuth.NONE)));
+            return httpClient.secure(spec -> spec.sslContext(config.getSslContext().get()));
         } else {
             return httpClient;
         }

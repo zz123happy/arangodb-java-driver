@@ -20,43 +20,40 @@
 
 package com.arangodb.next.connection;
 
-import com.arangodb.next.connection.exceptions.ArangoConnectionAuthenticationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import deployments.ContainerDeployment;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.condition.EnabledForJreRange;
+import org.junit.jupiter.api.condition.JRE;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import reactor.core.Exceptions;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import utils.ArangoTls13SupportExtension;
 
 import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import java.io.IOException;
 import java.security.KeyStore;
 import java.util.stream.Stream;
 
 import static com.arangodb.next.connection.ConnectionTestUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Michele Rastelli
  */
 @Testcontainers
-class BasicConnectionTest {
+@EnabledForJreRange(min = JRE.JAVA_11)
+@ExtendWith(ArangoTls13SupportExtension.class)
+class SslTls13ConnectionTest {
 
     private static final String SSL_TRUSTSTORE = "/example.truststore";
     private static final String SSL_TRUSTSTORE_PASSWORD = "12345678";
@@ -66,7 +63,7 @@ class BasicConnectionTest {
 
     private final ConnectionConfig config;
 
-    BasicConnectionTest() throws Exception {
+    SslTls13ConnectionTest() throws Exception {
         config = ConnectionConfig.builder()
                 .useSsl(true)
                 .sslContext(getSslContext())
@@ -87,22 +84,8 @@ class BasicConnectionTest {
         );
     }
 
-    /**
-     * Provided arguments are:
-     * - ArangoProtocol
-     * - AuthenticationMethod
-     */
-    static private Stream<Arguments> wrongAuthenticationArgumentsProvider() {
-        return Stream.of(
-                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofBasic(deployment.getUser(), "wrong")),
-                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofJwt("invalid.jwt.token")),
-                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofBasic(deployment.getUser(), "wrong")),
-                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofJwt("invalid.jwt.token"))
-        );
-    }
-
     @Container
-    private static final ContainerDeployment deployment = ContainerDeployment.ofSingleServerWithSsl();
+    private static final ContainerDeployment deployment = ContainerDeployment.ofSingleServerWithSslTls13();
 
     @BeforeAll
     static void setup() throws Exception {
@@ -143,41 +126,6 @@ class BasicConnectionTest {
         connection.close().block();
     }
 
-    @ParameterizedTest
-    @EnumSource(ArangoProtocol.class)
-    void parallelLoop(ArangoProtocol protocol) {
-        new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, deployment.getAuthentication())
-                .flatMapMany(c ->
-                        Flux.range(0, 1_000)
-                                .flatMap(i -> c.execute(ConnectionTestUtils.versionRequest))
-                                .doOnNext(response -> {
-                                    assertThat(response).isNotNull();
-                                    assertThat(response.getVersion()).isEqualTo(1);
-                                    assertThat(response.getType()).isEqualTo(2);
-                                    assertThat(response.getResponseCode()).isEqualTo(200);
-                                    verifyGetResponseVPack(response);
-                                }))
-                .then().block();
-    }
-
-    @ParameterizedTest
-    @MethodSource("wrongAuthenticationArgumentsProvider")
-    void authenticationFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
-        assertThrows(ArangoConnectionAuthenticationException.class, () ->
-                new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, authenticationMethod)
-                        .block()
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource("argumentsProvider")
-    void wrongHostFailure(ArangoProtocol protocol, AuthenticationMethod authenticationMethod) {
-        HostDescription wrongHost = HostDescription.of("wrongHost", 8529);
-        Throwable thrown = catchThrowable(() -> new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(wrongHost, authenticationMethod)
-                .block());
-        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
-    }
-
     private static SslContext getSslContext() throws Exception {
         final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
         ks.load(SslTls13ConnectionTest.class.getResourceAsStream(SSL_TRUSTSTORE), SSL_TRUSTSTORE_PASSWORD.toCharArray());
@@ -190,6 +138,7 @@ class BasicConnectionTest {
 
         return SslContextBuilder
                 .forClient()
+                .protocols("TLSv1.3")
                 .sslProvider(SslProvider.JDK)
                 .trustManager(tmf)
                 .build();

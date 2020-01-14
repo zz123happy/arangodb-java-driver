@@ -21,10 +21,10 @@
 package com.arangodb.next.connection;
 
 
+import io.netty.handler.ssl.SslContext;
 import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
-import javax.net.ssl.SSLContext;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -57,7 +57,10 @@ public interface ConnectionConfig {
         return false;
     }
 
-    Optional<SSLContext> getSslContext();
+    /**
+     * @return sslContext to use
+     */
+    Optional<SslContext> getSslContext();
 
     @Value.Default
     default ContentType getContentType() {

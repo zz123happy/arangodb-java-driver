@@ -31,7 +31,7 @@ import java.util.Objects;
 /**
  * @author Michele Rastelli
  */
-class ContainerUtils {
+public class ContainerUtils {
 
     private static final String DEFAULT_DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.6.0";
     private static final Logger log = LoggerFactory.getLogger(ContainerUtils.class);
@@ -71,6 +71,15 @@ class ContainerUtils {
                 }
             }
         } while (authErrors);
+    }
+
+    static public ArangoVersion getVersion() {
+        String[] parts = getImage().split(":")[1].split("\\.");
+        return ImmutableArangoVersion.of(
+                Integer.parseInt(parts[0]),
+                Integer.parseInt(parts[1]),
+                Integer.parseInt(parts[2])
+        );
     }
 
 }

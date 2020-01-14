@@ -24,8 +24,6 @@ import com.arangodb.next.connection.*;
 import com.arangodb.next.connection.exceptions.ArangoConnectionAuthenticationException;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.ssl.ClientAuth;
-import io.netty.handler.ssl.JdkSslContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Exceptions;
@@ -245,9 +243,7 @@ final public class VstConnection implements ArangoConnection {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
         return config.getSslContext()
                 .filter(v -> config.getUseSsl())
-                .map(sslContext ->
-                        httpClient.secure(spec ->
-                                spec.sslContext(new JdkSslContext(sslContext, true, ClientAuth.NONE))))
+                .map(sslContext -> httpClient.secure(spec -> spec.sslContext(sslContext)))
                 .orElse(httpClient);
     }
 

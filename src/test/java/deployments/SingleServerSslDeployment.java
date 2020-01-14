@@ -20,14 +20,17 @@ public class SingleServerSslDeployment extends ContainerDeployment {
 
     private final GenericContainer<?> container;
 
-    public SingleServerSslDeployment() {
+    /**
+     * @param sslProtocol value from https://www.arangodb.com/docs/stable/programs-arangod-ssl.html#ssl-protocol
+     */
+    public SingleServerSslDeployment(String sslProtocol) {
         String SSL_CERT_PATH = Paths.get("docker/server.pem").toAbsolutePath().toString();
         container = new GenericContainer<>(getImage())
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
                 .withEnv("ARANGO_ROOT_PASSWORD", getPassword())
                 .withExposedPorts(8529)
                 .withFileSystemBind(SSL_CERT_PATH, "/server.pem", BindMode.READ_ONLY)
-                .withCommand("arangod --ssl.keyfile /server.pem --server.endpoint ssl://0.0.0.0:8529")
+                .withCommand("arangod --ssl.keyfile /server.pem --server.endpoint ssl://0.0.0.0:8529 --ssl.protocol " + sslProtocol)
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[DB_LOG]"))
                 .waitingFor(Wait.forLogMessage(".*ready for business.*", 1));
     }
