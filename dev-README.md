@@ -2,4 +2,10 @@
 
 ## code coverage report
 
-[target/site/jacoco/index.html](target/site/jacoco/index.html)
+Run tests:
+
+```shell script
+mvn clean test
+```
+
+Coverage report: [target/site/jacoco/index.html](target/site/jacoco/index.html)

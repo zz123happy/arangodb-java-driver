@@ -89,7 +89,7 @@ final class RequestConverter {
         int size = payload.readableBytes();
         final int totalSize = size;
         final int n = size / chunkSize;
-        final int numberOfChunks = (size % chunkSize != 0) ? (n + 1) : n;
+        final int numberOfChunks = (size % chunkSize != 0) ? n + 1 : n;
         int off = 0;
         for (int i = 0; size > 0; i++) {
             final int len = Math.min(chunkSize, size);
