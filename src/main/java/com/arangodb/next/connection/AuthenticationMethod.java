@@ -45,7 +45,7 @@ public interface AuthenticationMethod {
     }
 
     /**
-     * @see <a href="https://github.com/arangodb/velocystream#authentication">API
+     * @see <a href="https://github.com/arangodb/velocystream#authentication">API</a>
      */
     @Value.Immutable(builder = false)
     abstract class JwtAuthenticationMethod implements AuthenticationMethod {

@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * @author Mark Vollmary
  * @author Michele Rastelli
- * @see <a href="https://github.com/arangodb/velocystream#request--response">API
+ * @see <a href="https://github.com/arangodb/velocystream#request--response">API</a>
  */
 @Value.Immutable
 @SuppressWarnings("SameReturnValue")
