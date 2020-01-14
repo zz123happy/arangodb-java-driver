@@ -19,20 +19,26 @@ public class SingleServerSslDeployment extends ContainerDeployment {
     private static final Logger log = LoggerFactory.getLogger(SingleServerSslDeployment.class);
 
     private final GenericContainer<?> container;
+    private final String command = "arangod --ssl.keyfile /server.pem --server.endpoint ssl://0.0.0.0:8529 ";
 
-    /**
-     * @param sslProtocol value from https://www.arangodb.com/docs/stable/programs-arangod-ssl.html#ssl-protocol
-     */
-    public SingleServerSslDeployment(String sslProtocol) {
+    public SingleServerSslDeployment() {
         String SSL_CERT_PATH = Paths.get("docker/server.pem").toAbsolutePath().toString();
         container = new GenericContainer<>(getImage())
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
                 .withEnv("ARANGO_ROOT_PASSWORD", getPassword())
                 .withExposedPorts(8529)
                 .withFileSystemBind(SSL_CERT_PATH, "/server.pem", BindMode.READ_ONLY)
-                .withCommand("arangod --ssl.keyfile /server.pem --server.endpoint ssl://0.0.0.0:8529 --ssl.protocol " + sslProtocol)
+                .withCommand(command)
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[DB_LOG]"))
                 .waitingFor(Wait.forLogMessage(".*ready for business.*", 1));
+    }
+
+    /**
+     * @param sslProtocol value from https://www.arangodb.com/docs/stable/programs-arangod-ssl.html#ssl-protocol
+     */
+    public SingleServerSslDeployment(String sslProtocol) {
+        this();
+        container.withCommand(command + "--ssl.protocol " + sslProtocol);
     }
 
     @Override

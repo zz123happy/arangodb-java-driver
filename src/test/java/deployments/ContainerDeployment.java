@@ -39,7 +39,7 @@ public abstract class ContainerDeployment implements Startable {
     private static final Logger log = LoggerFactory.getLogger(ContainerDeployment.class);
 
     public static ContainerDeployment ofSingleServerWithSsl() {
-        return new SingleServerSslDeployment("9");
+        return new SingleServerSslDeployment();
     }
 
     public static ContainerDeployment ofSingleServerWithSslTls13() {
