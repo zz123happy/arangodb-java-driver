@@ -23,9 +23,12 @@ package com.arangodb.next.connection;
 /**
  * @author Michele Rastelli
  */
-public class ConnectionUtils {
+public final class ConnectionUtils {
 
-    public static final ArangoRequest endpointsRequest = ArangoRequest.builder()
+    private ConnectionUtils() {
+    }
+
+    public static final ArangoRequest ENDPOINTS_REQUEST = ArangoRequest.builder()
             .database("_system")
             .path("/_api/cluster/endpoints")
             .requestType(ArangoRequest.RequestType.GET)

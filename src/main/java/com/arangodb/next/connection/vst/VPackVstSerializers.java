@@ -29,9 +29,12 @@ import com.arangodb.velocypack.ValueType;
 /**
  * @author Michele Rastelli
  */
-class VPackVstSerializers {
+final class VPackVstSerializers {
 
-    static VPackSlice serialize(ArangoRequest request) {
+    private VPackVstSerializers() {
+    }
+
+    static VPackSlice serialize(final ArangoRequest request) {
         final VPackBuilder builder = new VPackBuilder();
         builder.add(ValueType.ARRAY);
         builder.add(request.getVersion());

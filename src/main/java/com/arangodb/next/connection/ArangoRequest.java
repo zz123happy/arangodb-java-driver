@@ -76,8 +76,8 @@ public interface ArangoRequest {
 
         private final int type;
 
-        RequestType(final int type) {
-            this.type = type;
+        RequestType(final int requestType) {
+            this.type = requestType;
         }
 
         public int getType() {

@@ -29,6 +29,9 @@ public abstract class ArangoException extends RuntimeException {
     @Override
     public abstract String toString();
 
+    /**
+     * @return exception message
+     */
     @Override
     public String getMessage() {
         return toString();

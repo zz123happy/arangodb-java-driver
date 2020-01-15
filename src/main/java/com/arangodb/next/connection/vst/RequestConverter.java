@@ -36,24 +36,27 @@ import static com.arangodb.next.ArangoDefaults.HEADER_SIZE;
  */
 final class RequestConverter {
 
+    private RequestConverter() {
+    }
+
     /**
-     * @param id id of the VST message id
-     * @param request ArangoDB request
+     * @param id        id of the VST message id
+     * @param request   ArangoDB request
      * @param chunkSize VST chunkSize
      * @return a buffer ready to be sent following the VST 1.1 spec
      */
-    static ByteBuf encodeRequest(long id, ArangoRequest request, int chunkSize) {
+    static ByteBuf encodeRequest(final long id, final ArangoRequest request, final int chunkSize) {
         ByteBuf payload = createVstPayload(request);
         return encodeBuffer(id, payload, chunkSize);
     }
 
     /**
-     * @param id id of the VST message id
-     * @param payload request payload, it will be released before returning
+     * @param id        id of the VST message id
+     * @param payload   request payload, it will be released before returning
      * @param chunkSize VST chunkSize
      * @return a buffer ready to be sent following the VST 1.1 spec
      */
-    static ByteBuf encodeBuffer(long id, ByteBuf payload, int chunkSize) {
+    static ByteBuf encodeBuffer(final long id, final ByteBuf payload, final int chunkSize) {
         final ByteBuf out = IOUtils.createBuffer();
 
         for (final Chunk chunk : buildChunks(id, payload, chunkSize)) {
@@ -75,7 +78,7 @@ final class RequestConverter {
         return out;
     }
 
-    private static ByteBuf createVstPayload(ArangoRequest request) {
+    private static ByteBuf createVstPayload(final ArangoRequest request) {
         VPackSlice headSlice = VPackVstSerializers.serialize(request);
         int headSize = headSlice.getByteSize();
         ByteBuf payload = IOUtils.createBuffer(headSize + request.getBody().length);
@@ -84,7 +87,7 @@ final class RequestConverter {
         return payload;
     }
 
-    private static List<Chunk> buildChunks(long id, ByteBuf payload, int chunkSize) {
+    private static List<Chunk> buildChunks(final long id, final ByteBuf payload, final int chunkSize) {
         final List<Chunk> chunks = new ArrayList<>();
         int size = payload.readableBytes();
         final int totalSize = size;

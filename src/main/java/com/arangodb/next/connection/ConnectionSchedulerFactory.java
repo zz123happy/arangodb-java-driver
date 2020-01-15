@@ -32,16 +32,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author Michele Rastelli
  */
-public class ConnectionSchedulerFactory {
+public final class ConnectionSchedulerFactory {
 
     public static final String THREAD_PREFIX = "arango-connection";
-    private static final Logger log = LoggerFactory.getLogger(ConnectionSchedulerFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionSchedulerFactory.class);
 
     private final int maxThreads;
     private final List<Scheduler> schedulers;
     private final AtomicInteger cursor;
 
-    public ConnectionSchedulerFactory(int maxThreads) {
+    public ConnectionSchedulerFactory(final int maxThreads) {
         this.maxThreads = maxThreads;
         schedulers = new ArrayList<>();
         cursor = new AtomicInteger();
@@ -50,7 +50,7 @@ public class ConnectionSchedulerFactory {
     public synchronized Scheduler getScheduler() {
         int position = cursor.getAndIncrement();
         if (position < maxThreads) {
-            log.debug("Creating single thread connection scheduler #{}", position);
+            LOGGER.debug("Creating single thread connection scheduler #{}", position);
             schedulers.add(Schedulers.newSingle(THREAD_PREFIX));
         }
         return schedulers.get(position % maxThreads);

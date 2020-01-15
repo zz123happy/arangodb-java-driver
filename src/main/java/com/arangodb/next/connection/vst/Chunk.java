@@ -48,7 +48,7 @@ class Chunk {
     private static int chunkX(final int chunkIndex, final int numberOfChunks) {
         int chunkX;
         if (numberOfChunks == 1) {
-            chunkX = 3;// last byte: 0000 0011
+            chunkX = 3; // last byte: 0000 0011
         } else if (chunkIndex == 0) {
             chunkX = (numberOfChunks << 1) + 1;
         } else {

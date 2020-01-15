@@ -30,7 +30,7 @@ import org.immutables.value.Value;
 @Value.Immutable(builder = false)
 public abstract class ArangoConnectionAuthenticationException extends ArangoException {
 
-    public static ArangoConnectionAuthenticationException of(ArangoResponse response) {
+    public static ArangoConnectionAuthenticationException of(final ArangoResponse response) {
         return ImmutableArangoConnectionAuthenticationException.of(response);
     }
 

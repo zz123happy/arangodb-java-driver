@@ -51,7 +51,7 @@ final class CookieStore {
         return c;
     }
 
-    void saveCookies(HttpClientResponse resp) {
+    void saveCookies(final HttpClientResponse resp) {
         resp.cookies().values().stream().flatMap(Collection::stream)
                 .forEach(cookie -> {
                     LOGGER.debug("saving cookie: {}", cookie);

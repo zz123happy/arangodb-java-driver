@@ -69,6 +69,6 @@ interface ConnectionPool {
      * - connections related to removed hosts have been closed
      * - connections related to added hosts have been initialized
      */
-    Mono<Void> updateConnections(final List<HostDescription> hostList);
+    Mono<Void> updateConnections(List<HostDescription> hostList);
 
 }

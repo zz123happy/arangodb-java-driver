@@ -27,23 +27,26 @@ import io.netty.buffer.PooledByteBufAllocator;
 /**
  * @author Michele Rastelli
  */
-public class IOUtils {
+public final class IOUtils {
     private static final int DEFAULT_INITIAL_CAPACITY = 256;
     private static final int DEFAULT_MAX_CAPACITY = Integer.MAX_VALUE;
+
+    private IOUtils() {
+    }
 
     public static ByteBuf createBuffer() {
         return createBuffer(DEFAULT_INITIAL_CAPACITY);
     }
 
-    public static ByteBuf createBuffer(int initialCapacity) {
+    public static ByteBuf createBuffer(final int initialCapacity) {
         return createBuffer(initialCapacity, DEFAULT_MAX_CAPACITY);
     }
 
-    public static ByteBuf createBuffer(int initialCapacity, int maxCapacity) {
+    public static ByteBuf createBuffer(final int initialCapacity, final int maxCapacity) {
         return PooledByteBufAllocator.DEFAULT.directBuffer(initialCapacity, maxCapacity);
     }
 
-    public static ByteBuf createBuffer(byte[] bytes) {
+    public static ByteBuf createBuffer(final byte[] bytes) {
         ByteBuf buffer = createBuffer(bytes.length, bytes.length);
         buffer.writeBytes(bytes);
         return buffer;

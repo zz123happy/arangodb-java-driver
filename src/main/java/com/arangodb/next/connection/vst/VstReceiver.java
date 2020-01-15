@@ -37,7 +37,7 @@ import static com.arangodb.next.connection.ConnectionSchedulerFactory.THREAD_PRE
  */
 final class VstReceiver {
 
-    private static final Logger log = LoggerFactory.getLogger(VstReceiver.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(VstReceiver.class);
 
     private final ChunkStore chunkStore;
 
@@ -53,21 +53,21 @@ final class VstReceiver {
 
     void clear() {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-        log.debug("clear()");
+        LOGGER.debug("clear()");
 
         chunkStore.clear();
     }
 
     void shutDown() {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
-        log.debug("shutDown()");
+        LOGGER.debug("shutDown()");
 
         clear();
         chunkHeaderBuffer.release();
         chunkContentBuffer.release();
     }
 
-    void handleByteBuf(ByteBuf bbIn) {
+    void handleByteBuf(final ByteBuf bbIn) {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
 
         while (bbIn.readableBytes() > 0) {
@@ -96,7 +96,7 @@ final class VstReceiver {
         bbIn.release();
     }
 
-    private void readBytes(ByteBuf bbIn, ByteBuf out, int len) {
+    private void readBytes(final ByteBuf bbIn, final ByteBuf out, final int len) {
         int bytesToRead = Integer.min(len, bbIn.readableBytes());
         out.ensureWritable(bytesToRead);
         bbIn.readBytes(out, bytesToRead);
@@ -112,8 +112,8 @@ final class VstReceiver {
 
         chunk = new Chunk(messageId, chunkX, messageLength, 0, contentLength);
 
-        if (log.isDebugEnabled()) {
-            log.debug(String.format("Received chunk %s:%s from message %s", chunk.getChunk(), chunk.isFirstChunk() ? 1 : 0, chunk.getMessageId()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("Received chunk %s:%s from message %s", chunk.getChunk(), chunk.isFirstChunk() ? 1 : 0, chunk.getMessageId()));
         }
     }
 

@@ -28,7 +28,7 @@ import reactor.core.publisher.Mono;
  */
 public interface ConnectionFactory {
 
-    Mono<ArangoConnection> create(final HostDescription host, final AuthenticationMethod authentication);
+    Mono<ArangoConnection> create(HostDescription host, AuthenticationMethod authentication);
 
     void close();
 

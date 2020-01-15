@@ -23,16 +23,20 @@ package com.arangodb.next.entity.codec;
 
 import com.arangodb.next.entity.*;
 import com.arangodb.velocypack.VPackSlice;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 
 /**
  * @author Michele Rastelli
  */
-public class VpackDeserializer implements ArangoDeserializer {
+public final class VpackDeserializer implements ArangoDeserializer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(VpackDeserializer.class);
 
     @Override
-    public <T> T deserialize(byte[] buffer, Class<T> clazz) {
+    public <T> T deserialize(final byte[] buffer, final Class<T> clazz) {
         if (clazz.equals(Version.class)) {
             return clazz.cast(deserializeVersion(buffer));
         } else if (clazz.equals(ClusterEndpoints.class)) {
@@ -44,7 +48,7 @@ public class VpackDeserializer implements ArangoDeserializer {
         }
     }
 
-    private Version deserializeVersion(byte[] buffer) {
+    private Version deserializeVersion(final byte[] buffer) {
         ImmutableVersion.Builder builder = ImmutableVersion.builder();
         VPackSlice slice = new VPackSlice(buffer);
         slice.objectIterator().forEachRemaining(field -> {
@@ -62,12 +66,15 @@ public class VpackDeserializer implements ArangoDeserializer {
                     field.getValue().objectIterator()
                             .forEachRemaining(detail -> builder.putDetails(detail.getKey(), detail.getValue().getAsString()));
                     break;
+                default:
+                    LOGGER.debug("Unknown field {}: skipping", field.getKey());
+                    break;
             }
         });
         return builder.build();
     }
 
-    private ClusterEndpoints deserializeClusterEndpoints(byte[] buffer) {
+    private ClusterEndpoints deserializeClusterEndpoints(final byte[] buffer) {
         ImmutableClusterEndpoints.Builder builder = ImmutableClusterEndpoints.builder();
         VPackSlice slice = new VPackSlice(buffer);
         slice.objectIterator().forEachRemaining(field -> {
@@ -83,12 +90,15 @@ public class VpackDeserializer implements ArangoDeserializer {
                             endpointMap.objectIterator().forEachRemaining(endpoint ->
                                     builder.addEndpoints(Collections.singletonMap(endpoint.getKey(), endpoint.getValue().getAsString()))));
                     break;
+                default:
+                    LOGGER.debug("Unknown field {}: skipping", field.getKey());
+                    break;
             }
         });
         return builder.build();
     }
 
-    private ErrorEntity deserializeErrorEntity(byte[] buffer) {
+    private ErrorEntity deserializeErrorEntity(final byte[] buffer) {
         ImmutableErrorEntity.Builder builder = ImmutableErrorEntity.builder();
         VPackSlice slice = new VPackSlice(buffer);
         slice.objectIterator().forEachRemaining(field -> {
@@ -104,6 +114,9 @@ public class VpackDeserializer implements ArangoDeserializer {
                     break;
                 case "errorNum":
                     builder.errorNum(field.getValue().getAsInt());
+                    break;
+                default:
+                    LOGGER.debug("Unknown field {}: skipping", field.getKey());
                     break;
             }
         });

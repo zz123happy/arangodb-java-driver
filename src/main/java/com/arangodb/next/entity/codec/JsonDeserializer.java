@@ -24,6 +24,8 @@ import com.arangodb.next.entity.*;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -31,10 +33,12 @@ import java.util.Collections;
 /**
  * @author Michele Rastelli
  */
-public class JsonDeserializer implements ArangoDeserializer {
+public final class JsonDeserializer implements ArangoDeserializer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JsonDeserializer.class);
 
     @Override
-    public <T> T deserialize(byte[] buffer, Class<T> clazz) {
+    public <T> T deserialize(final byte[] buffer, final Class<T> clazz) {
         try {
             if (clazz.equals(Version.class)) {
                 return clazz.cast(deserializeVersion(buffer));
@@ -50,7 +54,7 @@ public class JsonDeserializer implements ArangoDeserializer {
         }
     }
 
-    private Version deserializeVersion(byte[] buffer) throws IOException {
+    private Version deserializeVersion(final byte[] buffer) throws IOException {
         JsonParser parser = new JsonFactory().createParser(buffer);
         ImmutableVersion.Builder builder = ImmutableVersion.builder();
 
@@ -58,22 +62,30 @@ public class JsonDeserializer implements ArangoDeserializer {
 
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             String name = parser.getCurrentName();
-            if ("server".equals(name)) {
-                parser.nextToken();
-                builder.server(parser.getText());
-            } else if ("license".equals(name)) {
-                parser.nextToken();
-                builder.license(parser.getText());
-            } else if ("version".equals(name)) {
-                parser.nextToken();
-                builder.version(parser.getText());
-            } else if ("details".equals(name)) {
-                parser.nextToken();
-                while (parser.nextToken() != JsonToken.END_OBJECT) {
-                    String key = parser.getCurrentName();
+            switch (name) {
+                case "server":
                     parser.nextToken();
-                    builder.putDetails(key, parser.getText());
-                }
+                    builder.server(parser.getText());
+                    break;
+                case "license":
+                    parser.nextToken();
+                    builder.license(parser.getText());
+                    break;
+                case "version":
+                    parser.nextToken();
+                    builder.version(parser.getText());
+                    break;
+                case "details":
+                    parser.nextToken();
+                    while (parser.nextToken() != JsonToken.END_OBJECT) {
+                        String key = parser.getCurrentName();
+                        parser.nextToken();
+                        builder.putDetails(key, parser.getText());
+                    }
+                    break;
+                default:
+                    LOGGER.debug("Unknown field {}: skipping", name);
+                    break;
             }
         }
 
@@ -81,7 +93,7 @@ public class JsonDeserializer implements ArangoDeserializer {
         return builder.build();
     }
 
-    private ClusterEndpoints deserializeClusterEndpoints(byte[] buffer) throws IOException {
+    private ClusterEndpoints deserializeClusterEndpoints(final byte[] buffer) throws IOException {
         JsonParser parser = new JsonFactory().createParser(buffer);
         ImmutableClusterEndpoints.Builder builder = ImmutableClusterEndpoints.builder();
 
@@ -90,21 +102,28 @@ public class JsonDeserializer implements ArangoDeserializer {
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             String name = parser.getCurrentName();
 
-            if ("code".equals(name)) {
-                parser.nextToken();
-                builder.code(parser.getIntValue());
-            } else if ("error".equals(name)) {
-                parser.nextToken();
-                builder.error(parser.getBooleanValue());
-            } else if ("endpoints".equals(name)) {
-                parser.nextToken();
-                while (parser.nextToken() != JsonToken.END_ARRAY) {
-                    while (parser.nextToken() != JsonToken.END_OBJECT) {
-                        String key = parser.getCurrentName();
-                        parser.nextToken();
-                        builder.addEndpoints(Collections.singletonMap(key, parser.getText()));
+            switch (name) {
+                case "code":
+                    parser.nextToken();
+                    builder.code(parser.getIntValue());
+                    break;
+                case "error":
+                    parser.nextToken();
+                    builder.error(parser.getBooleanValue());
+                    break;
+                case "endpoints":
+                    parser.nextToken();
+                    while (parser.nextToken() != JsonToken.END_ARRAY) {
+                        while (parser.nextToken() != JsonToken.END_OBJECT) {
+                            String key = parser.getCurrentName();
+                            parser.nextToken();
+                            builder.addEndpoints(Collections.singletonMap(key, parser.getText()));
+                        }
                     }
-                }
+                    break;
+                default:
+                    LOGGER.debug("Unknown field {}: skipping", name);
+                    break;
             }
         }
 
@@ -112,7 +131,7 @@ public class JsonDeserializer implements ArangoDeserializer {
         return builder.build();
     }
 
-    private ErrorEntity deserializeErrorEntity(byte[] buffer) throws IOException {
+    private ErrorEntity deserializeErrorEntity(final byte[] buffer) throws IOException {
         JsonParser parser = new JsonFactory().createParser(buffer);
         ImmutableErrorEntity.Builder builder = ImmutableErrorEntity.builder();
 
@@ -121,18 +140,26 @@ public class JsonDeserializer implements ArangoDeserializer {
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             String name = parser.getCurrentName();
 
-            if ("code" .equals(name)) {
-                parser.nextToken();
-                builder.code(parser.getIntValue());
-            } else if ("error" .equals(name)) {
-                parser.nextToken();
-                builder.error(parser.getBooleanValue());
-            } else if ("errorMessage" .equals(name)) {
-                parser.nextToken();
-                builder.errorMessage(parser.getText());
-            } else if ("errorNum" .equals(name)) {
-                parser.nextToken();
-                builder.errorNum(parser.getIntValue());
+            switch (name) {
+                case "code":
+                    parser.nextToken();
+                    builder.code(parser.getIntValue());
+                    break;
+                case "error":
+                    parser.nextToken();
+                    builder.error(parser.getBooleanValue());
+                    break;
+                case "errorMessage":
+                    parser.nextToken();
+                    builder.errorMessage(parser.getText());
+                    break;
+                case "errorNum":
+                    parser.nextToken();
+                    builder.errorNum(parser.getIntValue());
+                    break;
+                default:
+                    LOGGER.debug("Unknown field {}: skipping", name);
+                    break;
             }
         }
 

@@ -32,11 +32,14 @@ import io.netty.buffer.ByteBuf;
  */
 final class ResponseConverter {
 
+    private ResponseConverter() {
+    }
+
     /**
      * @param buffer received VST buffer
      * @return ArangoDB response
      */
-    static ArangoResponse decodeResponse(byte[] buffer) {
+    static ArangoResponse decodeResponse(final byte[] buffer) {
         VPackSlice head = new VPackSlice(buffer);
         final int headSize = head.getByteSize();
         ByteBuf body = IOUtils.createBuffer(buffer.length - headSize);

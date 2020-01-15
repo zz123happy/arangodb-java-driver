@@ -38,9 +38,9 @@ import java.util.Optional;
 /**
  * @author Michele Rastelli
  */
-class ArangoCommunicationImpl implements ArangoCommunication {
+final class ArangoCommunicationImpl implements ArangoCommunication {
 
-    private static final Logger log = LoggerFactory.getLogger(ArangoCommunicationImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ArangoCommunicationImpl.class);
 
     private final CommunicationConfig config;
     private final ArangoDeserializer deserializer;
@@ -58,14 +58,14 @@ class ArangoCommunicationImpl implements ArangoCommunication {
     @Nullable
     private volatile Disposable scheduledUpdateHostListSubscription;
 
-    private static final ArangoRequest acquireHostListRequest = ArangoRequest.builder()
+    private static final ArangoRequest ACQUIRE_HOST_LIST_REQUEST = ArangoRequest.builder()
             .database("_system")
             .path("/_api/cluster/endpoints")
             .requestType(ArangoRequest.RequestType.GET)
             .build();
 
-    ArangoCommunicationImpl(CommunicationConfig config, ConnectionFactory connectionFactory) {
-        log.debug("ArangoCommunicationImpl({}, {})", config, connectionFactory);
+    ArangoCommunicationImpl(final CommunicationConfig config, final ConnectionFactory connectionFactory) {
+        LOGGER.debug("ArangoCommunicationImpl({}, {})", config, connectionFactory);
 
         this.config = config;
         this.connectionFactory = connectionFactory;
@@ -74,7 +74,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
 
     @Override
     public synchronized Mono<ArangoCommunication> initialize() {
-        log.debug("initialize()");
+        LOGGER.debug("initialize()");
 
         if (initialized) {
             throw new IllegalStateException("Already initialized!");
@@ -102,19 +102,19 @@ class ArangoCommunicationImpl implements ArangoCommunication {
     }
 
     @Override
-    public Mono<ArangoResponse> execute(ArangoRequest request) {
-        log.debug("execute({})", request);
+    public Mono<ArangoResponse> execute(final ArangoRequest request) {
+        LOGGER.debug("execute({})", request);
         return execute(request, connectionPool);
     }
 
-    private Mono<ArangoResponse> execute(ArangoRequest request, ConnectionPool cp) {
-        log.debug("execute({}, {})", request, cp);
+    private Mono<ArangoResponse> execute(final ArangoRequest request, final ConnectionPool cp) {
+        LOGGER.debug("execute({}, {})", request, cp);
         return Mono.defer(() -> cp.executeOnRandomHost(request)).timeout(config.getTimeout());
     }
 
     @Override
     public Mono<Void> close() {
-        log.debug("close()");
+        LOGGER.debug("close()");
         Optional.ofNullable(scheduledUpdateHostListSubscription).ifPresent(Disposable::dispose);
         return connectionPool.close().then();
     }
@@ -134,7 +134,7 @@ class ArangoCommunicationImpl implements ArangoCommunication {
      * @return a {@code Mono} which completes once this::authenticationMethod has been correctly set
      */
     private synchronized Mono<Void> negotiateAuthentication() {
-        log.debug("negotiateAuthentication()");
+        LOGGER.debug("negotiateAuthentication()");
 
         if (config.getNegotiateAuthentication()) {
             throw new RuntimeException("Authentication Negotiation is not yet supported!");
@@ -153,26 +153,26 @@ class ArangoCommunicationImpl implements ArangoCommunication {
      * - connections related to added hosts have been initialized
      */
     synchronized Mono<Void> updateHostList() {
-        log.debug("updateHostList()");
+        LOGGER.debug("updateHostList()");
 
         if (updatingHostListSemaphore) {
             return Mono.error(new IllegalStateException("Ongoing updateHostList!"));
         }
         updatingHostListSemaphore = true;
 
-        return execute(acquireHostListRequest, contactConnectionPool)
+        return execute(ACQUIRE_HOST_LIST_REQUEST, contactConnectionPool)
                 .map(this::parseAcquireHostListResponse)
-                .doOnError(e -> log.warn("Error acquiring hostList, retrying...", e))
+                .doOnError(e -> LOGGER.warn("Error acquiring hostList, retrying...", e))
                 .retry(config.getRetries())
-                .doOnNext(acquiredHostList -> log.debug("Acquired hosts: {}", acquiredHostList))
-                .doOnError(e -> log.warn("Error acquiring hostList:", e))
+                .doOnNext(acquiredHostList -> LOGGER.debug("Acquired hosts: {}", acquiredHostList))
+                .doOnError(e -> LOGGER.warn("Error acquiring hostList:", e))
                 .flatMap(hostList -> connectionPool.updateConnections(hostList))
                 .timeout(config.getTimeout())
                 .doFinally(s -> updatingHostListSemaphore = false);
     }
 
-    private List<HostDescription> parseAcquireHostListResponse(ArangoResponse response) {
-        log.debug("parseAcquireHostListResponse({})", response);
+    private List<HostDescription> parseAcquireHostListResponse(final ArangoResponse response) {
+        LOGGER.debug("parseAcquireHostListResponse({})", response);
         if (response.getResponseCode() != 200) {
             throw ArangoServerException.builder()
                     .responseCode(response.getResponseCode())

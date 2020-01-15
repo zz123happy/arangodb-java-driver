@@ -38,5 +38,5 @@ public interface ArangoSerializer {
         }
     }
 
-    byte[] serialize(final Object value);
+    byte[] serialize(Object value);
 }

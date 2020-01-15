@@ -33,19 +33,22 @@ import java.util.Map;
 /**
  * @author Michele Rastelli
  */
-class VPackVstDeserializers {
+final class VPackVstDeserializers {
 
-     static ArangoResponse deserializeArangoResponse(VPackSlice vpack, ByteBuf body) {
-         byte[] bodyBytes = IOUtils.getByteArray(body);
-         body.release();
+    private VPackVstDeserializers() {
+    }
 
-         ImmutableArangoResponse.Builder builder = ArangoResponse.builder()
-                 .body(bodyBytes)
-                 .version(vpack.get(0).getAsInt())
-                 .type(vpack.get(1).getAsInt())
-                 .responseCode(vpack.get(2).getAsInt());
+    static ArangoResponse deserializeArangoResponse(final VPackSlice vpack, final ByteBuf body) {
+        byte[] bodyBytes = IOUtils.getByteArray(body);
+        body.release();
 
-         if (vpack.size() > 3) {
+        ImmutableArangoResponse.Builder builder = ArangoResponse.builder()
+                .body(bodyBytes)
+                .version(vpack.get(0).getAsInt())
+                .type(vpack.get(1).getAsInt())
+                .responseCode(vpack.get(2).getAsInt());
+
+        if (vpack.size() > 3) {
              Iterator<Map.Entry<String, VPackSlice>> metaIterator = vpack.get(3).objectIterator();
              while (metaIterator.hasNext()) {
                  Map.Entry<String, VPackSlice> meta = metaIterator.next();

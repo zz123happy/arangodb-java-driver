@@ -34,10 +34,10 @@ import java.util.Map;
 /**
  * @author Michele Rastelli
  */
-public class JsonSerializer implements ArangoSerializer {
+public final class JsonSerializer implements ArangoSerializer {
 
     @Override
-    public byte[] serialize(Object value) {
+    public byte[] serialize(final Object value) {
         try {
             if (value instanceof Version) {
                 return doSerialize((Version) value);

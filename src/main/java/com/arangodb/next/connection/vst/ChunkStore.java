@@ -39,9 +39,9 @@ final class ChunkStore {
     private final Map<Long, ByteBuf> data;
     private final BiConsumer<Long, ArangoResponse> callback;
 
-    ChunkStore(BiConsumer<Long, ArangoResponse> callback) {
+    ChunkStore(final BiConsumer<Long, ArangoResponse> responseCallback) {
         data = new HashMap<>();
-        this.callback = callback;
+        callback = responseCallback;
     }
 
     void storeChunk(final Chunk chunk, final ByteBuf inBuf) throws BufferUnderflowException, IndexOutOfBoundsException {

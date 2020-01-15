@@ -41,7 +41,7 @@ public interface ArangoConnection {
      * @param request to send
      * @return response from the server
      */
-    Mono<ArangoResponse> execute(final ArangoRequest request);
+    Mono<ArangoResponse> execute(ArangoRequest request);
 
     /**
      * @return whether the connection is open or closed

@@ -49,9 +49,9 @@ import static io.netty.handler.codec.http.HttpHeaderNames.*;
  * @author Michele Rastelli
  */
 
-final public class HttpConnection implements ArangoConnection {
+public final class HttpConnection implements ArangoConnection {
 
-    private static final Logger log = LoggerFactory.getLogger(HttpConnection.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpConnection.class);
 
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=UTF-8";
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";
@@ -70,7 +70,7 @@ final public class HttpConnection implements ArangoConnection {
     public HttpConnection(final HostDescription host,
                           @Nullable final AuthenticationMethod authentication,
                           final ConnectionConfig config) {
-        log.debug("HttpConnection({})", config);
+        LOGGER.debug("HttpConnection({})", config);
         this.host = host;
         this.authentication = authentication;
         this.config = config;
@@ -81,14 +81,14 @@ final public class HttpConnection implements ArangoConnection {
 
     @Override
     public synchronized Mono<ArangoConnection> initialize() {
-        log.debug("initialize()");
+        LOGGER.debug("initialize()");
         if (initialized) {
             throw new IllegalStateException("Already initialized!");
         }
         initialized = true;
 
         // perform a request to /_api/cluster/endpoints to check if server has no authentication
-        return execute(ConnectionUtils.endpointsRequest).doOnNext(response -> {
+        return execute(ConnectionUtils.ENDPOINTS_REQUEST).doOnNext(response -> {
             if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
                 throw ArangoConnectionAuthenticationException.of(response);
             }
@@ -97,7 +97,7 @@ final public class HttpConnection implements ArangoConnection {
 
     @Override
     public Mono<ArangoResponse> execute(final ArangoRequest request) {
-        log.debug("execute({})", request);
+        LOGGER.debug("execute({})", request);
         final String url = buildUrl(request);
         return createHttpClient(request, request.getBody().length)
                 .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
@@ -105,7 +105,7 @@ final public class HttpConnection implements ArangoConnection {
                 .responseSingle(this::buildResponse)
                 .doOnNext(response -> {
                     if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
-                        log.debug("in execute(): throwing ArangoConnectionAuthenticationException()");
+                        LOGGER.debug("in execute(): throwing ArangoConnectionAuthenticationException()");
                         throw ArangoConnectionAuthenticationException.of(response);
                     }
                 })
@@ -121,7 +121,7 @@ final public class HttpConnection implements ArangoConnection {
 
     @Override
     public Mono<Void> close() {
-        log.debug("close()");
+        LOGGER.debug("close()");
         return connectionProvider.disposeLater()
                 .doOnTerminate(() -> {
                     connected = false;
@@ -144,15 +144,15 @@ final public class HttpConnection implements ArangoConnection {
                         .tcpConfiguration(tcpClient -> tcpClient.option(CONNECT_TIMEOUT_MILLIS, config.getTimeout()))
                         .protocol(HttpProtocol.HTTP11)
                         .keepAlive(true)
-                        .baseUrl((Boolean.TRUE == config.getUseSsl() ?
-                                "https://" : "http://") + host.getHost() + ":" + host.getPort())
+                        .baseUrl((Boolean.TRUE == config.getUseSsl()
+                                ? "https://" : "http://") + host.getHost() + ":" + host.getPort())
                         .headers(headers -> Optional.ofNullable(authentication).ifPresent(
                                 method -> headers.set(AUTHORIZATION, method.getHttpAuthorizationHeader())
                         ))
         );
     }
 
-    private HttpClient applySslContext(HttpClient httpClient) {
+    private HttpClient applySslContext(final HttpClient httpClient) {
         if (config.getUseSsl() && config.getSslContext().isPresent()) {
             return httpClient.secure(spec -> spec.sslContext(config.getSslContext().get()));
         } else {
@@ -229,7 +229,7 @@ final public class HttpConnection implements ArangoConnection {
         }
     }
 
-    private Mono<ArangoResponse> buildResponse(HttpClientResponse resp, ByteBufMono bytes) {
+    private Mono<ArangoResponse> buildResponse(final HttpClientResponse resp, final ByteBufMono bytes) {
         return bytes
                 .switchIfEmpty(Mono.just(Unpooled.EMPTY_BUFFER))
                 .map(byteBuf -> {
@@ -244,7 +244,7 @@ final public class HttpConnection implements ArangoConnection {
                         .body(buffer)
                         .build())
                 .doOnNext(it -> {
-                    log.debug("received response {}", it);
+                    LOGGER.debug("received response {}", it);
                     if (config.getResendCookies()) {
                         cookieStore.saveCookies(resp);
                     }

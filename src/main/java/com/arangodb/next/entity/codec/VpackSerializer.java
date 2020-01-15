@@ -26,10 +26,10 @@ import com.arangodb.velocypack.VPack;
 /**
  * @author Michele Rastelli
  */
-public class VpackSerializer implements ArangoSerializer {
+public final class VpackSerializer implements ArangoSerializer {
 
     @Override
-    public byte[] serialize(Object value) {
+    public byte[] serialize(final Object value) {
         return new VPack.Builder().build().serialize(value).getBuffer();
     }
 

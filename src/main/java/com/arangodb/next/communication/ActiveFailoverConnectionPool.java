@@ -32,11 +32,11 @@ import java.util.List;
 /**
  * @author Michele Rastelli
  */
-public class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
+final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
 
-    private static final Logger log = LoggerFactory.getLogger(ActiveFailoverConnectionPool.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ActiveFailoverConnectionPool.class);
 
-    private static final ArangoRequest currentDatabaseRequest = ArangoRequest.builder()
+    private static final ArangoRequest CURRENT_DATABASE_REQUEST = ArangoRequest.builder()
             .database("_system")
             .path("/_api/database/current")
             .requestType(ArangoRequest.RequestType.GET)
@@ -53,15 +53,15 @@ public class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
     }
 
     @Override
-    public synchronized Mono<Void> updateConnections(List<HostDescription> hostList) {
+    public synchronized Mono<Void> updateConnections(final List<HostDescription> hostList) {
         return super.updateConnections(hostList).then(Mono.defer(this::findLeader));
     }
 
     @Override
-    public Mono<ArangoResponse> executeOnRandomHost(ArangoRequest request) {
-        log.debug("executeOnRandomHost({})", request);
+    public Mono<ArangoResponse> executeOnRandomHost(final ArangoRequest request) {
+        LOGGER.debug("executeOnRandomHost({})", request);
 
-        List<ArangoConnection> leaderConnections = connectionsByHost.get(leader);
+        List<ArangoConnection> leaderConnections = getConnectionsByHost().get(leader);
         if (leader == null || leaderConnections == null) {
             return Mono.error(new IOException("Leader not reachable!"));
         }
@@ -81,13 +81,13 @@ public class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
     }
 
     /**
-     * Sets {@link this#leader} finding the leader among the existing {@link this#connectionsByHost}.
+     * Sets {@link this#leader} finding the leader among the existing {@link this#getConnectionsByHost()}.
      *
      * @return a mono completing when done
      */
     private Mono<Void> findLeader() {
-        return Flux.fromIterable(connectionsByHost.entrySet())
-                .flatMap(e -> e.getValue().get(0).execute(currentDatabaseRequest)
+        return Flux.fromIterable(getConnectionsByHost().entrySet())
+                .flatMap(e -> e.getValue().get(0).execute(CURRENT_DATABASE_REQUEST)
                         .filter(response -> response.getResponseCode() != 503)
                         .doOnNext(__ -> leader = e.getKey())
                 )

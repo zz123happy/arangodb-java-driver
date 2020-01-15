@@ -35,7 +35,7 @@ import java.util.Map;
  */
 final class MessageStore {
 
-    private static final Logger log = LoggerFactory.getLogger(MessageStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MessageStore.class);
 
     private final Map<Long, MonoProcessor<ArangoResponse>> pendingRequests = new HashMap<>();
 
@@ -45,14 +45,14 @@ final class MessageStore {
      * @param messageId id of the sent message
      * @return a {@link Mono} that will be resolved when the related response is received
      */
-    Mono<ArangoResponse> addRequest(long messageId) {
-        log.debug("Adding request with messageId: {}", messageId);
+    Mono<ArangoResponse> addRequest(final long messageId) {
+        LOGGER.debug("Adding request with messageId: {}", messageId);
         if (pendingRequests.containsKey(messageId)) {
             throw new IllegalStateException("Key already present: " + messageId);
         }
         final MonoProcessor<ArangoResponse> response = MonoProcessor.create();
         pendingRequests.put(messageId, response);
-        log.atDebug().addArgument(pendingRequests::size).log("pendingRequests.size(): {}");
+        LOGGER.atDebug().addArgument(pendingRequests::size).log("pendingRequests.size(): {}");
         return response;
     }
 
@@ -62,8 +62,8 @@ final class MessageStore {
      * @param messageId id of the received message
      * @param response  the received response
      */
-    void resolve(long messageId, final ArangoResponse response) {
-        log.debug("Resolving message [{}]: {}", messageId, response);
+    void resolve(final long messageId, final ArangoResponse response) {
+        LOGGER.debug("Resolving message [{}]: {}", messageId, response);
         final MonoProcessor<ArangoResponse> future = pendingRequests.remove(messageId);
         if (future != null) {
             future.onNext(response);
@@ -76,7 +76,7 @@ final class MessageStore {
      * @param t cause
      */
     void clear(final Throwable t) {
-        log.debug("clear()");
+        LOGGER.debug("clear()");
         pendingRequests.values().forEach(future -> future.onError(t));
         pendingRequests.clear();
     }

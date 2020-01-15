@@ -26,16 +26,16 @@ package com.arangodb.next.connection;
  */
 public enum ArangoProtocol {
 
-	/**
-	 * VelocyStream
-	 * 
-	 * @see <a href="https://github.com/arangodb/velocystream">VelocyStream specification</a>
-	 */
-	VST,
+    /**
+     * VelocyStream
+     *
+     * @see <a href="https://github.com/arangodb/velocystream">VelocyStream specification</a>
+     */
+    VST,
 
-	/**
-	 * HTTP
-	 */
-	HTTP
+    /**
+     * HTTP
+     */
+    HTTP
 
 }

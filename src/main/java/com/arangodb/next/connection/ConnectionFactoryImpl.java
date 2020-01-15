@@ -29,7 +29,7 @@ import reactor.core.publisher.Mono;
 /**
  * @author Michele Rastelli
  */
-public class ConnectionFactoryImpl implements ConnectionFactory {
+public final class ConnectionFactoryImpl implements ConnectionFactory {
 
     private final ConnectionConfig config;
     private final ArangoProtocol protocol;

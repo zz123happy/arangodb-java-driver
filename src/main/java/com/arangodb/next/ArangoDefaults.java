@@ -38,17 +38,17 @@ public final class ArangoDefaults {
     public static final int CHUNK_DEFAULT_CONTENT_SIZE = 30_000;
     public static final long DEFAULT_TIMEOUT = DEFAULT_POOL_ACQUIRE_TIMEOUT;
 
-//	public static final String DEFAULT_HOST = "127.0.0.1";
-//	public static final Integer DEFAULT_PORT = 8529;
-//	public static final String DEFAULT_USER = "root";
-//	public static final Boolean DEFAULT_USE_SSL = false;
-//	public static final Boolean DEFAULT_HTTP_RESEND_COOKIES = true;
-//	public static final int MAX_CONNECTIONS_VST_DEFAULT = 1;
-//	public static final Integer CONNECTION_TTL_VST_DEFAULT = null;
-//	public static final int MAX_CONNECTIONS_HTTP_DEFAULT = 20;
-//	public static final Protocol DEFAULT_NETWORK_PROTOCOL = Protocol.VST;
-//	public static final boolean DEFAULT_ACQUIRE_HOST_LIST = false;
-//	public static final int DEFAULT_ACQUIRE_HOST_LIST_INTERVAL = 60 * 60 * 1000; // hour
-//	public static final LoadBalancingStrategy DEFAULT_LOAD_BALANCING_STRATEGY = LoadBalancingStrategy.NONE;
+// public static final String DEFAULT_HOST = "127.0.0.1";
+// public static final Integer DEFAULT_PORT = 8529;
+// public static final String DEFAULT_USER = "root";
+// public static final Boolean DEFAULT_USE_SSL = false;
+// public static final Boolean DEFAULT_HTTP_RESEND_COOKIES = true;
+// public static final int MAX_CONNECTIONS_VST_DEFAULT = 1;
+// public static final Integer CONNECTION_TTL_VST_DEFAULT = null;
+// public static final int MAX_CONNECTIONS_HTTP_DEFAULT = 20;
+// public static final Protocol DEFAULT_NETWORK_PROTOCOL = Protocol.VST;
+// public static final boolean DEFAULT_ACQUIRE_HOST_LIST = false;
+// public static final int DEFAULT_ACQUIRE_HOST_LIST_INTERVAL = 60 * 60 * 1000; // hour
+// public static final LoadBalancingStrategy DEFAULT_LOAD_BALANCING_STRATEGY = LoadBalancingStrategy.NONE;
 
 }

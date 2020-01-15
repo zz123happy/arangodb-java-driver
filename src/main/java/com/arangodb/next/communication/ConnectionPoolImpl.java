@@ -40,9 +40,9 @@ import java.util.stream.IntStream;
  */
 class ConnectionPoolImpl implements ConnectionPool {
 
-    private static final Logger log = LoggerFactory.getLogger(ConnectionPoolImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionPoolImpl.class);
 
-    protected final Map<HostDescription, List<ArangoConnection>> connectionsByHost;
+    private final Map<HostDescription, List<ArangoConnection>> connectionsByHost;
     private final CommunicationConfig config;
     private final ConnectionFactory connectionFactory;
     private final AuthenticationMethod authentication;
@@ -62,7 +62,7 @@ class ConnectionPoolImpl implements ConnectionPool {
             final AuthenticationMethod authentication,
             final ConnectionFactory connectionFactory
     ) {
-        log.debug("ArangoCommunicationImpl({}, {}, {})", config, authentication, connectionFactory);
+        LOGGER.debug("ArangoCommunicationImpl({}, {}, {})", config, authentication, connectionFactory);
 
         this.config = config;
 
@@ -72,19 +72,19 @@ class ConnectionPoolImpl implements ConnectionPool {
     }
 
     @Override
-    public Mono<ArangoResponse> executeOnRandomHost(ArangoRequest request) {
+    public Mono<ArangoResponse> executeOnRandomHost(final ArangoRequest request) {
         if (connectionsByHost.isEmpty()) {
             return Mono.error(new IOException("No open connections!"));
         }
         HostDescription host = getRandomItem(connectionsByHost.keySet());
-        log.debug("executeOnRandomHost: picked host {}", host);
+        LOGGER.debug("executeOnRandomHost: picked host {}", host);
         ArangoConnection connection = getRandomItem(connectionsByHost.get(host));
         return connection.execute(request);
     }
 
     @Override
     public Mono<Void> close() {
-        log.debug("close()");
+        LOGGER.debug("close()");
         List<Mono<Void>> closedConnections = connectionsByHost.values().stream()
                 .flatMap(Collection::stream)
                 .map(ArangoConnection::close)
@@ -92,15 +92,13 @@ class ConnectionPoolImpl implements ConnectionPool {
         return Flux.merge(closedConnections).doFinally(v -> connectionFactory.close()).then();
     }
 
-    Map<HostDescription, List<ArangoConnection>> getConnectionsByHost() {
-        return connectionsByHost.entrySet().stream()
-                .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), new LinkedList<>(e.getValue())))
-                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+    protected Map<HostDescription, List<ArangoConnection>> getConnectionsByHost() {
+        return connectionsByHost;
     }
 
     @Override
     public synchronized Mono<Void> updateConnections(final List<HostDescription> hostList) {
-        log.debug("updateConnections()");
+        LOGGER.debug("updateConnections()");
 
         if (updatingConnectionsSemaphore) {
             return Mono.error(new IllegalStateException("Ongoing updateConnections!"));
@@ -111,17 +109,17 @@ class ConnectionPoolImpl implements ConnectionPool {
 
         List<Mono<Void>> addedHosts = hostList.stream()
                 .filter(o -> !currentHosts.contains(o))
-                .peek(host -> log.debug("adding host: {}", host))
+                .peek(host -> LOGGER.debug("adding host: {}", host))
                 .map(host -> Flux
                         .merge(createHostConnections(host))
                         .collectList()
                         .flatMap(hostConnections -> {
                             if (hostConnections.isEmpty()) {
-                                log.warn("not able to connect to host [{}], skipped adding host!", host);
+                                LOGGER.warn("not able to connect to host [{}], skipped adding host!", host);
                                 return removeHost(host);
                             } else {
                                 connectionsByHost.put(host, hostConnections);
-                                log.debug("added host: {}", host);
+                                LOGGER.debug("added host: {}", host);
                                 return Mono.empty();
                             }
                         })
@@ -147,7 +145,7 @@ class ConnectionPoolImpl implements ConnectionPool {
                 // here we cannot use Flux::doFinally since the signal is propagated downstream before the callback is
                 // executed and this is a problem if a chained task re-invoke this method, eg. during {@link this#initialize}
                 .doOnTerminate(() -> {
-                    log.debug("updateConnections complete: {}", connectionsByHost.keySet());
+                    LOGGER.debug("updateConnections complete: {}", connectionsByHost.keySet());
                     updatingConnectionsSemaphore = false;
                 })
                 .doOnCancel(() -> updatingConnectionsSemaphore = false);
@@ -175,28 +173,28 @@ class ConnectionPoolImpl implements ConnectionPool {
                 .then();
     }
 
-    private Mono<Void> removeHost(HostDescription host) {
-        log.debug("removing host: {}", host);
+    private Mono<Void> removeHost(final HostDescription host) {
+        LOGGER.debug("removing host: {}", host);
         return Optional.ofNullable(connectionsByHost.remove(host))
                 .map(this::closeHostConnections)
                 .orElse(Mono.empty());
     }
 
-    private List<Mono<ArangoConnection>> createHostConnections(HostDescription host) {
-        log.debug("createHostConnections({})", host);
+    private List<Mono<ArangoConnection>> createHostConnections(final HostDescription host) {
+        LOGGER.debug("createHostConnections({})", host);
 
         return IntStream.range(0, config.getConnectionsPerHost())
                 .mapToObj(i -> Mono.defer(() -> connectionFactory.create(host, authentication))
                         .retry(config.getRetries())
-                        .doOnNext(it -> log.debug("created connection to host: {}", host))
-                        .doOnError(e -> log.warn("Error creating connection:", e))
+                        .doOnNext(it -> LOGGER.debug("created connection to host: {}", host))
+                        .doOnError(e -> LOGGER.warn("Error creating connection:", e))
                         .onErrorResume(e -> Mono.empty()) // skips the failing connections
                 )
                 .collect(Collectors.toList());
     }
 
-    private Mono<Void> closeHostConnections(List<ArangoConnection> connections) {
-        log.debug("closeHostConnections({})", connections);
+    private Mono<Void> closeHostConnections(final List<ArangoConnection> connections) {
+        LOGGER.debug("closeHostConnections({})", connections);
 
         return Flux.merge(
                 connections.stream()
@@ -209,7 +207,7 @@ class ConnectionPoolImpl implements ConnectionPool {
      * @param connections to check
      * @return Mono<True> if all the provided connections are disconnected
      */
-    private Mono<Boolean> checkAllDisconnected(List<ArangoConnection> connections) {
+    private Mono<Boolean> checkAllDisconnected(final List<ArangoConnection> connections) {
         return Flux
                 .merge(
                         connections.stream()

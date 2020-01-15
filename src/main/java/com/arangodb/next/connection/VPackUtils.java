@@ -27,7 +27,10 @@ import io.netty.buffer.ByteBuf;
 /**
  * @author Michele Rastelli
  */
-class VPackUtils {
+final class VPackUtils {
+
+    private VPackUtils() {
+    }
 
     /**
      * @param slice input
