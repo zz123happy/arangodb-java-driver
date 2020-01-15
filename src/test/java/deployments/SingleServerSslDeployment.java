@@ -17,9 +17,9 @@ import java.util.concurrent.CompletableFuture;
 public class SingleServerSslDeployment extends ContainerDeployment {
 
     private static final Logger log = LoggerFactory.getLogger(SingleServerSslDeployment.class);
+    private static final String command = "arangod --ssl.keyfile /server.pem --server.endpoint ssl://0.0.0.0:8529 ";
 
     private final GenericContainer<?> container;
-    private final String command = "arangod --ssl.keyfile /server.pem --server.endpoint ssl://0.0.0.0:8529 ";
 
     public SingleServerSslDeployment() {
         String SSL_CERT_PATH = Paths.get("docker/server.pem").toAbsolutePath().toString();

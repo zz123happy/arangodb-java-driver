@@ -28,6 +28,11 @@ public class SingleServerNoAuthDeployment extends ContainerDeployment {
                 .waitingFor(Wait.forLogMessage(".*ready for business.*", 1));
     }
 
+    public SingleServerNoAuthDeployment(String vstMaxSize) {
+        this();
+        container.withCommand("arangod --log.level communication=trace --log.level requests=trace --log.foreground-tty --vst.maxsize " + vstMaxSize);
+    }
+
     @Override
     public AuthenticationMethod getAuthentication() {
         return null;

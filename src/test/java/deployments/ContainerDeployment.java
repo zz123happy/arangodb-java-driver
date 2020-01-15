@@ -50,6 +50,10 @@ public abstract class ContainerDeployment implements Startable {
         return new SingleServerNoAuthDeployment();
     }
 
+    public static ContainerDeployment ofSingleServerNoAuth(String vstMaxSize) {
+        return new SingleServerNoAuthDeployment(vstMaxSize);
+    }
+
     public static ContainerDeployment ofCluster(int dbServers, int coordinators) {
         return new ClusterDeployment(dbServers, coordinators);
     }
