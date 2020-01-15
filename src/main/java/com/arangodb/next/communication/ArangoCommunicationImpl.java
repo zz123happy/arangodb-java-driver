@@ -35,6 +35,8 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
+import static com.arangodb.next.connection.ConnectionUtils.ENDPOINTS_REQUEST;
+
 /**
  * @author Michele Rastelli
  */
@@ -57,12 +59,6 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     private volatile AuthenticationMethod authentication;
     @Nullable
     private volatile Disposable scheduledUpdateHostListSubscription;
-
-    private static final ArangoRequest ACQUIRE_HOST_LIST_REQUEST = ArangoRequest.builder()
-            .database("_system")
-            .path("/_api/cluster/endpoints")
-            .requestType(ArangoRequest.RequestType.GET)
-            .build();
 
     ArangoCommunicationImpl(final CommunicationConfig config, final ConnectionFactory connectionFactory) {
         LOGGER.debug("ArangoCommunicationImpl({}, {})", config, connectionFactory);
@@ -160,7 +156,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
         }
         updatingHostListSemaphore = true;
 
-        return execute(ACQUIRE_HOST_LIST_REQUEST, contactConnectionPool)
+        return execute(ENDPOINTS_REQUEST, contactConnectionPool)
                 .map(this::parseAcquireHostListResponse)
                 .doOnError(e -> LOGGER.warn("Error acquiring hostList, retrying...", e))
                 .retry(config.getRetries())

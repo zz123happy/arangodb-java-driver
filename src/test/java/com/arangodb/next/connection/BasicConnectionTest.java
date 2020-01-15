@@ -27,7 +27,6 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -41,7 +40,6 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -127,7 +125,7 @@ class BasicConnectionTest {
         ArangoConnection connection = new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, authenticationMethod).block();
         assertThat(connection).isNotNull();
-        ArangoResponse response = connection.execute(ConnectionTestUtils.versionRequest).block();
+        ArangoResponse response = connection.execute(ConnectionTestUtils.VERSION_REQUEST).block();
         verifyGetResponseVPack(response);
         connection.close().block();
     }
@@ -149,7 +147,7 @@ class BasicConnectionTest {
         new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, deployment.getAuthentication())
                 .flatMapMany(c ->
                         Flux.range(0, 1_000)
-                                .flatMap(i -> c.execute(ConnectionTestUtils.versionRequest))
+                                .flatMap(i -> c.execute(ConnectionTestUtils.VERSION_REQUEST))
                                 .doOnNext(response -> {
                                     assertThat(response).isNotNull();
                                     assertThat(response.getVersion()).isEqualTo(1);

@@ -64,7 +64,7 @@ class BasicConnectionNoAuthTest {
         ArangoConnection connection = new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, null).block();
         assertThat(connection).isNotNull();
-        ArangoResponse response = connection.execute(ConnectionTestUtils.versionRequest).block();
+        ArangoResponse response = connection.execute(ConnectionTestUtils.VERSION_REQUEST).block();
         verifyGetResponseVPack(response);
         connection.close().block();
     }
@@ -86,7 +86,7 @@ class BasicConnectionNoAuthTest {
         new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(host, deployment.getAuthentication())
                 .flatMapMany(c ->
                         Flux.range(0, 1_000)
-                                .flatMap(i -> c.execute(ConnectionTestUtils.versionRequest))
+                                .flatMap(i -> c.execute(ConnectionTestUtils.VERSION_REQUEST))
                                 .doOnNext(ConnectionTestUtils::verifyGetResponseVPack))
                 .then().block();
     }

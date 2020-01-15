@@ -34,14 +34,14 @@ import static com.arangodb.next.connection.ConnectionTestUtils.verifyGetResponse
 class CommunicationTestUtils {
 
     static void executeRequest(ArangoCommunication communication, int retries) {
-        ArangoResponse response = communication.execute(ConnectionTestUtils.versionRequest)
+        ArangoResponse response = communication.execute(ConnectionTestUtils.VERSION_REQUEST)
                 .retry(retries, t -> t instanceof IOException || t instanceof TimeoutException)
                 .block();
         verifyGetResponseVPack(response);
     }
 
     static void executeRequest(ArangoCommunication communication) {
-        ArangoResponse response = communication.execute(ConnectionTestUtils.versionRequest).block();
+        ArangoResponse response = communication.execute(ConnectionTestUtils.VERSION_REQUEST).block();
         verifyGetResponseVPack(response);
     }
 

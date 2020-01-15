@@ -125,7 +125,7 @@ class ConnectionResiliencyTest {
         assertThat(connection).isNotNull();
         assertThat(connection.isConnected().block()).isTrue();
 
-        connection.execute(versionRequest);
+        connection.execute(VERSION_REQUEST);
         connection.close().block();
         connection.close().block();
 

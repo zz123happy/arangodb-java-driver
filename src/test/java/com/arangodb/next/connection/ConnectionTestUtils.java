@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ConnectionTestUtils {
     public static final ConnectionSchedulerFactory DEFAULT_SCHEDULER_FACTORY = new ConnectionSchedulerFactory(4);
 
-    public static final ArangoRequest versionRequest = ArangoRequest.builder()
+    public static final ArangoRequest VERSION_REQUEST = ArangoRequest.builder()
             .database("_system")
             .path("/_api/version")
             .requestType(ArangoRequest.RequestType.GET)
@@ -64,14 +64,14 @@ public class ConnectionTestUtils {
     }
 
     public static void performRequest(ArangoConnection connection, int retries) {
-        ArangoResponse response = connection.execute(versionRequest)
+        ArangoResponse response = connection.execute(VERSION_REQUEST)
                 .retry(retries, t -> t instanceof IOException || t instanceof TimeoutException)
                 .block();
         verifyGetResponseVPack(response);
     }
 
     public static void performRequest(ArangoConnection connection) {
-        ArangoResponse response = connection.execute(versionRequest).block();
+        ArangoResponse response = connection.execute(VERSION_REQUEST).block();
         verifyGetResponseVPack(response);
     }
 

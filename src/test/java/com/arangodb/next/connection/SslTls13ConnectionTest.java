@@ -110,7 +110,7 @@ class SslTls13ConnectionTest {
         ArangoConnection connection = new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY)
                 .create(host, authenticationMethod).block();
         assertThat(connection).isNotNull();
-        ArangoResponse response = connection.execute(ConnectionTestUtils.versionRequest).block();
+        ArangoResponse response = connection.execute(ConnectionTestUtils.VERSION_REQUEST).block();
         verifyGetResponseVPack(response);
         connection.close().block();
     }

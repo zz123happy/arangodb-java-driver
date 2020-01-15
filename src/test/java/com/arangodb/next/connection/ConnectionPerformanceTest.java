@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.arangodb.next.connection.ConnectionTestUtils.DEFAULT_SCHEDULER_FACTORY;
+import static com.arangodb.next.connection.ConnectionTestUtils.VERSION_REQUEST;
 
 /**
  * @author Michele Rastelli
@@ -41,12 +42,6 @@ class ConnectionPerformanceTest {
     private final HostDescription host = HostDescription.of("172.28.3.1", 8529);
     private final AuthenticationMethod authentication = AuthenticationMethod.ofBasic("root", "test");
     private final ConnectionConfig config = ConnectionConfig.builder().build();
-
-    private final ArangoRequest getRequest = ArangoRequest.builder()
-            .database("_system")
-            .path("/_api/version")
-            .requestType(ArangoRequest.RequestType.GET)
-            .build();
 
     @Test
     void infiniteParallelLoop() {
@@ -72,7 +67,7 @@ class ConnectionPerformanceTest {
                                     if (i % 100_000 == 0)
                                         System.out.println(i);
                                 })
-                                .flatMap(i -> connection.execute(getRequest))
+                                .flatMap(i -> connection.execute(VERSION_REQUEST))
                                 .doOnNext(ConnectionTestUtils::verifyGetResponseVPack)
                 )
                 .then().toFuture();

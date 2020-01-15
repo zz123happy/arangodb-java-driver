@@ -31,6 +31,8 @@ import reactor.core.publisher.Flux;
 
 import java.util.Date;
 
+import static com.arangodb.next.connection.ConnectionTestUtils.VERSION_REQUEST;
+
 /**
  * @author Michele Rastelli
  */
@@ -44,12 +46,6 @@ class CommunicationPerformanceTest {
             .authenticationMethod(authentication)
             .connectionsPerHost(4)
             .acquireHostList(false)
-            .build();
-
-    private final ArangoRequest getRequest = ArangoRequest.builder()
-            .database("_system")
-            .path("/_api/version")
-            .requestType(ArangoRequest.RequestType.GET)
             .build();
 
     private volatile long chunkStart;
@@ -72,7 +68,7 @@ class CommunicationPerformanceTest {
                                 chunkStart = new Date().getTime();
                             }
                         })
-                        .flatMap(i -> communication.execute(getRequest))
+                        .flatMap(i -> communication.execute(VERSION_REQUEST))
                         .doOnNext(v -> new VPackSlice(v.getBody()).get("server"))
                 )
                 .then()
