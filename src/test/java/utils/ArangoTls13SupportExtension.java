@@ -39,9 +39,9 @@ public class ArangoTls13SupportExtension implements ExecutionCondition {
         ArangoVersion version = ContainerUtils.getVersion();
 
         if (version.compareTo(minVersion) < 0) {
-            return ConditionEvaluationResult.disabled("DB version < " + minVersion);
+            return ConditionEvaluationResult.disabled("Disabled on DB version < " + minVersion);
         } else {
-            return ConditionEvaluationResult.enabled("Test enabled for DB version >= " + minVersion);
+            return ConditionEvaluationResult.enabled("Enabled on DB version >= " + minVersion);
         }
 
     }

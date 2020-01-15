@@ -38,6 +38,7 @@ import reactor.netty.tcp.TcpClient;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -54,7 +55,7 @@ public final class VstConnection implements ArangoConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VstConnection.class);
 
-    private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes();
+    private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes(StandardCharsets.UTF_8);
 
     private volatile boolean initialized = false;
     private volatile boolean closing = false;

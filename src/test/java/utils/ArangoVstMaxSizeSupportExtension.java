@@ -39,9 +39,9 @@ public class ArangoVstMaxSizeSupportExtension implements ExecutionCondition {
         ArangoVersion version = ContainerUtils.getVersion();
 
         if (version.compareTo(maxVersion) < 0) {
-            return ConditionEvaluationResult.enabled("Test enabled for DB version < " + maxVersion);
+            return ConditionEvaluationResult.enabled("Enabled on DB version < " + maxVersion);
         } else {
-            return ConditionEvaluationResult.disabled("DB version >= " + maxVersion);
+            return ConditionEvaluationResult.disabled("Disabled on DB version >= " + maxVersion);
         }
 
     }

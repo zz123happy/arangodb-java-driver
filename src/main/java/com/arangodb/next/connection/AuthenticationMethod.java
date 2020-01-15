@@ -25,6 +25,7 @@ import com.arangodb.velocypack.ValueType;
 import io.netty.buffer.ByteBuf;
 import org.immutables.value.Value;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
@@ -84,7 +85,7 @@ public interface AuthenticationMethod {
         @Override
         public String getHttpAuthorizationHeader() {
             final String plainAuth = getUser() + ":" + getPassword();
-            final String encodedAuth = Base64.getEncoder().encodeToString(plainAuth.getBytes());
+            final String encodedAuth = Base64.getEncoder().encodeToString(plainAuth.getBytes(StandardCharsets.UTF_8));
             return "Basic " + encodedAuth;
         }
 
