@@ -36,12 +36,6 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActiveFailoverConnectionPool.class);
 
-    private static final ArangoRequest CURRENT_DATABASE_REQUEST = ArangoRequest.builder()
-            .database("_system")
-            .path("/_api/database/current")
-            .requestType(ArangoRequest.RequestType.GET)
-            .build();
-
     private volatile HostDescription leader;
 
     ActiveFailoverConnectionPool(
@@ -87,8 +81,8 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
      */
     private Mono<Void> findLeader() {
         return Flux.fromIterable(getConnectionsByHost().entrySet())
-                .flatMap(e -> e.getValue().get(0).execute(CURRENT_DATABASE_REQUEST)
-                        .filter(response -> response.getResponseCode() != 503)
+                .flatMap(e -> e.getValue().get(0).requestUser()
+                        .filter(response -> response.getResponseCode() == 200)
                         .doOnNext(__ -> leader = e.getKey())
                 )
                 .then();
