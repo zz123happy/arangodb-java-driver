@@ -84,8 +84,8 @@ public final class HttpConnection extends ArangoConnection {
         }
         initialized = true;
 
-        // perform a request to /_api/cluster/endpoints to check if server has no authentication
-        return execute(ConnectionUtils.ENDPOINTS_REQUEST).doOnNext(response -> {
+        // perform a request to check if credentials are ok
+        return requestUser().doOnNext(response -> {
             if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
                 throw ArangoConnectionAuthenticationException.of(response);
             }

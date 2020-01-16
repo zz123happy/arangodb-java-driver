@@ -195,8 +195,8 @@ public final class VstConnection extends ArangoConnection {
      */
     private Mono<ArangoResponse> checkAuthenticated() {
         return Mono.defer(() ->
-                // perform a request to /_api/cluster/endpoints
-                execute(ConnectionUtils.ENDPOINTS_REQUEST)
+                // perform a request to check if credentials are ok
+                requestUser()
                         .doOnNext(response -> {
                             if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
                                 throw ArangoConnectionAuthenticationException.of(response);
