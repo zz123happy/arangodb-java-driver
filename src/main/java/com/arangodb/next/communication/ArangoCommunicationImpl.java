@@ -34,6 +34,7 @@ import reactor.core.publisher.Mono;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Semaphore;
 
 import static com.arangodb.next.connection.ConnectionUtils.ENDPOINTS_REQUEST;
 
@@ -47,6 +48,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     private final CommunicationConfig config;
     private final ArangoDeserializer deserializer;
     private final ConnectionFactory connectionFactory;
+    private final Semaphore updatingHostListSemaphore;
 
     // connection pool used to acquireHostList
     private volatile ConnectionPool contactConnectionPool;
@@ -54,7 +56,6 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     private volatile ConnectionPool connectionPool;
 
     private volatile boolean initialized = false;
-    private volatile boolean updatingHostListSemaphore = false;
     @Nullable
     private volatile AuthenticationMethod authentication;
     @Nullable
@@ -65,6 +66,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
 
         this.config = config;
         this.connectionFactory = connectionFactory;
+        updatingHostListSemaphore = new Semaphore(1);
         deserializer = ArangoDeserializer.of(config.getContentType());
     }
 
@@ -129,7 +131,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
      *
      * @return a {@code Mono} which completes once this::authenticationMethod has been correctly set
      */
-    private synchronized Mono<Void> negotiateAuthentication() {
+    private Mono<Void> negotiateAuthentication() {
         LOGGER.debug("negotiateAuthentication()");
 
         if (config.getNegotiateAuthentication()) {
@@ -148,13 +150,12 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
      * - connections related to removed hosts have been closed
      * - connections related to added hosts have been initialized
      */
-    synchronized Mono<Void> updateHostList() {
+    Mono<Void> updateHostList() {
         LOGGER.debug("updateHostList()");
 
-        if (updatingHostListSemaphore) {
+        if (!updatingHostListSemaphore.tryAcquire()) {
             return Mono.error(new IllegalStateException("Ongoing updateHostList!"));
         }
-        updatingHostListSemaphore = true;
 
         return execute(ENDPOINTS_REQUEST, contactConnectionPool)
                 .map(this::parseAcquireHostListResponse)
@@ -164,7 +165,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
                 .doOnError(e -> LOGGER.warn("Error acquiring hostList:", e))
                 .flatMap(hostList -> connectionPool.updateConnections(hostList))
                 .timeout(config.getTimeout())
-                .doFinally(s -> updatingHostListSemaphore = false);
+                .doFinally(s -> updatingHostListSemaphore.release());
     }
 
     private List<HostDescription> parseAcquireHostListResponse(final ArangoResponse response) {

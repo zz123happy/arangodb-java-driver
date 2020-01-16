@@ -31,6 +31,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -46,7 +47,7 @@ class ConnectionPoolImpl implements ConnectionPool {
     private final CommunicationConfig config;
     private final ConnectionFactory connectionFactory;
     private final AuthenticationMethod authentication;
-    private volatile boolean updatingConnectionsSemaphore = false;
+    private final Semaphore updatingConnectionsSemaphore;
 
     protected static <T> T getRandomItem(final Collection<T> collection) {
         int index = ThreadLocalRandom.current().nextInt(collection.size());
@@ -65,9 +66,9 @@ class ConnectionPoolImpl implements ConnectionPool {
         LOGGER.debug("ArangoCommunicationImpl({}, {}, {})", config, authentication, connectionFactory);
 
         this.config = config;
-
         this.authentication = authentication;
         this.connectionFactory = connectionFactory;
+        updatingConnectionsSemaphore = new Semaphore(1);
         connectionsByHost = new ConcurrentHashMap<>();
     }
 
@@ -97,13 +98,12 @@ class ConnectionPoolImpl implements ConnectionPool {
     }
 
     @Override
-    public synchronized Mono<Void> updateConnections(final List<HostDescription> hostList) {
+    public Mono<Void> updateConnections(final List<HostDescription> hostList) {
         LOGGER.debug("updateConnections()");
 
-        if (updatingConnectionsSemaphore) {
+        if (!updatingConnectionsSemaphore.tryAcquire()) {
             return Mono.error(new IllegalStateException("Ongoing updateConnections!"));
         }
-        updatingConnectionsSemaphore = true;
 
         Set<HostDescription> currentHosts = connectionsByHost.keySet();
 
@@ -146,9 +146,9 @@ class ConnectionPoolImpl implements ConnectionPool {
                 // executed and this is a problem if a chained task re-invoke this method, eg. during {@link this#initialize}
                 .doOnTerminate(() -> {
                     LOGGER.debug("updateConnections complete: {}", connectionsByHost.keySet());
-                    updatingConnectionsSemaphore = false;
+                    updatingConnectionsSemaphore.release();
                 })
-                .doOnCancel(() -> updatingConnectionsSemaphore = false);
+                .doOnCancel(updatingConnectionsSemaphore::release);
     }
 
     /**

@@ -28,6 +28,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 /**
  * @author Michele Rastelli
@@ -36,6 +37,7 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActiveFailoverConnectionPool.class);
 
+    private final Semaphore findLeaderSemaphore;
     private volatile HostDescription leader;
 
     ActiveFailoverConnectionPool(
@@ -44,10 +46,11 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
             final ConnectionFactory connectionFactory
     ) {
         super(config, authentication, connectionFactory);
+        findLeaderSemaphore = new Semaphore(1);
     }
 
     @Override
-    public synchronized Mono<Void> updateConnections(final List<HostDescription> hostList) {
+    public Mono<Void> updateConnections(final List<HostDescription> hostList) {
         return super.updateConnections(hostList).then(Mono.defer(this::findLeader));
     }
 
@@ -80,11 +83,16 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
      * @return a mono completing when done
      */
     private Mono<Void> findLeader() {
+        if (!findLeaderSemaphore.tryAcquire()) {
+            return Mono.empty();
+        }
+
         return Flux.fromIterable(getConnectionsByHost().entrySet())
                 .flatMap(e -> e.getValue().get(0).requestUser()
                         .filter(response -> response.getResponseCode() == 200)
                         .doOnNext(__ -> leader = e.getKey())
                 )
+                .doFinally(__ -> findLeaderSemaphore.release())
                 .then();
     }
 
