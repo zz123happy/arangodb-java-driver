@@ -20,9 +20,7 @@
 
 package com.arangodb.next.connection;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import deployments.ContainerDeployment;
-import io.netty.buffer.Unpooled;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
@@ -35,12 +33,11 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
 import utils.ArangoTls13SupportExtension;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
+import java.io.IOException;
 import java.security.KeyStore;
 import java.util.stream.Stream;
 
@@ -59,8 +56,6 @@ class SslTls13ConnectionTest {
     private static final String SSL_TRUSTSTORE_PASSWORD = "12345678";
 
     private static HostDescription host;
-    private static String jwt;
-
     private final ConnectionConfig config;
 
     SslTls13ConnectionTest() throws Exception {
@@ -75,12 +70,12 @@ class SslTls13ConnectionTest {
      * - ArangoProtocol
      * - AuthenticationMethod
      */
-    static private Stream<Arguments> argumentsProvider() {
+    static private Stream<Arguments> argumentsProvider() throws IOException {
         return Stream.of(
                 Arguments.of(ArangoProtocol.VST, deployment.getAuthentication()),
-                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofJwt(jwt)),
+                Arguments.of(ArangoProtocol.VST, deployment.getJwtAuthentication()),
                 Arguments.of(ArangoProtocol.HTTP, deployment.getAuthentication()),
-                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofJwt(jwt))
+                Arguments.of(ArangoProtocol.HTTP, deployment.getJwtAuthentication())
         );
     }
 
@@ -88,20 +83,8 @@ class SslTls13ConnectionTest {
     private static final ContainerDeployment deployment = ContainerDeployment.ofSingleServerWithSslTls13();
 
     @BeforeAll
-    static void setup() throws Exception {
+    static void setup() {
         host = deployment.getHosts().get(0);
-        SslContext sslContext = getSslContext();
-
-        String request = "{\"username\":\"" + deployment.getUser() + "\",\"password\":\"" + deployment.getPassword() + "\"}";
-        String response = HttpClient.create()
-                .tcpConfiguration(tcp -> tcp.secure(c -> c.sslContext(sslContext)))
-                .post()
-                .uri("https://" + host.getHost() + ":" + host.getPort() + "/_db/_system/_open/auth")
-                .send(Mono.just(Unpooled.wrappedBuffer(request.getBytes())))
-                .responseContent()
-                .asString()
-                .blockFirst();
-        jwt = new ObjectMapper().readTree(response).get("jwt").asText();
     }
 
     @ParameterizedTest

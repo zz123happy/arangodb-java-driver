@@ -40,7 +40,6 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import static com.arangodb.next.connection.ConnectionSchedulerFactory.THREAD_PREFIX;
@@ -51,7 +50,7 @@ import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
  * @author Mark Vollmary
  * @author Michele Rastelli
  */
-public final class VstConnection implements ArangoConnection {
+public final class VstConnection extends ArangoConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VstConnection.class);
 
@@ -61,8 +60,6 @@ public final class VstConnection implements ArangoConnection {
     private volatile boolean closing = false;
 
     private final HostDescription host;
-    @Nullable
-    private final AuthenticationMethod authentication;
     private final ConnectionConfig config;
     private final MessageStore messageStore;
     private final Scheduler scheduler;
@@ -86,9 +83,9 @@ public final class VstConnection implements ArangoConnection {
                          @Nullable final AuthenticationMethod authenticationMethod,
                          final ConnectionConfig connectionConfig,
                          final ConnectionSchedulerFactory schedulerFactory) {
+        super(authenticationMethod);
         LOGGER.debug("VstConnection({})", connectionConfig);
         host = hostDescription;
-        authentication = authenticationMethod;
         config = connectionConfig;
         closed = MonoProcessor.create();
         messageStore = new MessageStore();
@@ -97,7 +94,7 @@ public final class VstConnection implements ArangoConnection {
     }
 
     @Override
-    public synchronized Mono<ArangoConnection> initialize() {
+    protected synchronized Mono<ArangoConnection> initialize() {
         LOGGER.debug("initialize()");
         if (initialized) {
             throw new IllegalStateException("Already initialized!");
@@ -165,7 +162,7 @@ public final class VstConnection implements ArangoConnection {
     private Mono<Void> authenticate(final Connection connection) {
         assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
         LOGGER.debug("authenticate()");
-        return Optional.ofNullable(authentication)
+        return getAuthentication()
                 .map(authenticationMethod -> {
                     final long id = increaseAndGetMessageCounter();
                     final ByteBuf buffer = RequestConverter.encodeBuffer(

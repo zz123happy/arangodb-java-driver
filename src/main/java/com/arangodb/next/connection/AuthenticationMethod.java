@@ -33,12 +33,14 @@ import java.util.Base64;
  */
 public interface AuthenticationMethod {
 
+    String getUser();
+
     String getHttpAuthorizationHeader();
 
     ByteBuf getVstAuthenticationMessage();
 
-    static AuthenticationMethod ofJwt(final String jwt) {
-        return ImmutableJwtAuthenticationMethod.of(jwt);
+    static AuthenticationMethod ofJwt(final String user, final String jwt) {
+        return ImmutableJwtAuthenticationMethod.of(user, jwt);
     }
 
     static AuthenticationMethod ofBasic(final String user, final String password) {
@@ -51,7 +53,10 @@ public interface AuthenticationMethod {
     @Value.Immutable(builder = false)
     abstract class JwtAuthenticationMethod implements AuthenticationMethod {
 
-        @Value.Parameter
+        @Value.Parameter(order = 1)
+        public abstract String getUser();
+
+        @Value.Parameter(order = 2)
         abstract String getJwt();
 
         @Override
@@ -77,7 +82,7 @@ public interface AuthenticationMethod {
     abstract class BasicAuthenticationMethod implements AuthenticationMethod {
 
         @Value.Parameter(order = 1)
-        abstract String getUser();
+        public abstract String getUser();
 
         @Value.Parameter(order = 2)
         abstract String getPassword();

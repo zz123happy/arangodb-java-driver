@@ -40,7 +40,7 @@ class HttpConnectionEchoTest {
     private static DisposableServer server;
 
     private final HostDescription host = HostDescription.of("localhost", 9000);
-    private final AuthenticationMethod authentication = AuthenticationMethod.ofJwt("token");
+    private final AuthenticationMethod authentication = AuthenticationMethod.ofJwt("user", "token");
 
     private final ConnectionConfig config = ConnectionConfig.builder()
             .contentType(ContentType.JSON)

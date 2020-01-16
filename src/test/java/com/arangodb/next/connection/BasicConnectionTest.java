@@ -21,9 +21,7 @@
 package com.arangodb.next.connection;
 
 import com.arangodb.next.connection.exceptions.ArangoConnectionAuthenticationException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import deployments.ContainerDeployment;
-import io.netty.buffer.Unpooled;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
@@ -36,8 +34,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
@@ -60,7 +56,6 @@ class BasicConnectionTest {
     private static final String SSL_TRUSTSTORE_PASSWORD = "12345678";
 
     private static HostDescription host;
-    private static String jwt;
 
     private final ConnectionConfig config;
 
@@ -76,12 +71,12 @@ class BasicConnectionTest {
      * - ArangoProtocol
      * - AuthenticationMethod
      */
-    static private Stream<Arguments> argumentsProvider() {
+    static private Stream<Arguments> argumentsProvider() throws IOException {
         return Stream.of(
                 Arguments.of(ArangoProtocol.VST, deployment.getAuthentication()),
-                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofJwt(jwt)),
+                Arguments.of(ArangoProtocol.VST, deployment.getJwtAuthentication()),
                 Arguments.of(ArangoProtocol.HTTP, deployment.getAuthentication()),
-                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofJwt(jwt))
+                Arguments.of(ArangoProtocol.HTTP, deployment.getJwtAuthentication())
         );
     }
 
@@ -93,9 +88,9 @@ class BasicConnectionTest {
     static private Stream<Arguments> wrongAuthenticationArgumentsProvider() {
         return Stream.of(
                 Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofBasic(deployment.getUser(), "wrong")),
-                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofJwt("invalid.jwt.token")),
+                Arguments.of(ArangoProtocol.VST, AuthenticationMethod.ofJwt("root", "invalid.jwt.token")),
                 Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofBasic(deployment.getUser(), "wrong")),
-                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofJwt("invalid.jwt.token"))
+                Arguments.of(ArangoProtocol.HTTP, AuthenticationMethod.ofJwt("root", "invalid.jwt.token"))
         );
     }
 
@@ -103,20 +98,8 @@ class BasicConnectionTest {
     private static final ContainerDeployment deployment = ContainerDeployment.ofSingleServerWithSsl();
 
     @BeforeAll
-    static void setup() throws Exception {
+    static void setup() {
         host = deployment.getHosts().get(0);
-        SslContext sslContext = getSslContext();
-
-        String request = "{\"username\":\"" + deployment.getUser() + "\",\"password\":\"" + deployment.getPassword() + "\"}";
-        String response = HttpClient.create()
-                .tcpConfiguration(tcp -> tcp.secure(c -> c.sslContext(sslContext)))
-                .post()
-                .uri("https://" + host.getHost() + ":" + host.getPort() + "/_db/_system/_open/auth")
-                .send(Mono.just(Unpooled.wrappedBuffer(request.getBytes())))
-                .responseContent()
-                .asString()
-                .blockFirst();
-        jwt = new ObjectMapper().readTree(response).get("jwt").asText();
     }
 
     @ParameterizedTest

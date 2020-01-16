@@ -20,6 +20,7 @@ public class SingleServerSslDeployment extends ContainerDeployment {
     private static final String command = "arangod --ssl.keyfile /server.pem --server.endpoint ssl://0.0.0.0:8529 ";
 
     private final GenericContainer<?> container;
+    private String sslProtocol;
 
     public SingleServerSslDeployment() {
         String SSL_CERT_PATH = Paths.get("docker/server.pem").toAbsolutePath().toString();
@@ -38,6 +39,7 @@ public class SingleServerSslDeployment extends ContainerDeployment {
      */
     public SingleServerSslDeployment(String sslProtocol) {
         this();
+        this.sslProtocol = sslProtocol;
         container.withCommand(command + "--ssl.protocol " + sslProtocol);
     }
 
@@ -54,6 +56,11 @@ public class SingleServerSslDeployment extends ContainerDeployment {
     @Override
     public CompletableFuture<ContainerDeployment> asyncStop() {
         return CompletableFuture.runAsync(container::stop).thenAccept((v) -> log.info("Stopped!")).thenApply((v) -> this);
+    }
+
+    @Override
+    protected String getSslProtocol() {
+        return "6".equals(sslProtocol) ? "TLSv1.3" : "TLSv1.2";
     }
 
 }

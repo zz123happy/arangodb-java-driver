@@ -22,18 +22,38 @@ package com.arangodb.next.connection;
 
 import reactor.core.publisher.Mono;
 
+import javax.annotation.Nullable;
+import java.util.Optional;
+
 
 /**
  * @author Michele Rastelli
  */
-public interface ArangoConnection {
+public abstract class ArangoConnection {
+
+    @Nullable
+    private final AuthenticationMethod authentication;
+    private final ArangoRequest userRequest;
+
+    protected ArangoConnection(@Nullable final AuthenticationMethod authenticationMethod) {
+        authentication = authenticationMethod;
+        userRequest = ArangoRequest.builder()
+                .database("_system")
+                .path("/_api/user/" + getAuthentication().map(AuthenticationMethod::getUser).orElse("root"))
+                .requestType(ArangoRequest.RequestType.GET)
+                .build();
+    }
+
+    protected final Optional<AuthenticationMethod> getAuthentication() {
+        return Optional.ofNullable(authentication);
+    }
 
     /**
      * Initializes the connection asynchronously, eg. establishing the tcp connection and performing the authentication
      *
      * @return the connection ready to be used
      */
-    Mono<ArangoConnection> initialize();
+    protected abstract Mono<ArangoConnection> initialize();
 
     /**
      * Performs a request
@@ -41,16 +61,24 @@ public interface ArangoConnection {
      * @param request to send
      * @return response from the server
      */
-    Mono<ArangoResponse> execute(ArangoRequest request);
+    public abstract Mono<ArangoResponse> execute(ArangoRequest request);
 
     /**
      * @return whether the connection is open or closed
      */
-    Mono<Boolean> isConnected();
+    public abstract Mono<Boolean> isConnected();
 
     /**
      * @return a mono completing once the connection is closed
      */
-    Mono<Void> close();
+    public abstract Mono<Void> close();
+
+    /**
+     * Executes a request to /_api/user/{username}
+     * @return server response
+     */
+    public final Mono<ArangoResponse> requestUser() {
+        return execute(userRequest);
+    }
 
 }

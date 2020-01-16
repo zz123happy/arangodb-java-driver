@@ -38,7 +38,6 @@ import reactor.netty.resources.ConnectionProvider;
 import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
@@ -49,7 +48,7 @@ import static io.netty.handler.codec.http.HttpHeaderNames.*;
  * @author Michele Rastelli
  */
 
-public final class HttpConnection implements ArangoConnection {
+public final class HttpConnection extends ArangoConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpConnection.class);
 
@@ -60,27 +59,25 @@ public final class HttpConnection implements ArangoConnection {
     private volatile boolean connected = false;
 
     private final HostDescription host;
-    @Nullable
-    private final AuthenticationMethod authentication;
     private final ConnectionConfig config;
     private final ConnectionProvider connectionProvider;
     private final HttpClient client;
     private final CookieStore cookieStore;
 
-    public HttpConnection(final HostDescription host,
-                          @Nullable final AuthenticationMethod authentication,
-                          final ConnectionConfig config) {
-        LOGGER.debug("HttpConnection({})", config);
-        this.host = host;
-        this.authentication = authentication;
-        this.config = config;
+    public HttpConnection(final HostDescription hostDescription,
+                          @Nullable final AuthenticationMethod authenticationMethod,
+                          final ConnectionConfig connectionConfig) {
+        super(authenticationMethod);
+        LOGGER.debug("HttpConnection({})", connectionConfig);
+        host = hostDescription;
+        config = connectionConfig;
         connectionProvider = createConnectionProvider();
         client = getClient();
         cookieStore = new CookieStore();
     }
 
     @Override
-    public synchronized Mono<ArangoConnection> initialize() {
+    protected synchronized Mono<ArangoConnection> initialize() {
         LOGGER.debug("initialize()");
         if (initialized) {
             throw new IllegalStateException("Already initialized!");
@@ -146,7 +143,7 @@ public final class HttpConnection implements ArangoConnection {
                         .keepAlive(true)
                         .baseUrl((Boolean.TRUE == config.getUseSsl()
                                 ? "https://" : "http://") + host.getHost() + ":" + host.getPort())
-                        .headers(headers -> Optional.ofNullable(authentication).ifPresent(
+                        .headers(headers -> getAuthentication().ifPresent(
                                 method -> headers.set(AUTHORIZATION, method.getHttpAuthorizationHeader())
                         ))
         );

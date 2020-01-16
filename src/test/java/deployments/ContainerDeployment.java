@@ -22,11 +22,20 @@ package deployments;
 
 import com.arangodb.next.connection.AuthenticationMethod;
 import com.arangodb.next.connection.HostDescription;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.ContainerLaunchException;
 import org.testcontainers.lifecycle.Startable;
+import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -87,6 +96,27 @@ public abstract class ContainerDeployment implements Startable {
         return AuthenticationMethod.ofBasic(getUser(), getPassword());
     }
 
+    public AuthenticationMethod getJwtAuthentication() throws IOException {
+        SslContext sslContext = SslContextBuilder
+                .forClient()
+                .protocols(getSslProtocol())
+                .sslProvider(SslProvider.JDK)
+                .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                .build();
+
+        String request = "{\"username\":\"" + getUser() + "\",\"password\":\"" + getPassword() + "\"}";
+        String response = HttpClient.create()
+                .tcpConfiguration(tcp -> tcp.secure(c -> c.sslContext(sslContext)))
+                .post()
+                .uri("https://" + getHosts().get(0).getHost() + ":" + getHosts().get(0).getPort() + "/_db/_system/_open/auth")
+                .send(Mono.just(Unpooled.wrappedBuffer(request.getBytes())))
+                .responseContent()
+                .asString()
+                .blockFirst();
+        String jwt = new ObjectMapper().readTree(response).get("jwt").asText();
+        return AuthenticationMethod.ofJwt(getUser(), jwt);
+    }
+
     public String getUser() {
         return "root";
     }
@@ -108,5 +138,9 @@ public abstract class ContainerDeployment implements Startable {
     protected abstract CompletableFuture<? extends ContainerDeployment> asyncStart();
 
     protected abstract CompletableFuture<ContainerDeployment> asyncStop();
+
+    protected String getSslProtocol() {
+        return null;
+    }
 
 }
