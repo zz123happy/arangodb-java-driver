@@ -33,7 +33,7 @@ public abstract class LeaderNotFoundException extends ArangoException {
     }
 
     @Override
-    public String getMessage() {
+    public final String getMessage() {
         return "Could not find the leader server!";
     }
 
