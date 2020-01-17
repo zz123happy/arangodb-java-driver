@@ -21,6 +21,7 @@
 package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.*;
+import com.arangodb.next.exceptions.LeaderNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -64,6 +65,7 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
         }
         ArangoConnection connection = getRandomItem(leaderConnections);
         return connection.execute(request)
+                .onErrorResume(throwable -> Mono.defer(() -> findLeader().then(Mono.error(throwable))))
                 .flatMap(response -> {
                     if (response.getResponseCode() == 503) {
                         return findLeader().then(Mono.just(response));
@@ -90,8 +92,16 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
         return Flux.fromIterable(getConnectionsByHost().entrySet())
                 .flatMap(e -> e.getValue().get(0).requestUser()
                         .filter(response -> response.getResponseCode() == 200)
-                        .doOnNext(__ -> leader = e.getKey())
+                        .doOnNext(__ -> {
+                            if (!e.getKey().equals(leader)) {
+                                leader = e.getKey();
+                                LOGGER.info("findLeader(): found new leader {}", leader);
+                            }
+                        })
                 )
+                .onErrorContinue((throwable, o) -> LOGGER.warn("findLeader(): error contacting {}", o, throwable))
+                .switchIfEmpty(Mono.error(LeaderNotFoundException.create()))
+                .doOnError(err -> LOGGER.error("findLeader(): ", err))
                 .doFinally(__ -> findLeaderSemaphore.release())
                 .then();
     }
