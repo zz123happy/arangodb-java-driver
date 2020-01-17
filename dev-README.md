@@ -18,3 +18,15 @@ To trigger GH Actions:
 ```
 
 Check results [here](https://github.com/ArangoDB-Community/mirror-arangodb-java-driver/actions).
+
+
+
+## SonarCloud
+
+Set the environment variable `SONAR_LOGIN` and run:
+
+```shell script
+mvn verify sonar:sonar -Dgpg.skip
+```
+
+Check results [here](https://sonarcloud.io/dashboard?id=rashtao_mirror-arangodb-java-driver).
