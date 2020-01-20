@@ -33,8 +33,12 @@ public abstract class SerdeException extends ArangoException {
         return ImmutableSerdeException.of(cause);
     }
 
-    @Override
     @Value.Parameter
-    public abstract Throwable getCause();
+    abstract Throwable getWrapped();
+
+    @Override
+    public final synchronized Throwable getCause() {
+        return getWrapped();
+    }
 
 }
