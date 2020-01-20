@@ -23,6 +23,7 @@ package com.arangodb.next.entity.codec;
 import com.arangodb.next.entity.ClusterEndpoints;
 import com.arangodb.next.entity.ErrorEntity;
 import com.arangodb.next.entity.Version;
+import com.arangodb.next.exceptions.SerdeException;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -49,71 +50,67 @@ public final class JsonSerializer implements ArangoSerializer {
                 throw new IllegalArgumentException("Unsupported type: " + value.getClass().getName());
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw SerdeException.of(e);
         }
     }
 
     private byte[] doSerialize(final Version value) throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        JsonGenerator generator = new JsonFactory().createGenerator(stream, JsonEncoding.UTF8);
-
-        generator.writeStartObject();
-        generator.writeStringField("license", value.getLicense());
-        generator.writeStringField("server", value.getServer());
-        generator.writeStringField("version", value.getVersion());
-
-        Map<String, String> details = value.getDetails();
-        generator.writeFieldName("details");
-        if (details == null) {
-            generator.writeNull();
-        } else {
+        try (JsonGenerator generator = new JsonFactory().createGenerator(stream, JsonEncoding.UTF8)) {
             generator.writeStartObject();
-            for (Map.Entry<String, String> e : details.entrySet()) {
-                generator.writeStringField(e.getKey(), e.getValue());
+            generator.writeStringField("license", value.getLicense());
+            generator.writeStringField("server", value.getServer());
+            generator.writeStringField("version", value.getVersion());
+
+            Map<String, String> details = value.getDetails();
+            generator.writeFieldName("details");
+            if (details == null) {
+                generator.writeNull();
+            } else {
+                generator.writeStartObject();
+                for (Map.Entry<String, String> e : details.entrySet()) {
+                    generator.writeStringField(e.getKey(), e.getValue());
+                }
+                generator.writeEndObject();
             }
+
             generator.writeEndObject();
         }
-
-        generator.writeEndObject();
-        generator.close();
         return stream.toByteArray();
     }
 
     private byte[] doSerialize(final ClusterEndpoints value) throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        JsonGenerator generator = new JsonFactory().createGenerator(stream, JsonEncoding.UTF8);
-
-        generator.writeStartObject();
-        generator.writeBooleanField("error", value.getError());
-        generator.writeNumberField("code", value.getCode());
-
-        generator.writeArrayFieldStart("endpoints");
-        for (Map<String, String> endpointMap : value.getEndpoints()) {
+        try (JsonGenerator generator = new JsonFactory().createGenerator(stream, JsonEncoding.UTF8)) {
             generator.writeStartObject();
-            for (Map.Entry<String, String> endpoint : endpointMap.entrySet()) {
-                generator.writeStringField(endpoint.getKey(), endpoint.getValue());
+            generator.writeBooleanField("error", value.getError());
+            generator.writeNumberField("code", value.getCode());
+
+            generator.writeArrayFieldStart("endpoints");
+            for (Map<String, String> endpointMap : value.getEndpoints()) {
+                generator.writeStartObject();
+                for (Map.Entry<String, String> endpoint : endpointMap.entrySet()) {
+                    generator.writeStringField(endpoint.getKey(), endpoint.getValue());
+                }
+                generator.writeEndObject();
             }
+            generator.writeEndArray();
+
             generator.writeEndObject();
         }
-        generator.writeEndArray();
-
-        generator.writeEndObject();
-        generator.close();
         return stream.toByteArray();
     }
 
     private byte[] doSerialize(final ErrorEntity value) throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        JsonGenerator generator = new JsonFactory().createGenerator(stream, JsonEncoding.UTF8);
-
-        generator.writeStartObject();
-        generator.writeNumberField("code", value.getCode());
-        generator.writeBooleanField("error", value.getError());
-        generator.writeStringField("errorMessage", value.getErrorMessage());
-        generator.writeNumberField("errorNum", value.getErrorNum());
-
-        generator.writeEndObject();
-        generator.close();
+        try (JsonGenerator generator = new JsonFactory().createGenerator(stream, JsonEncoding.UTF8)) {
+            generator.writeStartObject();
+            generator.writeNumberField("code", value.getCode());
+            generator.writeBooleanField("error", value.getError());
+            generator.writeStringField("errorMessage", value.getErrorMessage());
+            generator.writeNumberField("errorNum", value.getErrorNum());
+            generator.writeEndObject();
+        }
         return stream.toByteArray();
     }
 
