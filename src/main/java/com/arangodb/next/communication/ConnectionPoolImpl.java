@@ -109,20 +109,22 @@ class ConnectionPoolImpl implements ConnectionPool {
 
         List<Mono<Void>> addedHosts = hostList.stream()
                 .filter(o -> !currentHosts.contains(o))
-                .peek(host -> LOGGER.debug("adding host: {}", host))
-                .map(host -> Flux
-                        .merge(createHostConnections(host))
-                        .collectList()
-                        .flatMap(hostConnections -> {
-                            if (hostConnections.isEmpty()) {
-                                LOGGER.warn("not able to connect to host [{}], skipped adding host!", host);
-                                return removeHost(host);
-                            } else {
-                                connectionsByHost.put(host, hostConnections);
-                                LOGGER.debug("added host: {}", host);
-                                return Mono.empty();
-                            }
-                        })
+                .map(host -> {
+                            LOGGER.debug("adding host: {}", host);
+                            return Flux
+                                    .merge(createHostConnections(host))
+                                    .collectList()
+                                    .flatMap(hostConnections -> {
+                                        if (hostConnections.isEmpty()) {
+                                            LOGGER.warn("not able to connect to host [{}], skipped adding host!", host);
+                                            return removeHost(host);
+                                        } else {
+                                            connectionsByHost.put(host, hostConnections);
+                                            LOGGER.debug("added host: {}", host);
+                                            return Mono.empty();
+                                        }
+                                    });
+                        }
                 )
                 .collect(Collectors.toList());
 

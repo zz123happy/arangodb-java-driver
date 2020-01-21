@@ -207,7 +207,7 @@ public final class HttpConnection extends ArangoConnection {
                 .headers(headers -> {
                     headers.set(CONTENT_LENGTH, bodyLength);
                     if (config.getContentType() == ContentType.VPACK) {
-                        headers.set(ACCEPT, "application/x-velocypack");
+                        headers.set(ACCEPT, CONTENT_TYPE_VPACK);
                     } else if (config.getContentType() == ContentType.JSON) {
                         headers.set(ACCEPT, "application/json");
                     } else {

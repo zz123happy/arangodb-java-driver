@@ -34,6 +34,7 @@ import java.util.Collections;
 public final class VpackDeserializer implements ArangoDeserializer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VpackDeserializer.class);
+    private static final String UNKNOWN_FIELD_LOG = "Unknown field {}: skipping";
 
     @Override
     public <T> T deserialize(final byte[] buffer, final Class<T> clazz) {
@@ -67,7 +68,7 @@ public final class VpackDeserializer implements ArangoDeserializer {
                             .forEachRemaining(detail -> builder.putDetails(detail.getKey(), detail.getValue().getAsString()));
                     break;
                 default:
-                    LOGGER.debug("Unknown field {}: skipping", field.getKey());
+                    LOGGER.debug(UNKNOWN_FIELD_LOG, field.getKey());
                     break;
             }
         });
@@ -91,7 +92,7 @@ public final class VpackDeserializer implements ArangoDeserializer {
                                     builder.addEndpoints(Collections.singletonMap(endpoint.getKey(), endpoint.getValue().getAsString()))));
                     break;
                 default:
-                    LOGGER.debug("Unknown field {}: skipping", field.getKey());
+                    LOGGER.debug(UNKNOWN_FIELD_LOG, field.getKey());
                     break;
             }
         });
@@ -116,7 +117,7 @@ public final class VpackDeserializer implements ArangoDeserializer {
                     builder.errorNum(field.getValue().getAsInt());
                     break;
                 default:
-                    LOGGER.debug("Unknown field {}: skipping", field.getKey());
+                    LOGGER.debug(UNKNOWN_FIELD_LOG, field.getKey());
                     break;
             }
         });

@@ -130,7 +130,7 @@ public final class VstConnection extends ArangoConnection {
         closing = true;
 
         return publishOnScheduler(() -> {
-            assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+            assertCorrectThread();
             LOGGER.debug("close()");
             if (connectionState == ConnectionState.DISCONNECTED) {
                 return publishOnScheduler(vstReceiver::shutDown);
@@ -146,7 +146,7 @@ public final class VstConnection extends ArangoConnection {
     }
 
     private long increaseAndGetMessageCounter() {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        assertCorrectThread();
         return ++mId;
     }
 
@@ -160,7 +160,7 @@ public final class VstConnection extends ArangoConnection {
     }
 
     private Mono<Void> authenticate(final Connection connection) {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        assertCorrectThread();
         LOGGER.debug("authenticate()");
         return getAuthentication()
                 .map(authenticationMethod -> {
@@ -183,7 +183,7 @@ public final class VstConnection extends ArangoConnection {
     }
 
     private Mono<ArangoResponse> execute(final Connection connection, final long id, final ByteBuf buf) {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        assertCorrectThread();
         return send(connection, buf).then(messageStore.addRequest(id));
     }
 
@@ -218,14 +218,15 @@ public final class VstConnection extends ArangoConnection {
 
     private Mono<Void> publishOnScheduler(final Runnable task) {
         return Mono.defer(() -> {
-            assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+            assertCorrectThread();
             task.run();
             return Mono.empty();
         }).then().subscribeOn(scheduler);
     }
 
+    @SuppressWarnings("squid:S1872")    // Classes should not be compared by name
     private Mono<Void> send(final Connection connection, final ByteBuf buf) {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        assertCorrectThread();
         return connection.outbound()
                 .send(Mono.just(buf))
                 .then()
@@ -238,7 +239,7 @@ public final class VstConnection extends ArangoConnection {
     }
 
     private TcpClient applySslContext(final TcpClient httpClient) {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        assertCorrectThread();
         return config.getSslContext()
                 .filter(v -> config.getUseSsl())
                 .map(sslContext -> httpClient.secure(spec -> spec.sslContext(sslContext)))
@@ -248,7 +249,7 @@ public final class VstConnection extends ArangoConnection {
     private void handleError(final Throwable t) {
         LOGGER.atDebug().addArgument(() -> t.getClass().getSimpleName()).log("handleError({})");
         publishOnScheduler(() -> {
-            assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+            assertCorrectThread();
             if (connectionState == ConnectionState.DISCONNECTED) {
                 return;
             }
@@ -273,7 +274,7 @@ public final class VstConnection extends ArangoConnection {
      * @return a Mono that will be resolved with a ready to use connection (connected, initialized and authenticated)
      */
     private Mono<? extends Connection> connect() {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        assertCorrectThread();
         LOGGER.debug("connect()");
 
         if (connectionState == ConnectionState.CONNECTED || connectionState == ConnectionState.CONNECTING) {
@@ -294,7 +295,7 @@ public final class VstConnection extends ArangoConnection {
     }
 
     private TcpClient createTcpClient() {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        assertCorrectThread();
         return applySslContext(TcpClient.create(createConnectionProvider()))
                 .option(CONNECT_TIMEOUT_MILLIS, config.getTimeout())
                 .host(host.getHost())
@@ -311,12 +312,16 @@ public final class VstConnection extends ArangoConnection {
     }
 
     private void setSession(final Connection connection) {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        assertCorrectThread();
         if (session == null) {
             throw Exceptions.bubble(new IOException("Connection closed!"));
         }
         connectionState = ConnectionState.CONNECTED;
         session.onNext(connection);
+    }
+
+    static void assertCorrectThread() {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
     }
 
 }

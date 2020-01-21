@@ -135,7 +135,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
         LOGGER.debug("negotiateAuthentication()");
 
         if (config.getNegotiateAuthentication()) {
-            throw new RuntimeException("Authentication Negotiation is not yet supported!");
+            throw new UnsupportedOperationException("Authentication Negotiation is not yet supported!");
         } else {
             authentication = config.getAuthenticationMethod();
             return Mono.empty();

@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import java.util.function.BiConsumer;
 
 import static com.arangodb.next.ArangoDefaults.HEADER_SIZE;
-import static com.arangodb.next.connection.ConnectionSchedulerFactory.THREAD_PREFIX;
 
 /**
  * @author Michele Rastelli
@@ -52,14 +51,14 @@ final class VstReceiver {
     }
 
     void clear() {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        VstConnection.assertCorrectThread();
         LOGGER.debug("clear()");
 
         chunkStore.clear();
     }
 
     void shutDown() {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        VstConnection.assertCorrectThread();
         LOGGER.debug("shutDown()");
 
         clear();
@@ -68,7 +67,7 @@ final class VstReceiver {
     }
 
     void handleByteBuf(final ByteBuf bbIn) {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+        VstConnection.assertCorrectThread();
 
         while (bbIn.readableBytes() > 0) {
 

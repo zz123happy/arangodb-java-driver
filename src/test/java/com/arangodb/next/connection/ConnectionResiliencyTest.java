@@ -40,6 +40,8 @@ import static org.assertj.core.api.Assertions.catchThrowable;
  * @author Michele Rastelli
  */
 @Testcontainers
+// "Thread.sleep" should not be used in tests
+@SuppressWarnings("squid:S2925")
 class ConnectionResiliencyTest {
 
     private final ImmutableConnectionConfig.Builder config;
