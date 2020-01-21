@@ -41,8 +41,8 @@ public final class ConnectionSchedulerFactory {
     private final List<Scheduler> schedulers;
     private final AtomicInteger cursor;
 
-    public ConnectionSchedulerFactory(final int maxThreads) {
-        this.maxThreads = maxThreads;
+    public ConnectionSchedulerFactory(final int maxAllowedThreads) {
+        maxThreads = maxAllowedThreads;
         schedulers = new ArrayList<>();
         cursor = new AtomicInteger();
     }

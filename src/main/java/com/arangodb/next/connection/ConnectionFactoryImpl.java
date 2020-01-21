@@ -36,16 +36,16 @@ public final class ConnectionFactoryImpl implements ConnectionFactory {
     private final ConnectionSchedulerFactory schedulerFactory;
 
     /**
-     * @param protocol         communication protocol
-     * @param config           connection config
-     * @param schedulerFactory scheduler factory to use for VST connections
+     * @param arangoProtocol             communication protocol
+     * @param connectionConfig           connection config
+     * @param connectionSchedulerFactory scheduler factory to use for VST connections
      */
-    public ConnectionFactoryImpl(final ConnectionConfig config,
-                                 final ArangoProtocol protocol,
-                                 final ConnectionSchedulerFactory schedulerFactory) {
-        this.config = config;
-        this.protocol = protocol;
-        this.schedulerFactory = schedulerFactory;
+    public ConnectionFactoryImpl(final ConnectionConfig connectionConfig,
+                                 final ArangoProtocol arangoProtocol,
+                                 final ConnectionSchedulerFactory connectionSchedulerFactory) {
+        config = connectionConfig;
+        protocol = arangoProtocol;
+        schedulerFactory = connectionSchedulerFactory;
     }
 
     /**

@@ -59,15 +59,15 @@ class ConnectionPoolImpl implements ConnectionPool {
     }
 
     ConnectionPoolImpl(
-            final CommunicationConfig config,
-            final AuthenticationMethod authentication,
-            final ConnectionFactory connectionFactory
+            final CommunicationConfig communicationConfig,
+            final AuthenticationMethod authenticationMethod,
+            final ConnectionFactory connFactory
     ) {
-        LOGGER.debug("ArangoCommunicationImpl({}, {}, {})", config, authentication, connectionFactory);
+        LOGGER.debug("ArangoCommunicationImpl({}, {}, {})", communicationConfig, authenticationMethod, connFactory);
 
-        this.config = config;
-        this.authentication = authentication;
-        this.connectionFactory = connectionFactory;
+        config = communicationConfig;
+        authentication = authenticationMethod;
+        connectionFactory = connFactory;
         updatingConnectionsSemaphore = new Semaphore(1);
         connectionsByHost = new ConcurrentHashMap<>();
     }

@@ -8,5 +8,6 @@
     <suppress files=".*" checks="MagicNumber"/>
     <suppress files=".*" checks="AvoidStarImport"/>
     <suppress files=".*" checks="LineLength"/>
+    <suppress files="com.arangodb.next.connection.vst.Chunk" checks="HiddenField"/>
     <suppress files="Immutable.*" checks=".*"/>
 </suppressions>

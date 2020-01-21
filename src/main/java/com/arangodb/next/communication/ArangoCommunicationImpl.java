@@ -61,13 +61,13 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     @Nullable
     private volatile Disposable scheduledUpdateHostListSubscription;
 
-    ArangoCommunicationImpl(final CommunicationConfig config, final ConnectionFactory connectionFactory) {
-        LOGGER.debug("ArangoCommunicationImpl({}, {})", config, connectionFactory);
+    ArangoCommunicationImpl(final CommunicationConfig communicationConfig, final ConnectionFactory connFactory) {
+        LOGGER.debug("ArangoCommunicationImpl({}, {})", communicationConfig, connFactory);
 
-        this.config = config;
-        this.connectionFactory = connectionFactory;
+        config = communicationConfig;
+        connectionFactory = connFactory;
         updatingHostListSemaphore = new Semaphore(1);
-        deserializer = ArangoDeserializer.of(config.getContentType());
+        deserializer = ArangoDeserializer.of(communicationConfig.getContentType());
     }
 
     @Override
