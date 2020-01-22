@@ -32,6 +32,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
@@ -52,12 +53,15 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
 
     // connection pool used to acquireHostList
     private volatile ConnectionPool contactConnectionPool;
+
     // connection pool used for all other operations
     private volatile ConnectionPool connectionPool;
 
     private volatile boolean initialized = false;
+
     @Nullable
     private volatile AuthenticationMethod authentication;
+
     @Nullable
     private volatile Disposable scheduledUpdateHostListSubscription;
 
@@ -80,18 +84,29 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
         initialized = true;
 
         return negotiateAuthentication()
-                .doOnSuccess(__ -> {
-                    CommunicationConfig contactPoolConfig = CommunicationConfig.builder().from(config)
-                            .topology(ArangoTopology.SINGLE_SERVER)
-                            .connectionsPerHost(1)
-                            .build();
-                    contactConnectionPool = ConnectionPool.create(contactPoolConfig, authentication, connectionFactory);
-                    connectionPool = ConnectionPool.create(config, authentication, connectionFactory);
-                })
                 .then(Mono.defer(() -> {
                     if (config.getAcquireHostList()) {
+                        contactConnectionPool = ConnectionPool.create(
+                                CommunicationConfig.builder()
+                                        .from(config)
+                                        .topology(ArangoTopology.SINGLE_SERVER)
+                                        .connectionsPerHost(1)
+                                        .build(),
+                                authentication,
+                                connectionFactory);
+
+                        // create empty connectionPool, hosts will be acquired later
+                        connectionPool = ConnectionPool.create(
+                                CommunicationConfig.builder()
+                                        .from(config)
+                                        .hosts(Collections.emptyList())
+                                        .build(),
+                                authentication,
+                                connectionFactory);
+
                         return contactConnectionPool.updateConnections(config.getHosts());
                     } else {
+                        connectionPool = ConnectionPool.create(config, authentication, connectionFactory);
                         return connectionPool.updateConnections(config.getHosts());
                     }
                 }))
@@ -107,7 +122,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
 
     private Mono<ArangoResponse> execute(final ArangoRequest request, final ConnectionPool cp) {
         LOGGER.debug("execute({}, {})", request, cp);
-        return Mono.defer(() -> cp.executeOnRandomHost(request)).timeout(config.getTimeout());
+        return Mono.defer(() -> cp.execute(request)).timeout(config.getTimeout());
     }
 
     @Override

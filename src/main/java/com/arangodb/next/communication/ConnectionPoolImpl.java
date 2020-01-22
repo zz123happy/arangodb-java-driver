@@ -22,6 +22,7 @@ package com.arangodb.next.communication;
 
 
 import com.arangodb.next.connection.*;
+import com.arangodb.next.exceptions.HostNotAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Exceptions;
@@ -73,14 +74,23 @@ class ConnectionPoolImpl implements ConnectionPool {
     }
 
     @Override
-    public Mono<ArangoResponse> executeOnRandomHost(final ArangoRequest request) {
+    public Mono<ArangoResponse> execute(final ArangoRequest request) {
         if (connectionsByHost.isEmpty()) {
             return Mono.error(new IOException("No open connections!"));
         }
         HostDescription host = getRandomItem(connectionsByHost.keySet());
-        LOGGER.debug("executeOnRandomHost: picked host {}", host);
-        ArangoConnection connection = getRandomItem(connectionsByHost.get(host));
-        return connection.execute(request);
+        LOGGER.debug("execute: picked host {}", host);
+        return getRandomItem(connectionsByHost.get(host)).execute(request);
+    }
+
+    @Override
+    public Mono<ArangoResponse> execute(ArangoRequest request, HostDescription host) {
+        List<ArangoConnection> hostConnections = connectionsByHost.get(host);
+        if (hostConnections == null) {
+            throw HostNotAvailableException.of(host);
+        }
+        LOGGER.debug("execute: executing on host {}", host);
+        return getRandomItem(hostConnections).execute(request);
     }
 
     @Override
@@ -155,7 +165,6 @@ class ConnectionPoolImpl implements ConnectionPool {
 
     /**
      * removes all the hosts that are disconnected
-     *
      * @return a Mono completing when the hosts have been removed
      */
     private Mono<Void> removeDisconnectedHosts() {
@@ -218,6 +227,10 @@ class ConnectionPoolImpl implements ConnectionPool {
                 )
                 .collectList()
                 .map(areConnected -> areConnected.stream().noneMatch(i -> i));
+    }
+
+    protected CommunicationConfig getConfig() {
+        return config;
     }
 
 }

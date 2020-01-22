@@ -53,6 +53,14 @@ public interface CommunicationConfig {
     }
 
     /**
+     * @return whether to allow dirty reads (only considered for topology {@link ArangoTopology#ACTIVE_FAILOVER})
+     */
+    @Value.Default
+    default boolean getDirtyReads() {
+        return false;
+    }
+
+    /**
      * @return connection configuration
      */
     @Value.Default

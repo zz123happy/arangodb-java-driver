@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
@@ -55,16 +54,25 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
         return super.updateConnections(hostList).then(Mono.defer(this::findLeader));
     }
 
-    @Override
-    public Mono<ArangoResponse> executeOnRandomHost(final ArangoRequest request) {
-        LOGGER.debug("executeOnRandomHost({})", request);
+    private static boolean isReadRequest(final ArangoRequest request) {
+        return ArangoRequest.RequestType.GET.equals(request.getRequestType())
+                || ArangoRequest.RequestType.HEAD.equals(request.getRequestType());
+    }
 
-        List<ArangoConnection> leaderConnections = getConnectionsByHost().get(leader);
-        if (leader == null || leaderConnections == null) {
-            return Mono.error(new IOException("Leader not reachable!"));
+    @Override
+    public Mono<ArangoResponse> execute(final ArangoRequest request) {
+        LOGGER.debug("execute({})", request);
+
+        if (getConfig().getDirtyReads() && isReadRequest(request)) {
+            return super.execute(request);  // executes on random host
+        } else {
+            return executeOnLeader(request);
         }
-        ArangoConnection connection = getRandomItem(leaderConnections);
-        return connection.execute(request)
+
+    }
+
+    private Mono<ArangoResponse> executeOnLeader(final ArangoRequest request) {
+        return execute(request, leader)
                 .onErrorResume(throwable -> Mono.defer(() -> findLeader().then(Mono.error(throwable))))
                 .flatMap(response -> {
                     if (response.getResponseCode() == 503) {
