@@ -79,7 +79,7 @@ class ConnectionPoolImpl implements ConnectionPool {
     }
 
     @Override
-    public Mono<ArangoResponse> execute(ArangoRequest request, HostDescription host) {
+    public Mono<ArangoResponse> execute(final ArangoRequest request, final HostDescription host) {
         List<ArangoConnection> hostConnections = connectionsByHost.get(host);
         if (hostConnections == null) {
             throw HostNotAvailableException.of(host);
@@ -165,7 +165,7 @@ class ConnectionPoolImpl implements ConnectionPool {
     }
 
     @Override
-    public Conversation createConversation(Conversation.Level level) {
+    public Conversation createConversation(final Conversation.Level level) {
         try {
             HostDescription host = getRandomItem(connectionsByHost.keySet());
             return Conversation.of(host, level);

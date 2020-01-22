@@ -128,7 +128,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     }
 
     @Override
-    public Mono<ArangoResponse> execute(ArangoRequest request, Conversation conversation) {
+    public Mono<ArangoResponse> execute(final ArangoRequest request, final Conversation conversation) {
         LOGGER.debug("execute({}, {})", request, conversation);
         try {
             return execute(request, conversation.getHost());
@@ -150,7 +150,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     }
 
     @Override
-    public Conversation createConversation(Conversation.Level level) {
+    public Conversation createConversation(final Conversation.Level level) {
         return connectionPool.createConversation(level);
     }
 
