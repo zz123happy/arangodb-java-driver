@@ -91,6 +91,27 @@ class CommunicationActiveFailoverTest {
 
     @ParameterizedTest
     @EnumSource(ArangoProtocol.class)
+    void executeWithConversation(ArangoProtocol protocol) {
+        ArangoCommunication communication = ArangoCommunication.create(config
+                .protocol(protocol)
+                .build()).block();
+        assertThat(communication).isNotNull();
+
+        Conversation requiredConversation = communication.createConversation(Conversation.Level.REQUIRED);
+        for (int i = 0; i < 10; i++) {
+            CommunicationTestUtils.executeRequestAndVerifyHost(communication, requiredConversation, true);
+        }
+
+        Conversation preferredConversation = communication.createConversation(Conversation.Level.PREFERRED);
+        for (int i = 0; i < 10; i++) {
+            CommunicationTestUtils.executeRequestAndVerifyHost(communication, preferredConversation, true);
+        }
+
+        communication.close().block();
+    }
+
+    @ParameterizedTest
+    @EnumSource(ArangoProtocol.class)
     void acquireHostList(ArangoProtocol protocol) {
 
         ArangoCommunication communication = ArangoCommunication.create(config

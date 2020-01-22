@@ -20,18 +20,28 @@
 
 package com.arangodb.next.communication;
 
+import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.connection.ConnectionTestUtils;
+import com.arangodb.next.connection.HostDescription;
+import com.arangodb.velocypack.VPackSlice;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 import static com.arangodb.next.connection.ConnectionTestUtils.verifyGetResponseVPack;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Michele Rastelli
  */
 class CommunicationTestUtils {
+
+    private static final ArangoRequest ECHO_REQUEST = ArangoRequest.builder()
+            .database("_system")
+            .path("/_admin/status")
+            .requestType(ArangoRequest.RequestType.GET)
+            .build();
 
     static void executeRequest(ArangoCommunication communication, int retries) {
         ArangoResponse response = communication.execute(ConnectionTestUtils.VERSION_REQUEST)
@@ -43,6 +53,25 @@ class CommunicationTestUtils {
     static void executeRequest(ArangoCommunication communication) {
         ArangoResponse response = communication.execute(ConnectionTestUtils.VERSION_REQUEST).block();
         verifyGetResponseVPack(response);
+    }
+
+    static void executeRequestAndVerifyHost(ArangoCommunication communication, Conversation conversation, boolean expectSameHost) {
+        ArangoResponse response = communication.execute(ECHO_REQUEST, conversation).block();
+        assertThat(response).isNotNull();
+        assertThat(response.getVersion()).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(2);
+        assertThat(response.getResponseCode()).isEqualTo(200);
+
+        String remoteHost = getHostFromEchoResponseVPack(response);
+        if (expectSameHost) {
+            HostDescription host = conversation.getHost();
+            assertThat(remoteHost).isEqualTo(host.getHost());
+        }
+    }
+
+    private static String getHostFromEchoResponseVPack(ArangoResponse response) {
+        VPackSlice slice = new VPackSlice(response.getBody());
+        return slice.get("host").getAsString();
     }
 
 }

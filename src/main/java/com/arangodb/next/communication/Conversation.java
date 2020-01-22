@@ -31,7 +31,7 @@ import org.immutables.value.Value;
  * @author Michele Rastelli
  */
 @Value.Immutable
-interface Conversation {
+public interface Conversation {
 
     static Conversation of(HostDescription host, Level level) {
         return ImmutableConversation.of(host, level);
