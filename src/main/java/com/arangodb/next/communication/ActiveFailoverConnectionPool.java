@@ -114,4 +114,9 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
                 .then();
     }
 
+    @Override
+    public Conversation createConversation(Conversation.Level level) {
+        return Conversation.of(leader, level);
+    }
+
 }

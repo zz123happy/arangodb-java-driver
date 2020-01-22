@@ -26,12 +26,12 @@ import com.arangodb.next.entity.ImmutableClusterEndpoints;
 import com.arangodb.next.entity.ImmutableErrorEntity;
 import com.arangodb.next.entity.codec.ArangoSerializer;
 import com.arangodb.next.exceptions.ArangoServerException;
+import com.arangodb.next.exceptions.NoHostsAvailableException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -188,9 +188,7 @@ public class AcquireHostListMockTest {
 
         ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
         Throwable thrown = catchThrowable(() -> communication.initialize().block());
-        assertThat(Exceptions.unwrap(thrown))
-                .isInstanceOf(IOException.class)
-                .hasMessageContaining("Could not create any connection");
+        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(NoHostsAvailableException.class);
 
         ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communication.getConnectionPool();
         assertThat(connectionPool.getConnectionsByHost().keySet()).isEmpty();
@@ -220,9 +218,7 @@ public class AcquireHostListMockTest {
 
         ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
         Throwable thrown = catchThrowable(() -> communication.initialize().block());
-        assertThat(Exceptions.unwrap(thrown))
-                .isInstanceOf(IOException.class)
-                .hasMessageContaining("Could not create any connection");
+        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(NoHostsAvailableException.class);
 
         ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communication.getConnectionPool();
         assertThat(connectionPool.getConnectionsByHost().keySet()).isEmpty();

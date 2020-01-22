@@ -25,6 +25,7 @@ import com.arangodb.next.entity.ClusterEndpoints;
 import com.arangodb.next.entity.ErrorEntity;
 import com.arangodb.next.entity.codec.ArangoDeserializer;
 import com.arangodb.next.exceptions.ArangoServerException;
+import com.arangodb.next.exceptions.HostNotAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
@@ -42,6 +43,7 @@ import static com.arangodb.next.connection.ConnectionUtils.ENDPOINTS_REQUEST;
 /**
  * @author Michele Rastelli
  */
+@SuppressWarnings("squid:S1192")    // String literals should not be duplicated
 final class ArangoCommunicationImpl implements ArangoCommunication {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ArangoCommunicationImpl.class);
@@ -123,6 +125,33 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     private Mono<ArangoResponse> execute(final ArangoRequest request, final ConnectionPool cp) {
         LOGGER.debug("execute({}, {})", request, cp);
         return Mono.defer(() -> cp.execute(request)).timeout(config.getTimeout());
+    }
+
+    @Override
+    public Mono<ArangoResponse> execute(ArangoRequest request, Conversation conversation) {
+        LOGGER.debug("execute({}, {})", request, conversation);
+        try {
+            return execute(request, conversation.getHost());
+        } catch (HostNotAvailableException e) {
+            if (Conversation.Level.REQUIRED.equals(conversation.getLevel())) {
+                throw e;
+            } else {
+                return execute(request);
+            }
+        }
+    }
+
+    private Mono<ArangoResponse> execute(
+            final ArangoRequest request,
+            final HostDescription host
+    ) {
+        LOGGER.debug("execute({}, {})", request, host);
+        return Mono.defer(() -> connectionPool.execute(request, host)).timeout(config.getTimeout());
+    }
+
+    @Override
+    public Conversation createConversation(Conversation.Level level) {
+        return connectionPool.createConversation(level);
     }
 
     @Override

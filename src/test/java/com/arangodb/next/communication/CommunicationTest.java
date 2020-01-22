@@ -25,6 +25,7 @@ import com.arangodb.next.connection.ArangoConnection;
 import com.arangodb.next.connection.ArangoProtocol;
 import com.arangodb.next.connection.ConnectionTestUtils;
 import com.arangodb.next.connection.HostDescription;
+import com.arangodb.next.exceptions.NoHostsAvailableException;
 import deployments.ContainerDeployment;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -32,7 +33,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +118,7 @@ class CommunicationTest {
                 .protocol(protocol)
                 .hosts(Collections.singleton(HostDescription.of("wrongHost", 8529)))
                 .build()).block());
-        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
+        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(NoHostsAvailableException.class);
     }
 
 }

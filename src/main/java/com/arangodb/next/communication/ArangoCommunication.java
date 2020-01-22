@@ -62,6 +62,20 @@ public interface ArangoCommunication {
     Mono<ArangoResponse> execute(ArangoRequest request);
 
     /**
+     * Send the request to the conversation host, according to the conversation level
+     *
+     * @param request      to send
+     * @param conversation to specify the desired host affinity
+     * @return response from the server
+     */
+    Mono<ArangoResponse> execute(ArangoRequest request, Conversation conversation);
+
+    /**
+     * @return a new conversation
+     */
+    Conversation createConversation(Conversation.Level level);
+
+    /**
      * @return a mono completing once all the connections are closed
      */
     Mono<Void> close();

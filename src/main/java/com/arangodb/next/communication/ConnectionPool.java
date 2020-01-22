@@ -81,4 +81,9 @@ interface ConnectionPool {
      */
     Mono<Void> updateConnections(List<HostDescription> hostList);
 
+    /**
+     * @return a new conversation
+     */
+    Conversation createConversation(Conversation.Level level);
+
 }

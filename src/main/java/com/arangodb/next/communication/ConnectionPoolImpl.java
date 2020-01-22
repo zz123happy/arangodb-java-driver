@@ -23,9 +23,9 @@ package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.*;
 import com.arangodb.next.exceptions.HostNotAvailableException;
+import com.arangodb.next.exceptions.NoHostsAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -33,9 +33,10 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static com.arangodb.next.communication.CommunicationUtils.getRandomItem;
 
 /**
  * @author Michele Rastelli
@@ -49,15 +50,6 @@ class ConnectionPoolImpl implements ConnectionPool {
     private final ConnectionFactory connectionFactory;
     private final AuthenticationMethod authentication;
     private final Semaphore updatingConnectionsSemaphore;
-
-    protected static <T> T getRandomItem(final Collection<T> collection) {
-        int index = ThreadLocalRandom.current().nextInt(collection.size());
-        Iterator<T> iterator = collection.iterator();
-        for (int i = 0; i < index; i++) {
-            iterator.next();
-        }
-        return iterator.next();
-    }
 
     ConnectionPoolImpl(
             final CommunicationConfig communicationConfig,
@@ -75,12 +67,15 @@ class ConnectionPoolImpl implements ConnectionPool {
 
     @Override
     public Mono<ArangoResponse> execute(final ArangoRequest request) {
-        if (connectionsByHost.isEmpty()) {
-            return Mono.error(new IOException("No open connections!"));
+        ArangoConnection connection;
+        try {
+            HostDescription host = getRandomItem(connectionsByHost.keySet());
+            LOGGER.debug("execute: picked host {}", host);
+            connection = getRandomItem(connectionsByHost.get(host));
+        } catch (NoSuchElementException e) {
+            return Mono.error(NoHostsAvailableException.create());
         }
-        HostDescription host = getRandomItem(connectionsByHost.keySet());
-        LOGGER.debug("execute: picked host {}", host);
-        return getRandomItem(connectionsByHost.get(host)).execute(request);
+        return connection.execute(request);
     }
 
     @Override
@@ -90,7 +85,13 @@ class ConnectionPoolImpl implements ConnectionPool {
             throw HostNotAvailableException.of(host);
         }
         LOGGER.debug("execute: executing on host {}", host);
-        return getRandomItem(hostConnections).execute(request);
+        ArangoConnection connection;
+        try {
+            connection = getRandomItem(hostConnections);
+        } catch (NoSuchElementException e) {
+            return Mono.error(new IOException("No open connections!"));
+        }
+        return connection.execute(request);
     }
 
     @Override
@@ -148,7 +149,7 @@ class ConnectionPoolImpl implements ConnectionPool {
                 .timeout(config.getTimeout())
                 .then(Mono.defer(() -> {
                     if (connectionsByHost.isEmpty()) {
-                        return Mono.<Void>error(Exceptions.bubble(new IOException("Could not create any connection.")));
+                        return Mono.<Void>error(NoHostsAvailableException.create());
                     } else {
                         return Mono.empty();
                     }
@@ -163,8 +164,19 @@ class ConnectionPoolImpl implements ConnectionPool {
                 .doOnCancel(updatingConnectionsSemaphore::release);
     }
 
+    @Override
+    public Conversation createConversation(Conversation.Level level) {
+        try {
+            HostDescription host = getRandomItem(connectionsByHost.keySet());
+            return Conversation.of(host, level);
+        } catch (NoSuchElementException e) {
+            throw NoHostsAvailableException.create();
+        }
+    }
+
     /**
      * removes all the hosts that are disconnected
+     *
      * @return a Mono completing when the hosts have been removed
      */
     private Mono<Void> removeDisconnectedHosts() {
