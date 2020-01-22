@@ -5,7 +5,7 @@
 #   ./start_db_single.sh <dockerImage>
 
 # EXAMPLE:
-#   ./start_db_single.sh docker.io/arangodb/arangodb:3.5.1
+#   ./start_db_single.sh docker.io/arangodb/arangodb:3.6.0
 
 docker pull "$1"
 
@@ -17,7 +17,7 @@ echo "waiting for arangodb ..."
 
 # shellcheck disable=SC2091
 until $(curl --output /dev/null --silent --head --fail -i -u root:test 'http://172.28.3.1:8529/_api/version'); do
-    printf '.'
-    sleep 1
+  printf '.'
+  sleep 1
 done
 echo "READY!"
