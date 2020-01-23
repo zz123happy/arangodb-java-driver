@@ -21,6 +21,8 @@
 package com.arangodb.next.exceptions;
 
 
+import javax.annotation.Nullable;
+
 /**
  * @author Mark Vollmary
  */
@@ -28,6 +30,10 @@ public abstract class ArangoException extends RuntimeException {
 
     @Override
     public abstract String toString();
+
+    @Override
+    @Nullable
+    public abstract Throwable getCause();
 
     /**
      * @return exception message

@@ -50,7 +50,7 @@ public final class JsonSerializer implements ArangoSerializer {
                 throw new IllegalArgumentException("Unsupported type: " + value.getClass().getName());
             }
         } catch (IOException e) {
-            throw SerdeException.of(e);
+            throw SerdeException.builder().cause(e).build();
         }
     }
 

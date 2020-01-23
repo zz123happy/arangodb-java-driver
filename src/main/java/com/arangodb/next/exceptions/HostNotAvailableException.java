@@ -26,14 +26,13 @@ import org.immutables.value.Value;
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable(builder = false)
+@Value.Immutable
 public abstract class HostNotAvailableException extends ArangoException {
 
-    public static HostNotAvailableException of(final HostDescription hostDescription) {
-        return ImmutableHostNotAvailableException.of(hostDescription);
+    public static ImmutableHostNotAvailableException.Builder builder() {
+        return ImmutableHostNotAvailableException.builder();
     }
 
-    @Value.Parameter
     public abstract HostDescription getHost();
 
 }

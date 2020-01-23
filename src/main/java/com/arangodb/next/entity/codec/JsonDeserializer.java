@@ -52,7 +52,7 @@ public final class JsonDeserializer implements ArangoDeserializer {
                 throw new IllegalArgumentException("Unsupported type: " + clazz.getName());
             }
         } catch (IOException e) {
-            throw SerdeException.of(e);
+            throw SerdeException.builder().cause(e).build();
         }
     }
 

@@ -112,7 +112,7 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
                         })
                 )
                 .onErrorContinue((throwable, o) -> LOGGER.warn("findLeader(): error contacting {}", o, throwable))
-                .switchIfEmpty(Mono.error(LeaderNotAvailableException.create()))
+                .switchIfEmpty(Mono.error(LeaderNotAvailableException.builder().build()))
                 .doOnError(err -> LOGGER.error("findLeader(): ", err))
                 .doFinally(type -> findLeaderSemaphore.release())
                 .then();

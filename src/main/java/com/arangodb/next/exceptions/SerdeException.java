@@ -26,19 +26,11 @@ import org.immutables.value.Value;
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable(builder = false)
+@Value.Immutable
 public abstract class SerdeException extends ArangoException {
 
-    public static SerdeException of(final Throwable cause) {
-        return ImmutableSerdeException.of(cause);
-    }
-
-    @Value.Parameter
-    abstract Throwable getWrapped();
-
-    @Override
-    public final synchronized Throwable getCause() {
-        return getWrapped();
+    public static ImmutableSerdeException.Builder builder() {
+        return ImmutableSerdeException.builder();
     }
 
 }

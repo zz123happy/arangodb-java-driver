@@ -73,7 +73,7 @@ class ConnectionPoolImpl implements ConnectionPool {
             LOGGER.debug("execute: picked host {}", host);
             connection = getRandomItem(connectionsByHost.get(host));
         } catch (NoSuchElementException e) {
-            return Mono.error(NoHostsAvailableException.create());
+            return Mono.error(NoHostsAvailableException.builder().cause(e).build());
         }
         return connection.execute(request);
     }
@@ -82,7 +82,7 @@ class ConnectionPoolImpl implements ConnectionPool {
     public Mono<ArangoResponse> execute(final ArangoRequest request, final HostDescription host) {
         List<ArangoConnection> hostConnections = connectionsByHost.get(host);
         if (hostConnections == null) {
-            throw HostNotAvailableException.of(host);
+            throw HostNotAvailableException.builder().host(host).build();
         }
         LOGGER.debug("execute: executing on host {}", host);
         ArangoConnection connection;
@@ -163,7 +163,7 @@ class ConnectionPoolImpl implements ConnectionPool {
             HostDescription host = getRandomItem(connectionsByHost.keySet());
             return Conversation.of(host, level);
         } catch (NoSuchElementException e) {
-            throw NoHostsAvailableException.create();
+            throw NoHostsAvailableException.builder().cause(e).build();
         }
     }
 

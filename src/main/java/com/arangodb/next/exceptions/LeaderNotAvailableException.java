@@ -25,11 +25,11 @@ import org.immutables.value.Value;
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable(builder = false)
+@Value.Immutable
 public abstract class LeaderNotAvailableException extends ArangoException {
 
-    public static LeaderNotAvailableException create() {
-        return ImmutableLeaderNotAvailableException.of();
+    public static ImmutableLeaderNotAvailableException.Builder builder() {
+        return ImmutableLeaderNotAvailableException.builder();
     }
 
     @Override
