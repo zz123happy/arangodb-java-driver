@@ -64,7 +64,13 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
         LOGGER.debug("execute({})", request);
 
         if (getConfig().getDirtyReads() && isReadRequest(request)) {
-            return super.execute(request);  // executes on random host
+            // executes on random host
+            return super.execute(
+                    ArangoRequest.builder()
+                            .from(request)
+                            .putHeaderParam("X-Arango-Allow-Dirty-Read", "true")
+                            .build()
+            );
         } else {
             return executeOnLeader(request);
         }

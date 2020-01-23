@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CommunicationTestUtils {
 
-    private static final ArangoRequest ECHO_REQUEST = ArangoRequest.builder()
+    private static final ArangoRequest STATUS_REQUEST = ArangoRequest.builder()
             .database("_system")
             .path("/_admin/status")
             .requestType(ArangoRequest.RequestType.GET)
@@ -56,20 +56,29 @@ class CommunicationTestUtils {
     }
 
     static void executeRequestAndVerifyHost(ArangoCommunication communication, Conversation conversation, boolean expectSameHost) {
-        ArangoResponse response = communication.execute(ECHO_REQUEST, conversation).block();
-        assertThat(response).isNotNull();
-        assertThat(response.getVersion()).isEqualTo(1);
-        assertThat(response.getType()).isEqualTo(2);
-        assertThat(response.getResponseCode()).isEqualTo(200);
-
-        String remoteHost = getHostFromEchoResponseVPack(response);
+        String remoteHost = executeStatusRequest(communication, conversation);
         if (expectSameHost) {
             HostDescription host = conversation.getHost();
             assertThat(remoteHost).isEqualTo(host.getHost());
         }
     }
 
-    private static String getHostFromEchoResponseVPack(ArangoResponse response) {
+    static String executeStatusRequest(ArangoCommunication communication, Conversation conversation) {
+        ArangoResponse response = communication.execute(STATUS_REQUEST, conversation).block();
+        return getHostFromStatusResponseVPack(response);
+    }
+
+    static String executeStatusRequest(ArangoCommunication communication) {
+        ArangoResponse response = communication.execute(STATUS_REQUEST).block();
+        return getHostFromStatusResponseVPack(response);
+    }
+
+    private static String getHostFromStatusResponseVPack(ArangoResponse response) {
+        assertThat(response).isNotNull();
+        assertThat(response.getVersion()).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(2);
+        assertThat(response.getResponseCode()).isEqualTo(200);
+
         VPackSlice slice = new VPackSlice(response.getBody());
         return slice.get("host").getAsString();
     }

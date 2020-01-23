@@ -18,7 +18,6 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-
 package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.ArangoConnection;
@@ -33,9 +32,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -107,6 +105,51 @@ class CommunicationActiveFailoverTest {
             CommunicationTestUtils.executeRequestAndVerifyHost(communication, preferredConversation, true);
         }
 
+        communication.close().block();
+    }
+
+    @ParameterizedTest
+    @EnumSource(ArangoProtocol.class)
+    void dirtyRead(ArangoProtocol protocol) {
+        ArangoCommunication communication = ArangoCommunication.create(config
+                .protocol(protocol)
+                .dirtyReads(true)
+                .build()).block();
+        assertThat(communication).isNotNull();
+
+        Set<String> remoteHosts = new HashSet<>();
+
+        for (int i = 0; i < 20; i++) {
+            String host = CommunicationTestUtils.executeStatusRequest(communication);
+            remoteHosts.add(host);
+        }
+
+        assertThat(remoteHosts)
+                .containsExactlyInAnyOrderElementsOf(
+                        hosts
+                                .stream()
+                                .map(HostDescription::getHost)
+                                .collect(Collectors.toList()));
+
+        communication.close().block();
+    }
+
+    @ParameterizedTest
+    @EnumSource(ArangoProtocol.class)
+    void executeOnLeader(ArangoProtocol protocol) {
+        ArangoCommunication communication = ArangoCommunication.create(config
+                .protocol(protocol)
+                .build()).block();
+        assertThat(communication).isNotNull();
+
+        Set<String> remoteHosts = new HashSet<>();
+
+        for (int i = 0; i < 10; i++) {
+            String host = CommunicationTestUtils.executeStatusRequest(communication);
+            remoteHosts.add(host);
+        }
+
+        assertThat(remoteHosts).hasSize(1);
         communication.close().block();
     }
 
