@@ -49,7 +49,7 @@ public abstract class ProxiedHost {
 
     abstract int getProxiedPort();
 
-    HostDescription getHostDescription() {
+    public HostDescription getHostDescription() {
         return HostDescription.of(getProxy().getContainerIpAddress(), getProxy().getProxyPort());
     }
 

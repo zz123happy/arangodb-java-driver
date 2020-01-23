@@ -23,6 +23,9 @@ package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.ArangoProtocol;
 import com.arangodb.next.connection.ConnectionConfig;
+import com.arangodb.next.connection.HostDescription;
+import com.arangodb.next.exceptions.HostNotAvailableException;
+import com.arangodb.next.exceptions.NoHostsAvailableException;
 import deployments.ProxiedContainerDeployment;
 import deployments.ProxiedHost;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +36,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
 
 import java.io.IOException;
+import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.arangodb.next.communication.CommunicationTestUtils.executeRequest;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,6 +108,53 @@ class CommunicationResiliencyTest {
 
         }
 
+        communication.close().block();
+    }
+
+    @ParameterizedTest
+    @EnumSource(ArangoProtocol.class)
+    void executeWithConversation(ArangoProtocol protocol) {
+
+        List<ProxiedHost> proxies = Arrays.asList(
+                deployment.getProxiedHosts().get(0),
+                deployment.getProxiedHosts().get(1)
+        );
+
+        Map<HostDescription, ProxiedHost> proxiedHosts = proxies.stream()
+                .map(it -> new AbstractMap.SimpleEntry<>(it.getHostDescription(), it))
+                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+
+        ArangoCommunication communication = ArangoCommunication.create(config
+                .protocol(protocol)
+                .build()).block();
+        assertThat(communication).isNotNull();
+
+        Conversation requiredConversation = communication.createConversation(Conversation.Level.REQUIRED);
+
+        // update connections removing conversation host
+        proxiedHosts.get(requiredConversation.getHost()).disableProxy();
+        ((ArangoCommunicationImpl) communication).getConnectionPool().updateConnections(proxiedHosts.keySet()).block();
+
+        assertThat(catchThrowable(() ->
+                CommunicationTestUtils.executeRequestAndVerifyHost(communication, requiredConversation, true)))
+                .isInstanceOf(HostNotAvailableException.class);
+
+        Conversation preferredConversation = communication.createConversation(Conversation.Level.PREFERRED);
+        CommunicationTestUtils.executeRequestAndVerifyHost(communication, preferredConversation, false);
+
+        // update connections removing all hosts
+        proxies.forEach(ProxiedHost::disableProxy);
+        ((ArangoCommunicationImpl) communication).getConnectionPool().updateConnections(proxiedHosts.keySet()).block();
+
+        assertThat(catchThrowable(() ->
+                CommunicationTestUtils.executeRequestAndVerifyHost(communication, requiredConversation, true)))
+                .isInstanceOf(HostNotAvailableException.class);
+
+        assertThat(catchThrowable(() ->
+                CommunicationTestUtils.executeRequestAndVerifyHost(communication, preferredConversation, false)))
+                .isInstanceOf(NoHostsAvailableException.class);
+
+        proxies.forEach(ProxiedHost::enableProxy);
         communication.close().block();
     }
 
