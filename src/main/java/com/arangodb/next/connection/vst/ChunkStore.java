@@ -25,7 +25,6 @@ import com.arangodb.next.connection.IOUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.ReferenceCounted;
 
-import java.nio.BufferUnderflowException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -44,7 +43,7 @@ final class ChunkStore {
         callback = responseCallback;
     }
 
-    void storeChunk(final Chunk chunk, final ByteBuf inBuf) throws BufferUnderflowException, IndexOutOfBoundsException {
+    void storeChunk(final Chunk chunk, final ByteBuf inBuf) {
         final long messageId = chunk.getMessageId();
         ByteBuf chunkBuffer = data.get(messageId);
         if (chunkBuffer == null) {
@@ -57,8 +56,7 @@ final class ChunkStore {
         checkCompleteness(messageId, chunkBuffer);
     }
 
-    private void checkCompleteness(final long messageId, final ByteBuf chunkBuffer)
-            throws BufferUnderflowException, IndexOutOfBoundsException {
+    private void checkCompleteness(final long messageId, final ByteBuf chunkBuffer) {
         if (chunkBuffer.readableBytes() == chunkBuffer.capacity()) {
             byte[] bytes = new byte[chunkBuffer.readableBytes()];
             chunkBuffer.readBytes(bytes);

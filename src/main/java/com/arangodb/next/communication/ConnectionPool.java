@@ -22,7 +22,6 @@ package com.arangodb.next.communication;
 
 
 import com.arangodb.next.connection.*;
-import com.arangodb.next.exceptions.HostNotAvailableException;
 import reactor.core.publisher.Mono;
 
 import java.util.Set;
@@ -67,7 +66,7 @@ interface ConnectionPool {
      *
      * @param request to be executed
      * @return db response
-     * @throws HostNotAvailableException if there are no connections to the specified host
+     * @throws com.arangodb.next.exceptions.HostNotAvailableException if there are no connections to the specified host
      */
     Mono<ArangoResponse> execute(ArangoRequest request, HostDescription host);
 

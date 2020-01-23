@@ -176,7 +176,7 @@ class ConnectionPoolImpl implements ConnectionPool {
         List<Mono<HostDescription>> hostsToRemove = connectionsByHost.entrySet().stream()
                 .map(hostConnections -> checkAllDisconnected(hostConnections.getValue())
                         .flatMap(hostDisconnected -> {
-                            if (hostDisconnected) {
+                            if (Boolean.TRUE.equals(hostDisconnected)) {
                                 return Mono.just(hostConnections.getKey());
                             } else {
                                 return Mono.empty();

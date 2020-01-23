@@ -22,7 +22,6 @@ package com.arangodb.next.communication;
 
 
 import com.arangodb.next.connection.HostDescription;
-import com.arangodb.next.exceptions.HostNotAvailableException;
 import org.immutables.value.Value;
 
 /**
@@ -46,7 +45,7 @@ public interface Conversation {
     enum Level {
 
         /**
-         * if the host is not available this causes ArangoCommunication to throw {@link HostNotAvailableException}
+         * if the host is not available this causes ArangoCommunication to throw {@link com.arangodb.next.exceptions.HostNotAvailableException}
          */
         REQUIRED,
 

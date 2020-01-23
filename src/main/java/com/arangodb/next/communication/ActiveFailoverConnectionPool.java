@@ -104,7 +104,7 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
         return Flux.fromIterable(getConnectionsByHost().entrySet())
                 .flatMap(e -> e.getValue().get(0).requestUser()
                         .filter(response -> response.getResponseCode() == 200)
-                        .doOnNext(__ -> {
+                        .doOnNext(response -> {
                             if (!e.getKey().equals(leader)) {
                                 leader = e.getKey();
                                 LOGGER.info("findLeader(): found new leader {}", leader);
@@ -114,7 +114,7 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
                 .onErrorContinue((throwable, o) -> LOGGER.warn("findLeader(): error contacting {}", o, throwable))
                 .switchIfEmpty(Mono.error(LeaderNotAvailableException.create()))
                 .doOnError(err -> LOGGER.error("findLeader(): ", err))
-                .doFinally(__ -> findLeaderSemaphore.release())
+                .doFinally(type -> findLeaderSemaphore.release())
                 .then();
     }
 

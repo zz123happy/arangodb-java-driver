@@ -107,8 +107,8 @@ public final class HttpConnection extends ArangoConnection {
                     }
                 })
                 .timeout(Duration.ofMillis(config.getTimeout()))
-                .doOnNext(__ -> connected = true)
-                .doOnError(__ -> close().subscribe());
+                .doOnNext(response -> connected = true)
+                .doOnError(throwable -> close().subscribe());
     }
 
     @Override
@@ -148,8 +148,7 @@ public final class HttpConnection extends ArangoConnection {
                         .tcpConfiguration(tcpClient -> tcpClient.option(CONNECT_TIMEOUT_MILLIS, config.getTimeout()))
                         .protocol(HttpProtocol.HTTP11)
                         .keepAlive(true)
-                        .baseUrl((Boolean.TRUE == config.getUseSsl()
-                                ? "https://" : "http://") + host.getHost() + ":" + host.getPort())
+                        .baseUrl((config.getUseSsl() ? "https://" : "http://") + host.getHost() + ":" + host.getPort())
                         .headers(headers -> getAuthentication().ifPresent(
                                 method -> headers.set(AUTHORIZATION, method.getHttpAuthorizationHeader())
                         ))
