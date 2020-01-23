@@ -130,15 +130,14 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     @Override
     public Mono<ArangoResponse> execute(final ArangoRequest request, final Conversation conversation) {
         LOGGER.debug("execute({}, {})", request, conversation);
-        try {
-            return execute(request, conversation.getHost());
-        } catch (HostNotAvailableException e) {
-            if (Conversation.Level.REQUIRED.equals(conversation.getLevel())) {
-                throw e;
-            } else {
-                return execute(request);
-            }
-        }
+        return execute(request, conversation.getHost())
+                .onErrorResume(HostNotAvailableException.class, e -> {
+                    if (Conversation.Level.REQUIRED.equals(conversation.getLevel())) {
+                        throw e;
+                    } else {
+                        return execute(request);
+                    }
+                });
     }
 
     private Mono<ArangoResponse> execute(

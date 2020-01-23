@@ -38,6 +38,9 @@ final class CommunicationUtils {
      * @throws NoSuchElementException if the collection is empty
      */
     static <T> T getRandomItem(final Collection<T> collection) {
+        if (collection.isEmpty()) {
+            throw new NoSuchElementException();
+        }
         int index = ThreadLocalRandom.current().nextInt(collection.size());
         Iterator<T> iterator = collection.iterator();
         for (int i = 0; i < index; i++) {

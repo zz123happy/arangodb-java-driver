@@ -147,13 +147,6 @@ class ConnectionPoolImpl implements ConnectionPool {
         return Flux.merge(Flux.merge(addedHosts), Flux.merge(removedHosts))
                 .then(Mono.defer(this::removeDisconnectedHosts))
                 .timeout(config.getTimeout())
-                .then(Mono.defer(() -> {
-                    if (connectionsByHost.isEmpty()) {
-                        return Mono.<Void>error(NoHostsAvailableException.create());
-                    } else {
-                        return Mono.empty();
-                    }
-                }))
 
                 // here we cannot use Flux::doFinally since the signal is propagated downstream before the callback is
                 // executed and this is a problem if a chained task re-invoke this method, eg. during {@link this#initialize}
