@@ -113,7 +113,14 @@ public final class HttpConnection extends ArangoConnection {
 
     @Override
     public Mono<Boolean> isConnected() {
-        return Mono.just(connected);
+        if (connected) {
+            // double check if it is still connected
+            return requestUser()
+                    .map(it -> true)
+                    .onErrorReturn(false);
+        } else {
+            return Mono.just(false);
+        }
     }
 
     @Override
