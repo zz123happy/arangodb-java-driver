@@ -25,6 +25,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.netty.http.client.HttpClient;
+import utils.TestUtils;
 
 import java.util.Objects;
 
@@ -32,6 +33,10 @@ import java.util.Objects;
  * @author Michele Rastelli
  */
 public class ContainerUtils {
+
+    static {
+        TestUtils.enableDebug();
+    }
 
     private static final String DEFAULT_DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.6.0";
     private static final Logger log = LoggerFactory.getLogger(ContainerUtils.class);
