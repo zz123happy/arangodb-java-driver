@@ -9,7 +9,7 @@
 #   ./testSingle.sh <dockerImage>
 
 # EXAMPLE:
-#   ./testSingle.sh docker.io/arangodb/arangodb:3.5.3
+#   ./testSingle.sh docker.io/arangodb/arangodb:3.6.0
 
 
 # exit when any command fails
