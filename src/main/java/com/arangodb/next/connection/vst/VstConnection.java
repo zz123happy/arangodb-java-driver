@@ -119,7 +119,16 @@ public final class VstConnection extends ArangoConnection {
 
     @Override
     public Mono<Boolean> isConnected() {
-        return publishOnScheduler(() -> Mono.just(connectionState == ConnectionState.CONNECTED));
+        return publishOnScheduler(() -> {
+            if (connectionState == ConnectionState.CONNECTED) {
+                // double check if it is still connected
+                return requestUser()
+                        .map(it -> true)
+                        .onErrorReturn(false);
+            } else {
+                return Mono.just(false);
+            }
+        });
     }
 
     @Override

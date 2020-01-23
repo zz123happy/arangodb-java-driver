@@ -89,15 +89,9 @@ class CommunicationResiliencyTest {
         ProxiedHost host1 = deployment.getProxiedHosts().get(1);
 
         for (int j = 0; j < 100; j++) {
-
-            for (int i = 0; i < 10; i++) {
-                executeRequest(communication, 2); // retries at most once per host
-            }
-
+            executeRequest(communication, 2); // retries at most once per host
             host0.disableProxy();
-
             executeRequest(communication, 100);
-
             host1.disableProxy();
 
             Throwable thrown = catchThrowable(() -> executeRequest(communication));
@@ -105,7 +99,6 @@ class CommunicationResiliencyTest {
 
             host0.enableProxy();
             host1.enableProxy();
-
         }
 
         communication.close().block();
@@ -129,32 +122,36 @@ class CommunicationResiliencyTest {
                 .build()).block();
         assertThat(communication).isNotNull();
 
-        Conversation requiredConversation = communication.createConversation(Conversation.Level.REQUIRED);
+        for (int i = 0; i < 10; i++) {
+            Conversation requiredConversation = communication.createConversation(Conversation.Level.REQUIRED);
 
-        // update connections removing conversation host
-        proxiedHosts.get(requiredConversation.getHost()).disableProxy();
-        ((ArangoCommunicationImpl) communication).getConnectionPool().updateConnections(proxiedHosts.keySet()).block();
+            // update connections removing conversation host
+            proxiedHosts.get(requiredConversation.getHost()).disableProxy();
+            ((ArangoCommunicationImpl) communication).getConnectionPool().updateConnections(proxiedHosts.keySet()).block();
 
-        assertThat(catchThrowable(() ->
-                CommunicationTestUtils.executeRequestAndVerifyHost(communication, requiredConversation, true)))
-                .isInstanceOf(HostNotAvailableException.class);
+            assertThat(catchThrowable(() ->
+                    CommunicationTestUtils.executeRequestAndVerifyHost(communication, requiredConversation, true)))
+                    .isInstanceOf(HostNotAvailableException.class);
 
-        Conversation preferredConversation = communication.createConversation(Conversation.Level.PREFERRED);
-        CommunicationTestUtils.executeRequestAndVerifyHost(communication, preferredConversation, false);
+            Conversation preferredConversation = communication.createConversation(Conversation.Level.PREFERRED);
+            CommunicationTestUtils.executeRequestAndVerifyHost(communication, preferredConversation, false);
 
-        // update connections removing all hosts
-        proxies.forEach(ProxiedHost::disableProxy);
-        ((ArangoCommunicationImpl) communication).getConnectionPool().updateConnections(proxiedHosts.keySet()).block();
+            // update connections removing all hosts
+            proxies.forEach(ProxiedHost::disableProxy);
+            ((ArangoCommunicationImpl) communication).getConnectionPool().updateConnections(proxiedHosts.keySet()).block();
 
-        assertThat(catchThrowable(() ->
-                CommunicationTestUtils.executeRequestAndVerifyHost(communication, requiredConversation, true)))
-                .isInstanceOf(HostNotAvailableException.class);
+            assertThat(catchThrowable(() ->
+                    CommunicationTestUtils.executeRequestAndVerifyHost(communication, requiredConversation, true)))
+                    .isInstanceOf(HostNotAvailableException.class);
 
-        assertThat(catchThrowable(() ->
-                CommunicationTestUtils.executeRequestAndVerifyHost(communication, preferredConversation, false)))
-                .isInstanceOf(NoHostsAvailableException.class);
+            assertThat(catchThrowable(() ->
+                    CommunicationTestUtils.executeRequestAndVerifyHost(communication, preferredConversation, false)))
+                    .isInstanceOf(NoHostsAvailableException.class);
 
-        proxies.forEach(ProxiedHost::enableProxy);
+            proxies.forEach(ProxiedHost::enableProxy);
+            ((ArangoCommunicationImpl) communication).getConnectionPool().updateConnections(proxiedHosts.keySet()).block();
+        }
+
         communication.close().block();
     }
 
