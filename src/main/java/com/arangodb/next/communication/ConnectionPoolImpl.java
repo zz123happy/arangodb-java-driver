@@ -109,7 +109,7 @@ class ConnectionPoolImpl implements ConnectionPool {
     }
 
     @Override
-    public Mono<Void> updateConnections(final List<HostDescription> hostList) {
+    public Mono<Void> updateConnections(final Set<HostDescription> hostList) {
         LOGGER.debug("updateConnections()");
 
         if (!updatingConnectionsSemaphore.tryAcquire()) {

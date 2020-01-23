@@ -34,8 +34,8 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import static com.arangodb.next.connection.ConnectionUtils.ENDPOINTS_REQUEST;
@@ -212,7 +212,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
                 .doFinally(s -> updatingHostListSemaphore.release());
     }
 
-    private List<HostDescription> parseAcquireHostListResponse(final ArangoResponse response) {
+    private Set<HostDescription> parseAcquireHostListResponse(final ArangoResponse response) {
         LOGGER.debug("parseAcquireHostListResponse({})", response);
         if (response.getResponseCode() != 200) {
             throw ArangoServerException.builder()

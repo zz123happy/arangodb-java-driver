@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -50,7 +50,7 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
     }
 
     @Override
-    public Mono<Void> updateConnections(final List<HostDescription> hostList) {
+    public Mono<Void> updateConnections(final Set<HostDescription> hostList) {
         return super.updateConnections(hostList).then(Mono.defer(this::findLeader));
     }
 

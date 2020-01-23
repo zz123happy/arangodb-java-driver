@@ -24,8 +24,8 @@ package com.arangodb.next.entity;
 import com.arangodb.next.connection.HostDescription;
 import org.immutables.value.Value;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -35,9 +35,9 @@ import java.util.stream.Collectors;
 public interface ClusterEndpoints extends ArangoEntity {
 
 
-    List<Map<String, String>> getEndpoints();
+    Set<Map<String, String>> getEndpoints();
 
-    default List<HostDescription> getHostDescriptions() {
+    default Set<HostDescription> getHostDescriptions() {
         return getEndpoints().stream()
                 .map(it -> it.get("endpoint"))
                 .map(it -> it.replaceFirst(".*://", ""))
@@ -50,7 +50,7 @@ public interface ClusterEndpoints extends ArangoEntity {
                     return it.split(":");
                 })
                 .map(it -> HostDescription.of(it[0], Integer.parseInt(it[1])))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
 }

@@ -25,7 +25,7 @@ import com.arangodb.next.connection.*;
 import com.arangodb.next.exceptions.HostNotAvailableException;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author Michele Rastelli
@@ -79,7 +79,7 @@ interface ConnectionPool {
      * - connections related to removed hosts have been closed
      * - connections related to added hosts have been initialized
      */
-    Mono<Void> updateConnections(List<HostDescription> hostList);
+    Mono<Void> updateConnections(Set<HostDescription> hostList);
 
     /**
      * @return a new conversation
