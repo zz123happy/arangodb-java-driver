@@ -44,6 +44,10 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 @SuppressWarnings("squid:S2925")
 class ConnectionResiliencyTest {
 
+//    static {
+//        Hooks.onOperatorDebug();
+//    }
+
     private final ImmutableConnectionConfig.Builder config;
 
     @Container
