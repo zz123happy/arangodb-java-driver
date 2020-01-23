@@ -21,7 +21,7 @@
 package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.*;
-import com.arangodb.next.exceptions.LeaderNotFoundException;
+import com.arangodb.next.exceptions.LeaderNotAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -79,14 +79,12 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
 
     private Mono<ArangoResponse> executeOnLeader(final ArangoRequest request) {
         return execute(request, leader)
-                .onErrorResume(throwable -> Mono.defer(() -> findLeader().then(Mono.error(throwable))))
-                .flatMap(response -> {
+                .doOnNext(response -> {
                     if (response.getResponseCode() == 503) {
-                        return findLeader().then(Mono.just(response));
-                    } else {
-                        return Mono.just(response);
+                        findLeader().subscribe();
                     }
-                });
+                })
+                .doOnError(e -> findLeader().subscribe());
     }
 
     HostDescription getLeader() {
@@ -114,7 +112,7 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
                         })
                 )
                 .onErrorContinue((throwable, o) -> LOGGER.warn("findLeader(): error contacting {}", o, throwable))
-                .switchIfEmpty(Mono.error(LeaderNotFoundException.create()))
+                .switchIfEmpty(Mono.error(LeaderNotAvailableException.create()))
                 .doOnError(err -> LOGGER.error("findLeader(): ", err))
                 .doFinally(__ -> findLeaderSemaphore.release())
                 .then();

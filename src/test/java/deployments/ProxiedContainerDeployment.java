@@ -36,6 +36,10 @@ public abstract class ProxiedContainerDeployment extends ContainerDeployment {
         return new ProxiedClusterDeployment(dbServers, coordinators);
     }
 
+    public static ProxiedContainerDeployment ofActiveFailover(int servers) {
+        return new ProxiedActiveFailoverDeployment(servers);
+    }
+
     public abstract List<ProxiedHost> getProxiedHosts();
 
 }

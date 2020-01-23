@@ -22,7 +22,7 @@ package com.arangodb.next.communication;
 
 
 import com.arangodb.next.connection.*;
-import com.arangodb.next.exceptions.LeaderNotFoundException;
+import com.arangodb.next.exceptions.LeaderNotAvailableException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import reactor.core.publisher.Mono;
@@ -148,7 +148,7 @@ public class ActiveFailoverCommunicationMockTest {
 
         ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
         Throwable thrown = catchThrowable(() -> communication.initialize().block());
-        assertThat(thrown).isInstanceOf(LeaderNotFoundException.class);
+        assertThat(thrown).isInstanceOf(LeaderNotAvailableException.class);
     }
 
     @ParameterizedTest
@@ -163,7 +163,7 @@ public class ActiveFailoverCommunicationMockTest {
 
         ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
         Throwable thrown = catchThrowable(() -> communication.initialize().block());
-        assertThat(thrown).isInstanceOf(LeaderNotFoundException.class);
+        assertThat(thrown).isInstanceOf(LeaderNotAvailableException.class);
     }
 
     @ParameterizedTest

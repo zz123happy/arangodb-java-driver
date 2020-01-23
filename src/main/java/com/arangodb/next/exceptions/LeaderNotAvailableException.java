@@ -26,10 +26,10 @@ import org.immutables.value.Value;
  * @author Michele Rastelli
  */
 @Value.Immutable(builder = false)
-public abstract class LeaderNotFoundException extends ArangoException {
+public abstract class LeaderNotAvailableException extends ArangoException {
 
-    public static LeaderNotFoundException create() {
-        return ImmutableLeaderNotFoundException.of();
+    public static LeaderNotAvailableException create() {
+        return ImmutableLeaderNotAvailableException.of();
     }
 
     @Override
