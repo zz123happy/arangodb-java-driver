@@ -93,7 +93,7 @@ class ActiveFailoverResiliencyTest {
         for (int j = 0; j < 10; j++) {
             executeRequest(communication, 2);
             leaderProxy.disableProxy();
-            assertThat(Exceptions.unwrap(catchThrowable(() -> executeRequest(communication))))
+            assertThat(Exceptions.unwrap(catchThrowable(() -> executeRequest(communication, 2))))
                     .isInstanceOf(IOException.class);
             leaderProxy.enableProxy();
         }
