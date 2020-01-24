@@ -24,15 +24,16 @@ package com.arangodb.next.exceptions;
 import javax.annotation.Nullable;
 
 /**
- * @author Mark Vollmary
+ * @author Michele Rastelli
  */
 public abstract class ArangoException extends RuntimeException {
 
     @Override
     public abstract String toString();
 
-    @Override
     @Nullable
+    @Override
+    @SuppressWarnings("squid:S3551")    // Overrides should match their parent class methods in synchronization
     public abstract Throwable getCause();
 
     /**
