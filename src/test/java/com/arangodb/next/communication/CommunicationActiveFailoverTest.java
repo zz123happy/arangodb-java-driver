@@ -118,7 +118,7 @@ class CommunicationActiveFailoverTest {
 
         Set<String> remoteHosts = new HashSet<>();
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 30; i++) {
             String host = CommunicationTestUtils.executeStatusRequest(communication);
             remoteHosts.add(host);
         }
