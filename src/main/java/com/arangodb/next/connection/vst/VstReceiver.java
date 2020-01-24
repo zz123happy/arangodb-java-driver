@@ -39,10 +39,9 @@ final class VstReceiver {
     private static final Logger LOGGER = LoggerFactory.getLogger(VstReceiver.class);
 
     private final ChunkStore chunkStore;
-
-    private Chunk chunk;
     private final ByteBuf chunkHeaderBuffer;
     private final ByteBuf chunkContentBuffer;
+    private Chunk chunk;
 
     VstReceiver(final BiConsumer<Long, ArangoResponse> callback) {
         chunkStore = new ChunkStore(callback);

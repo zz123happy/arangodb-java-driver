@@ -54,15 +54,13 @@ public final class HttpConnection extends ArangoConnection {
 
     private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json; charset=UTF-8";
     private static final String CONTENT_TYPE_VPACK = "application/x-velocypack";
-
-    private volatile boolean initialized = false;
-    private volatile boolean connected = false;
-
     private final HostDescription host;
     private final ConnectionConfig config;
     private final ConnectionProvider connectionProvider;
     private final HttpClient client;
     private final CookieStore cookieStore;
+    private volatile boolean initialized = false;
+    private volatile boolean connected = false;
 
     public HttpConnection(final HostDescription hostDescription,
                           @Nullable final AuthenticationMethod authenticationMethod,
@@ -74,6 +72,27 @@ public final class HttpConnection extends ArangoConnection {
         connectionProvider = createConnectionProvider();
         client = getClient();
         cookieStore = new CookieStore();
+    }
+
+    private static String buildUrl(final ArangoRequest request) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("/_db/").append(request.getDatabase());
+        sb.append(request.getPath());
+
+        if (!request.getQueryParam().isEmpty()) {
+            sb.append("?");
+            final String paramString = request.getQueryParam().entrySet().stream()
+                    .map(it -> it.getKey() + "=" + it.getValue())
+                    .collect(Collectors.joining("&"));
+            sb.append(paramString);
+        }
+        return sb.toString();
+    }
+
+    private static void addHeaders(final ArangoRequest request, final HttpHeaders headers) {
+        for (final Entry<String, String> header : request.getHeaderParam().entrySet()) {
+            headers.add(header.getKey(), header.getValue());
+        }
     }
 
     @Override
@@ -163,21 +182,6 @@ public final class HttpConnection extends ArangoConnection {
         }
     }
 
-    private static String buildUrl(final ArangoRequest request) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("/_db/").append(request.getDatabase());
-        sb.append(request.getPath());
-
-        if (!request.getQueryParam().isEmpty()) {
-            sb.append("?");
-            final String paramString = request.getQueryParam().entrySet().stream()
-                    .map(it -> it.getKey() + "=" + it.getValue())
-                    .collect(Collectors.joining("&"));
-            sb.append(paramString);
-        }
-        return sb.toString();
-    }
-
     private HttpMethod requestTypeToHttpMethod(final ArangoRequest.RequestType requestType) {
         switch (requestType) {
             case POST:
@@ -224,12 +228,6 @@ public final class HttpConnection extends ArangoConnection {
                         headers.set(CONTENT_TYPE, getContentType());
                     }
                 });
-    }
-
-    private static void addHeaders(final ArangoRequest request, final HttpHeaders headers) {
-        for (final Entry<String, String> header : request.getHeaderParam().entrySet()) {
-            headers.add(header.getKey(), header.getValue());
-        }
     }
 
     private Mono<ArangoResponse> buildResponse(final HttpClientResponse resp, final ByteBufMono bytes) {

@@ -33,6 +33,13 @@ import java.util.concurrent.CompletableFuture;
  */
 public class EchoHttpServer {
 
+    private static NettyOutbound echo(HttpServerRequest request, HttpServerResponse response) {
+        return response
+                .headers(request.requestHeaders())
+                .header("uri", request.uri())
+                .send(request.receive().retain());
+    }
+
     public CompletableFuture<DisposableServer> start() {
         CompletableFuture<DisposableServer> done = new CompletableFuture<>();
 
@@ -52,13 +59,6 @@ public class EchoHttpServer {
         ).start();
 
         return done;
-    }
-
-    private static NettyOutbound echo(HttpServerRequest request, HttpServerResponse response) {
-        return response
-                .headers(request.requestHeaders())
-                .header("uri", request.uri())
-                .send(request.receive().retain());
     }
 
 }

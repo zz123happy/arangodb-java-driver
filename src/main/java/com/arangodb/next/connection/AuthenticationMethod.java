@@ -33,12 +33,6 @@ import java.util.Base64;
  */
 public interface AuthenticationMethod {
 
-    String getUser();
-
-    String getHttpAuthorizationHeader();
-
-    ByteBuf getVstAuthenticationMessage();
-
     static AuthenticationMethod ofJwt(final String user, final String jwt) {
         return ImmutableJwtAuthenticationMethod.of(user, jwt);
     }
@@ -46,6 +40,12 @@ public interface AuthenticationMethod {
     static AuthenticationMethod ofBasic(final String user, final String password) {
         return ImmutableBasicAuthenticationMethod.of(user, password);
     }
+
+    String getUser();
+
+    String getHttpAuthorizationHeader();
+
+    ByteBuf getVstAuthenticationMessage();
 
     /**
      * @see <a href="https://github.com/arangodb/velocystream#authentication">API</a>

@@ -44,11 +44,8 @@ import java.util.stream.IntStream;
 public class ProxiedActiveFailoverDeployment extends ProxiedContainerDeployment {
 
     private final Logger log = LoggerFactory.getLogger(ProxiedActiveFailoverDeployment.class);
-
-    private volatile Network network;
-
     private final Map<String, GenericContainer<?>> servers;
-
+    private volatile Network network;
     private volatile ToxiproxyContainer toxiproxy;
 
     ProxiedActiveFailoverDeployment(int servers) {

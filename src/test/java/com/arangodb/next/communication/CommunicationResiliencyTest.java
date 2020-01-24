@@ -54,10 +54,9 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 @Testcontainers
 class CommunicationResiliencyTest {
 
-    private final ImmutableCommunicationConfig.Builder config;
-
     @Container
     private final static ProxiedContainerDeployment deployment = ProxiedContainerDeployment.ofCluster(2, 2);
+    private final ImmutableCommunicationConfig.Builder config;
 
     CommunicationResiliencyTest() {
         config = CommunicationConfig.builder()

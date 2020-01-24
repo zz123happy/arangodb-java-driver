@@ -50,7 +50,8 @@ class CommunicationPerformanceTest {
     private volatile long chunkStart;
 
     @Test
-    @SuppressWarnings("squid:S2699")    // Tests should include assertions
+    @SuppressWarnings("squid:S2699")
+        // Tests should include assertions
     void infiniteParallelLoop() {
         int requests = 10_000_000;
         int chunkSize = 1_000_000;

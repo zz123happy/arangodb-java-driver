@@ -29,5 +29,6 @@ import java.util.List;
 @Value.Immutable
 interface MyClass {
     String getName();
+
     List<String> getRoles();
 }

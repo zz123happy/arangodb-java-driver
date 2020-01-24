@@ -54,9 +54,9 @@ class BasicConnectionTest {
 
     private static final String SSL_TRUSTSTORE = "/example.truststore";
     private static final String SSL_TRUSTSTORE_PASSWORD = "12345678";
-
+    @Container
+    private static final ContainerDeployment deployment = ContainerDeployment.ofSingleServerWithSsl();
     private static HostDescription host;
-
     private final ConnectionConfig config;
 
     BasicConnectionTest() throws Exception {
@@ -94,12 +94,26 @@ class BasicConnectionTest {
         );
     }
 
-    @Container
-    private static final ContainerDeployment deployment = ContainerDeployment.ofSingleServerWithSsl();
-
     @BeforeAll
     static void setup() {
         host = deployment.getHosts().get(0);
+    }
+
+    private static SslContext getSslContext() throws Exception {
+        final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        ks.load(SslTls13ConnectionTest.class.getResourceAsStream(SSL_TRUSTSTORE), SSL_TRUSTSTORE_PASSWORD.toCharArray());
+
+        final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(ks, SSL_TRUSTSTORE_PASSWORD.toCharArray());
+
+        final TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(ks);
+
+        return SslContextBuilder
+                .forClient()
+                .sslProvider(SslProvider.JDK)
+                .trustManager(tmf)
+                .build();
     }
 
     @ParameterizedTest
@@ -157,23 +171,6 @@ class BasicConnectionTest {
         Throwable thrown = catchThrowable(() -> new ConnectionFactoryImpl(config, protocol, DEFAULT_SCHEDULER_FACTORY).create(wrongHost, authenticationMethod)
                 .block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(IOException.class);
-    }
-
-    private static SslContext getSslContext() throws Exception {
-        final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-        ks.load(SslTls13ConnectionTest.class.getResourceAsStream(SSL_TRUSTSTORE), SSL_TRUSTSTORE_PASSWORD.toCharArray());
-
-        final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        kmf.init(ks, SSL_TRUSTSTORE_PASSWORD.toCharArray());
-
-        final TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        tmf.init(ks);
-
-        return SslContextBuilder
-                .forClient()
-                .sslProvider(SslProvider.JDK)
-                .trustManager(tmf)
-                .build();
     }
 
 }

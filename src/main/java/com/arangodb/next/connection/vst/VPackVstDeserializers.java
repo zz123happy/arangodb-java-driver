@@ -49,14 +49,14 @@ final class VPackVstDeserializers {
                 .responseCode(vpack.get(2).getAsInt());
 
         if (vpack.size() > 3) {
-             Iterator<Map.Entry<String, VPackSlice>> metaIterator = vpack.get(3).objectIterator();
-             while (metaIterator.hasNext()) {
-                 Map.Entry<String, VPackSlice> meta = metaIterator.next();
-                 builder.putMeta(meta.getKey(), meta.getValue().getAsString());
-             }
-         }
+            Iterator<Map.Entry<String, VPackSlice>> metaIterator = vpack.get(3).objectIterator();
+            while (metaIterator.hasNext()) {
+                Map.Entry<String, VPackSlice> meta = metaIterator.next();
+                builder.putMeta(meta.getKey(), meta.getValue().getAsString());
+            }
+        }
 
-         return builder.build();
-     }
+        return builder.build();
+    }
 
 }

@@ -13,8 +13,8 @@ LOCATION=$(pwd)/$(dirname "$0")
 
 docker network create arangodb --subnet 172.28.0.0/16
 
-echo "Averysecretword" > "$LOCATION"/jwtSecret
-docker run --rm -v "$LOCATION"/jwtSecret:/jwtSecret "$1" arangodb auth header --auth.jwt-secret /jwtSecret > "$LOCATION"/jwtHeader
+echo "Averysecretword" >"$LOCATION"/jwtSecret
+docker run --rm -v "$LOCATION"/jwtSecret:/jwtSecret "$1" arangodb auth header --auth.jwt-secret /jwtSecret >"$LOCATION"/jwtHeader
 AUTHORIZATION_HEADER=$(cat "$LOCATION"/jwtHeader)
 
 echo "Starting containers..."
@@ -26,8 +26,7 @@ docker run -d -v "$LOCATION"/jwtSecret:/jwtSecret -e ARANGO_LICENSE_KEY="$ARANGO
 debug_container() {
   running=$(docker inspect -f '{{.State.Running}}' "$1")
 
-  if [ "$running" = false ]
-  then
+  if [ "$running" = false ]; then
     echo "$1 is not running!"
     echo "---"
     docker logs "$1"
@@ -38,28 +37,28 @@ debug_container() {
 
 debug() {
   for c in server1 \
-           server2 \
-           server3 ; do
-      debug_container $c
+    server2 \
+    server3; do
+    debug_container $c
   done
 }
 
 wait_server() {
-    # shellcheck disable=SC2091
-    until $(curl --output /dev/null --silent --head --fail -i -H "$AUTHORIZATION_HEADER" "http://$1/_api/version"); do
-        printf '.'
-        debug
-        sleep 1
-    done
+  # shellcheck disable=SC2091
+  until $(curl --output /dev/null --silent --head --fail -i -H "$AUTHORIZATION_HEADER" "http://$1/_api/version"); do
+    printf '.'
+    debug
+    sleep 1
+  done
 }
 
 echo "Waiting..."
 
 # Wait for agents:
 for a in 172.28.3.1:8529 \
-         172.28.3.2:8529 \
-         172.28.3.3:8529 ; do
-    wait_server $a
+  172.28.3.2:8529 \
+  172.28.3.3:8529; do
+  wait_server $a
 done
 
 docker exec server1 arangosh --server.authentication=false --javascript.execute-string='require("org/arangodb/users").update("root", "test")'

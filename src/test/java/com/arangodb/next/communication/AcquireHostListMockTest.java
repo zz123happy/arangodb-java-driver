@@ -58,78 +58,6 @@ public class AcquireHostListMockTest {
                 .build();
     }
 
-    static abstract class MockConnectionFactory implements ConnectionFactory {
-
-        private final ContentType contentType;
-
-        public MockConnectionFactory(ContentType contentType) {
-            this.contentType = contentType;
-        }
-
-        abstract List<HostDescription> getHosts();
-
-        protected void stubIsConnected(ArangoConnection connection, HostDescription host) {
-            when(connection.isConnected()).thenReturn(Mono.just(true));
-        }
-
-        private static String getHostUrl(HostDescription hostDescription) {
-            final boolean isIpv6 = hostDescription.getHost().contains(":");
-            String hostUrl = "tcp://";
-
-            if (isIpv6) {
-                hostUrl += "[";
-            }
-
-            hostUrl += hostDescription.getHost();
-
-            if (isIpv6) {
-                hostUrl += "]";
-            }
-
-            hostUrl += ":" + hostDescription.getPort();
-            return hostUrl;
-        }
-
-        protected Mono<ArangoResponse> getClusterEndpointsResponse() {
-            byte[] responseBody = ArangoSerializer
-                    .of(contentType)
-                    .serialize(
-                            ImmutableClusterEndpoints.builder()
-                                    .error(false)
-                                    .code(200)
-                                    .endpoints(getHosts().stream()
-                                            .map(it -> Collections.singletonMap("endpoint", getHostUrl(it)))
-                                            .collect(Collectors.toList()))
-                                    .build()
-                    );
-
-            return Mono.just(
-                    ArangoResponse.builder()
-                            .responseCode(200)
-                            .body(responseBody)
-                            .build()
-            );
-        }
-
-        protected void stubRequestClusterEndpoints(ArangoConnection connection) {
-            when(connection.execute(any(ArangoRequest.class))).thenReturn(getClusterEndpointsResponse());
-        }
-
-        @Override
-        public Mono<ArangoConnection> create(HostDescription host, AuthenticationMethod authentication) {
-            ArangoConnection connection = mock(ArangoConnection.class);
-            stubIsConnected(connection, host);
-            stubRequestClusterEndpoints(connection);
-            when(connection.close()).thenReturn(Mono.empty());
-            return Mono.just(connection);
-        }
-
-        @Override
-        public void close() {
-        }
-
-    }
-
     @ParameterizedTest
     @EnumSource(ContentType.class)
     void newHosts(ContentType contentType) {
@@ -271,13 +199,13 @@ public class AcquireHostListMockTest {
                         ArangoResponse.builder()
                                 .responseCode(500)
                                 .body(
-                                                ArangoSerializer.of(contentType).serialize(ImmutableErrorEntity
-                                                        .builder()
-                                                        .errorMessage("Error 8000")
-                                                        .errorNum(8000)
-                                                        .code(500)
-                                                        .error(true)
-                                                        .build())
+                                        ArangoSerializer.of(contentType).serialize(ImmutableErrorEntity
+                                                .builder()
+                                                .errorMessage("Error 8000")
+                                                .errorNum(8000)
+                                                .code(500)
+                                                .error(true)
+                                                .build())
                                 )
                                 .build()
                 ));
@@ -313,13 +241,13 @@ public class AcquireHostListMockTest {
                                 ArangoResponse.builder()
                                         .responseCode(500)
                                         .body(
-                                                        ArangoSerializer.of(contentType).serialize(ImmutableErrorEntity
-                                                                .builder()
-                                                                .errorMessage("Error 8000")
-                                                                .errorNum(8000)
-                                                                .code(500)
-                                                                .error(true)
-                                                                .build())
+                                                ArangoSerializer.of(contentType).serialize(ImmutableErrorEntity
+                                                        .builder()
+                                                        .errorMessage("Error 8000")
+                                                        .errorNum(8000)
+                                                        .code(500)
+                                                        .error(true)
+                                                        .build())
                                         )
                                         .build()
                         ))
@@ -354,6 +282,78 @@ public class AcquireHostListMockTest {
         ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communication.getConnectionPool();
         assertThat(connectionPool.getConnectionsByHost().keySet()).containsExactlyInAnyOrder(factory.getHosts().toArray(new HostDescription[0]));
         connectionPool.getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(CONNECTIONS_PER_HOST));
+    }
+
+    static abstract class MockConnectionFactory implements ConnectionFactory {
+
+        private final ContentType contentType;
+
+        public MockConnectionFactory(ContentType contentType) {
+            this.contentType = contentType;
+        }
+
+        private static String getHostUrl(HostDescription hostDescription) {
+            final boolean isIpv6 = hostDescription.getHost().contains(":");
+            String hostUrl = "tcp://";
+
+            if (isIpv6) {
+                hostUrl += "[";
+            }
+
+            hostUrl += hostDescription.getHost();
+
+            if (isIpv6) {
+                hostUrl += "]";
+            }
+
+            hostUrl += ":" + hostDescription.getPort();
+            return hostUrl;
+        }
+
+        abstract List<HostDescription> getHosts();
+
+        protected void stubIsConnected(ArangoConnection connection, HostDescription host) {
+            when(connection.isConnected()).thenReturn(Mono.just(true));
+        }
+
+        protected Mono<ArangoResponse> getClusterEndpointsResponse() {
+            byte[] responseBody = ArangoSerializer
+                    .of(contentType)
+                    .serialize(
+                            ImmutableClusterEndpoints.builder()
+                                    .error(false)
+                                    .code(200)
+                                    .endpoints(getHosts().stream()
+                                            .map(it -> Collections.singletonMap("endpoint", getHostUrl(it)))
+                                            .collect(Collectors.toList()))
+                                    .build()
+                    );
+
+            return Mono.just(
+                    ArangoResponse.builder()
+                            .responseCode(200)
+                            .body(responseBody)
+                            .build()
+            );
+        }
+
+        protected void stubRequestClusterEndpoints(ArangoConnection connection) {
+            when(connection.execute(any(ArangoRequest.class))).thenReturn(getClusterEndpointsResponse());
+        }
+
+        @Override
+        public Mono<ArangoConnection> create(HostDescription host, AuthenticationMethod authentication) {
+            ArangoConnection connection = mock(ArangoConnection.class);
+            stubIsConnected(connection, host);
+            stubRequestClusterEndpoints(connection);
+            when(connection.close()).thenReturn(Mono.empty());
+            return Mono.just(connection);
+        }
+
+        @Override
+        public void close() {
+        }
+
     }
 
 }

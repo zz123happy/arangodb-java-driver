@@ -41,17 +41,15 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 @Testcontainers
 class BasicConnectionNoAuthTest {
 
+    @Container
+    private static final ContainerDeployment deployment = ContainerDeployment.ofSingleServerNoAuth();
     private static HostDescription host;
-
     private final ConnectionConfig config;
 
     BasicConnectionNoAuthTest() {
         config = ConnectionConfig.builder()
                 .build();
     }
-
-    @Container
-    private static final ContainerDeployment deployment = ContainerDeployment.ofSingleServerNoAuth();
 
     @BeforeAll
     static void setup() {

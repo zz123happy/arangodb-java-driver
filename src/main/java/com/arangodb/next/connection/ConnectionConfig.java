@@ -28,7 +28,8 @@ import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Optional;
 
-import static com.arangodb.next.ArangoDefaults.*;
+import static com.arangodb.next.ArangoDefaults.CHUNK_DEFAULT_CONTENT_SIZE;
+import static com.arangodb.next.ArangoDefaults.DEFAULT_TIMEOUT;
 
 /**
  * @author Michele Rastelli

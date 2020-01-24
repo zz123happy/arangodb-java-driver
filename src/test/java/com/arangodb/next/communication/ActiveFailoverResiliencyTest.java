@@ -50,10 +50,9 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 @Testcontainers
 class ActiveFailoverResiliencyTest {
 
-    private final ImmutableCommunicationConfig.Builder config;
-
     @Container
     private final static ProxiedContainerDeployment deployment = ProxiedContainerDeployment.ofActiveFailover(3);
+    private final ImmutableCommunicationConfig.Builder config;
 
     ActiveFailoverResiliencyTest() {
         config = CommunicationConfig.builder()

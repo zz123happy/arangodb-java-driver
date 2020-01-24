@@ -40,8 +40,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MultiChunkConnectionTest {
 
     private static final int CHUNK_SIZE = 8;
+    @Container
+    private static final ContainerDeployment deployment =
+            ContainerDeployment.ofSingleServerNoAuth(String.valueOf(CHUNK_SIZE));
     private static HostDescription host;
-
     private final ConnectionConfig config;
 
     MultiChunkConnectionTest() {
@@ -49,10 +51,6 @@ class MultiChunkConnectionTest {
                 .chunkSize(CHUNK_SIZE)
                 .build();
     }
-
-    @Container
-    private static final ContainerDeployment deployment =
-            ContainerDeployment.ofSingleServerNoAuth(String.valueOf(CHUNK_SIZE));
 
     @BeforeAll
     static void setup() {

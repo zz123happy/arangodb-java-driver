@@ -55,29 +55,19 @@ public final class VstConnection extends ArangoConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(VstConnection.class);
 
     private static final byte[] PROTOCOL_HEADER = "VST/1.1\r\n\r\n".getBytes(StandardCharsets.UTF_8);
-
-    private volatile boolean initialized = false;
-    private volatile boolean closing = false;
-
     private final HostDescription host;
     private final ConnectionConfig config;
     private final MessageStore messageStore;
     private final Scheduler scheduler;
     private final VstReceiver vstReceiver;
-
+    // mono that will be resolved when the closing process is finished
+    private final MonoProcessor<Void> closed;
+    private volatile boolean initialized = false;
+    private volatile boolean closing = false;
     // state managed by scheduler thread arango-vst-X
     private long mId = 0L;
     private MonoProcessor<Connection> session;
-
-    // mono that will be resolved when the closing process is finished
-    private final MonoProcessor<Void> closed;
     private ConnectionState connectionState = ConnectionState.DISCONNECTED;
-
-    private enum ConnectionState {
-        CONNECTING,
-        CONNECTED,
-        DISCONNECTED
-    }
 
     public VstConnection(final HostDescription hostDescription,
                          @Nullable final AuthenticationMethod authenticationMethod,
@@ -91,6 +81,10 @@ public final class VstConnection extends ArangoConnection {
         messageStore = new MessageStore();
         scheduler = schedulerFactory.getScheduler();
         vstReceiver = new VstReceiver(messageStore::resolve);
+    }
+
+    static void assertCorrectThread() {
+        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
     }
 
     @Override
@@ -329,8 +323,10 @@ public final class VstConnection extends ArangoConnection {
         session.onNext(connection);
     }
 
-    static void assertCorrectThread() {
-        assert Thread.currentThread().getName().startsWith(THREAD_PREFIX) : "Wrong thread!";
+    private enum ConnectionState {
+        CONNECTING,
+        CONNECTED,
+        DISCONNECTED
     }
 
 }

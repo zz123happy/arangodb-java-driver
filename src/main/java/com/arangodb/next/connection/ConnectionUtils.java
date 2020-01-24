@@ -25,13 +25,13 @@ package com.arangodb.next.connection;
  */
 public final class ConnectionUtils {
 
-    private ConnectionUtils() {
-    }
-
     public static final ArangoRequest ENDPOINTS_REQUEST = ArangoRequest.builder()
             .database("_system")
             .path("/_api/cluster/endpoints")
             .requestType(ArangoRequest.RequestType.GET)
             .build();
+
+    private ConnectionUtils() {
+    }
 
 }

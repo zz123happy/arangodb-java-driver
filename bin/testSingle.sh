@@ -11,7 +11,6 @@
 # EXAMPLE:
 #   ./testSingle.sh docker.io/arangodb/arangodb:3.6.0
 
-
 # exit when any command fails
 set -e
 

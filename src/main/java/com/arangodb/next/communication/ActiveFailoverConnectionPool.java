@@ -49,14 +49,14 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
         findLeaderSemaphore = new Semaphore(1);
     }
 
-    @Override
-    public Mono<Void> updateConnections(final Set<HostDescription> hostList) {
-        return super.updateConnections(hostList).then(Mono.defer(this::findLeader));
-    }
-
     private static boolean isReadRequest(final ArangoRequest request) {
         return ArangoRequest.RequestType.GET.equals(request.getRequestType())
                 || ArangoRequest.RequestType.HEAD.equals(request.getRequestType());
+    }
+
+    @Override
+    public Mono<Void> updateConnections(final Set<HostDescription> hostList) {
+        return super.updateConnections(hostList).then(Mono.defer(this::findLeader));
     }
 
     @Override

@@ -19,11 +19,9 @@ public class ProxiedSingleServerDeployment extends ProxiedContainerDeployment {
     private static final Logger log = LoggerFactory.getLogger(ProxiedSingleServerDeployment.class);
 
     private final int PORT = 8529;
-
-    private volatile Network network;
     private final ToxiproxyContainer toxiproxy;
     private final GenericContainer<?> container;
-
+    private volatile Network network;
     private ToxiproxyContainer.ContainerProxy proxy;
 
     public ProxiedSingleServerDeployment() {

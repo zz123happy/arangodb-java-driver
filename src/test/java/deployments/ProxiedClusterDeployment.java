@@ -13,7 +13,10 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -23,13 +26,11 @@ public class ProxiedClusterDeployment extends ProxiedContainerDeployment {
 
     private final Logger log = LoggerFactory.getLogger(ProxiedClusterDeployment.class);
     private final String DOCKER_COMMAND = "arangodb --auth.jwt-secret /jwtSecret ";
-
-    private volatile Network network;
-    private volatile ToxiproxyContainer toxiproxy;
-
     private final List<GenericContainer<?>> agents;
     private final List<GenericContainer<?>> dbServers;
     private final Map<String, GenericContainer<?>> coordinators;
+    private volatile Network network;
+    private volatile ToxiproxyContainer toxiproxy;
 
     ProxiedClusterDeployment(int dbServers, int coordinators) {
 

@@ -23,10 +23,8 @@ import java.util.stream.IntStream;
 public class ActiveFailoverDeployment extends ContainerDeployment {
 
     private final Logger log = LoggerFactory.getLogger(ActiveFailoverDeployment.class);
-
-    private volatile Network network;
-
     private final Map<String, GenericContainer<?>> servers;
+    private volatile Network network;
 
     ActiveFailoverDeployment(int servers) {
 

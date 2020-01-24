@@ -59,36 +59,6 @@ public class ActiveFailoverCommunicationMockTest {
                 .build();
     }
 
-    static abstract class MockConnectionFactory implements ConnectionFactory {
-
-        protected void stubIsConnected(ArangoConnection connection, HostDescription host) {
-            when(connection.isConnected()).thenReturn(Mono.just(true));
-        }
-
-        protected void stubUserRequest(ArangoConnection connection, HostDescription host) {
-            when(connection.requestUser()).thenReturn(Mono.just(ArangoResponse.builder().responseCode(200).build()));
-        }
-
-        protected void stubExecute(ArangoConnection connection, HostDescription host) {
-            when(connection.execute(any(ArangoRequest.class))).thenReturn(Mono.just(ArangoResponse.builder().responseCode(200).build()));
-        }
-
-        @Override
-        public Mono<ArangoConnection> create(HostDescription host, AuthenticationMethod authentication) {
-            ArangoConnection connection = mock(ArangoConnection.class);
-            stubIsConnected(connection, host);
-            stubUserRequest(connection, host);
-            stubExecute(connection, host);
-            when(connection.close()).thenReturn(Mono.empty());
-            return Mono.just(connection);
-        }
-
-        @Override
-        public void close() {
-        }
-
-    }
-
     @ParameterizedTest
     @EnumSource(ContentType.class)
     void findLeader(ContentType contentType) {
@@ -244,6 +214,36 @@ public class ActiveFailoverCommunicationMockTest {
         Throwable thrown = catchThrowable(() -> communication.execute(VERSION_REQUEST).block());
         assertThat(thrown).hasMessage("disconnected!");
         assertThat(connectionPool.getLeader()).isEqualTo(hosts.get(1));
+    }
+
+    static abstract class MockConnectionFactory implements ConnectionFactory {
+
+        protected void stubIsConnected(ArangoConnection connection, HostDescription host) {
+            when(connection.isConnected()).thenReturn(Mono.just(true));
+        }
+
+        protected void stubUserRequest(ArangoConnection connection, HostDescription host) {
+            when(connection.requestUser()).thenReturn(Mono.just(ArangoResponse.builder().responseCode(200).build()));
+        }
+
+        protected void stubExecute(ArangoConnection connection, HostDescription host) {
+            when(connection.execute(any(ArangoRequest.class))).thenReturn(Mono.just(ArangoResponse.builder().responseCode(200).build()));
+        }
+
+        @Override
+        public Mono<ArangoConnection> create(HostDescription host, AuthenticationMethod authentication) {
+            ArangoConnection connection = mock(ArangoConnection.class);
+            stubIsConnected(connection, host);
+            stubUserRequest(connection, host);
+            stubExecute(connection, host);
+            when(connection.close()).thenReturn(Mono.empty());
+            return Mono.just(connection);
+        }
+
+        @Override
+        public void close() {
+        }
+
     }
 
 }

@@ -50,10 +50,9 @@ class ConnectionResiliencyTest {
 //        Hooks.onOperatorDebug();
 //    }
 
-    private final ImmutableConnectionConfig.Builder config;
-
     @Container
     private static final ProxiedContainerDeployment deployment = ProxiedContainerDeployment.ofSingleServer();
+    private final ImmutableConnectionConfig.Builder config;
 
     ConnectionResiliencyTest() {
         config = ConnectionConfig.builder();

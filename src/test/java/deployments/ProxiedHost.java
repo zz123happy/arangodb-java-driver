@@ -37,11 +37,11 @@ import reactor.netty.http.client.HttpClient;
 @Value.Immutable
 public abstract class ProxiedHost {
 
+    private static final Logger log = LoggerFactory.getLogger(ProxiedHost.class);
+
     static ImmutableProxiedHost.Builder builder() {
         return ImmutableProxiedHost.builder();
     }
-
-    private static final Logger log = LoggerFactory.getLogger(ProxiedHost.class);
 
     abstract ToxiproxyContainer getToxiproxy();
 

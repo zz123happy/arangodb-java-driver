@@ -75,6 +75,7 @@ public abstract class ArangoConnection {
 
     /**
      * Executes a request to /_api/user/{username}
+     *
      * @return server response
      */
     public final Mono<ArangoResponse> requestUser() {

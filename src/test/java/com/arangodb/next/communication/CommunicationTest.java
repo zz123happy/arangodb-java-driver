@@ -46,11 +46,10 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 @Testcontainers
 class CommunicationTest {
 
-    private final ImmutableCommunicationConfig.Builder config;
-    private final List<HostDescription> hosts;
-
     @Container
     private final static ContainerDeployment deployment = ContainerDeployment.ofCluster(2, 2);
+    private final ImmutableCommunicationConfig.Builder config;
+    private final List<HostDescription> hosts;
 
     CommunicationTest() {
         hosts = deployment.getHosts();
