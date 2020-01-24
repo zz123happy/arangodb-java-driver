@@ -178,7 +178,7 @@ class ConnectionResiliencyTest {
             Throwable thrown = catchThrowable(() -> performRequest(connection));
             assertThat(Exceptions.unwrap(thrown)).isInstanceOfAny(IOException.class, TimeoutException.class);
             deployment.getProxiedHosts().forEach(ProxiedHost::enableProxy);
-            performRequest(connection, 1);
+            performRequest(connection, 2);
             assertThat(connection.isConnected().block()).isTrue();
         }
 
