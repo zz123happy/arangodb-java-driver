@@ -141,10 +141,9 @@
                 <version>2.22.2</version>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
-                    <includes>
-                        <include>**/*Test.java</include>
-                        <include>**/*Example.java</include>
-                    </includes>
+                    <excludes>
+                        <exclude>**/*ResiliencyTest.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>

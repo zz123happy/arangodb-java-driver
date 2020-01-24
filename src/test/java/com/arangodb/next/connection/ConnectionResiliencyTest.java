@@ -23,6 +23,7 @@ package com.arangodb.next.connection;
 import deployments.ProxiedContainerDeployment;
 import deployments.ProxiedHost;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.testcontainers.junit.jupiter.Container;
@@ -39,6 +40,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 /**
  * @author Michele Rastelli
  */
+@Disabled
 @Testcontainers
 // "Thread.sleep" should not be used in tests
 @SuppressWarnings("squid:S2925")
