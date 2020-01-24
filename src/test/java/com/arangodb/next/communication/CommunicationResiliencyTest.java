@@ -29,7 +29,7 @@ import com.arangodb.next.exceptions.NoHostsAvailableException;
 import deployments.ProxiedContainerDeployment;
 import deployments.ProxiedHost;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.testcontainers.junit.jupiter.Container;
@@ -50,7 +50,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 /**
  * @author Michele Rastelli
  */
-@Disabled
+@Tag("resiliency")
 @Testcontainers
 class CommunicationResiliencyTest {
 

@@ -59,7 +59,7 @@ jobs:
       - name: Info
         run: mvn -version
       - name: Test
-        run: mvn -e --no-transfer-progress test -Dtest.docker.image="${{matrix.docker-img}}" -Darango.license.key="$ARANGO_LICENSE_KEY"
+        run: mvn -e --no-transfer-progress test -DexcludedGroups="resiliency" -Dtest.docker.image="${{matrix.docker-img}}" -Darango.license.key="$ARANGO_LICENSE_KEY"
         env:
           ARANGO_LICENSE_KEY: ${{secrets.ARANGO_LICENSE_KEY}}
 
