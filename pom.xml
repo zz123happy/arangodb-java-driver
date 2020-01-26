@@ -213,7 +213,7 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>8.28</version>
+                        <version>8.29</version>
                         <exclusions>
                             <exclusion>
                                 <groupId>com.sun</groupId>
@@ -321,19 +321,19 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.12.4</version>
+            <version>1.12.5</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.12.4</version>
+            <version>1.12.5</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>toxiproxy</artifactId>
-            <version>1.12.4</version>
+            <version>1.12.5</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -349,7 +349,7 @@
             <dependency>
                 <groupId>io.projectreactor</groupId>
                 <artifactId>reactor-bom</artifactId>
-                <version>Dysprosium-SR2</version>
+                <version>Dysprosium-SR4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
