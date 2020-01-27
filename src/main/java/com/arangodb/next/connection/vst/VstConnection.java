@@ -220,6 +220,10 @@ public final class VstConnection extends ArangoConnection {
     }
 
     private Mono<Void> publishOnScheduler(final Runnable task) {
+        if (scheduler.isDisposed()) {
+            LOGGER.warn("Scheduler has been disposed!");
+            return Mono.empty();
+        }
         return Mono.defer(() -> {
             assertCorrectThread();
             task.run();
