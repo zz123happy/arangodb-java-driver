@@ -203,6 +203,7 @@ class ConnectionPoolImpl implements ConnectionPool {
                 .mapToObj(i -> Mono.defer(() -> connectionFactory.create(host, authentication))
                         .retry(config.getRetries())
                         .doOnNext(it -> LOGGER.debug("created connection to host: {}", host))
+                        .checkpoint("[ConnectionPoolImpl.createHostConnections()]: cannot connect to host: " + host)
                         .doOnError(e -> LOGGER.warn("Error creating connection:", e))
                         .onErrorResume(e -> Mono.empty()) // skips the failing connections
                 )

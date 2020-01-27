@@ -32,6 +32,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -169,6 +170,15 @@ public class AcquireHostListMockTest {
                     when(connection.isConnected()).thenReturn(Mono.just(false));
                 } else {
                     when(connection.isConnected()).thenReturn(Mono.just(true));
+                }
+            }
+
+            @Override
+            public Mono<ArangoConnection> create(HostDescription host, AuthenticationMethod authentication) {
+                if (unreachableHosts.contains(host)) {
+                    return Mono.error(new IOException("Connection closed!"));
+                } else {
+                    return super.create(host, authentication);
                 }
             }
         };

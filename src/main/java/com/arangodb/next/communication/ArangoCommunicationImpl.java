@@ -124,7 +124,9 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
 
     private Mono<ArangoResponse> execute(final ArangoRequest request, final ConnectionPool cp) {
         LOGGER.debug("execute({}, {})", request, cp);
-        return Mono.defer(() -> cp.execute(request)).timeout(config.getTimeout());
+        return Mono.defer(() -> cp.execute(request))
+                .checkpoint("[ArangoCommunicationImpl.execute()]")
+                .timeout(config.getTimeout());
     }
 
     @Override
@@ -145,7 +147,9 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
             final HostDescription host
     ) {
         LOGGER.debug("execute({}, {})", request, host);
-        return Mono.defer(() -> connectionPool.execute(request, host)).timeout(config.getTimeout());
+        return Mono.defer(() -> connectionPool.execute(request, host))
+                .checkpoint("[ArangoCommunicationImpl.execute()]")
+                .timeout(config.getTimeout());
     }
 
     @Override
@@ -202,6 +206,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
 
         return execute(ENDPOINTS_REQUEST, contactConnectionPool)
                 .map(this::parseAcquireHostListResponse)
+                .checkpoint("[ArangoCommunicationImpl.updateHostList()]")
                 .doOnError(e -> LOGGER.warn("Error acquiring hostList, retrying...", e))
                 .retry(config.getRetries())
                 .doOnNext(acquiredHostList -> LOGGER.debug("Acquired hosts: {}", acquiredHostList))
@@ -227,6 +232,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
         if (config.getAcquireHostList()) {
             scheduledUpdateHostListSubscription = Flux.interval(config.getAcquireHostListInterval())
                     .flatMap(it -> updateHostList())
+                    .checkpoint("[ArangoCommunicationImpl.scheduleUpdateHostList()]")
                     .subscribe();
             return updateHostList();
         } else {
