@@ -23,10 +23,4 @@ Check results [here](https://github.com/ArangoDB-Community/mirror-arangodb-java-
 
 ## SonarCloud
 
-Set the environment variable `SONAR_LOGIN` and run:
-
-```shell script
-mvn clean verify sonar:sonar -Dgpg.skip
-```
-
 Check results [here](https://sonarcloud.io/dashboard?id=ArangoDB-Community_mirror-arangodb-java-driver).

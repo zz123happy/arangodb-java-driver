@@ -104,11 +104,14 @@ public final class HttpConnection extends ArangoConnection {
         initialized = true;
 
         // perform a request to check if credentials are ok
-        return requestUser().doOnNext(response -> {
-            if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
-                throw ArangoConnectionAuthenticationException.of(response);
-            }
-        }).map(it -> this);
+        return requestUser()
+                .doOnNext(response -> {
+                    if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
+                        connected = false;
+                        throw ArangoConnectionAuthenticationException.of(response);
+                    }
+                })
+                .map(it -> this);
     }
 
     @Override
@@ -119,12 +122,6 @@ public final class HttpConnection extends ArangoConnection {
                 .request(requestTypeToHttpMethod(request.getRequestType())).uri(url)
                 .send(Mono.just(IOUtils.createBuffer(request.getBody())))
                 .responseSingle(this::buildResponse)
-                .doOnNext(response -> {
-                    if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
-                        LOGGER.debug("in execute(): throwing ArangoConnectionAuthenticationException()");
-                        throw ArangoConnectionAuthenticationException.of(response);
-                    }
-                })
                 .timeout(Duration.ofMillis(config.getTimeout()))
                 .doOnNext(response -> connected = true)
                 .doOnError(throwable -> close().subscribe());
