@@ -73,7 +73,7 @@ class ConnectionPoolImpl implements ConnectionPool {
             LOGGER.debug("execute: picked host {}", host);
             connection = getRandomItem(connectionsByHost.get(host));
         } catch (NoSuchElementException e) {
-            return Mono.error(NoHostsAvailableException.builder().cause(e).build());
+            return Mono.error(NoHostsAvailableException.builder().build());
         }
         return connection.execute(request);
     }
@@ -163,7 +163,7 @@ class ConnectionPoolImpl implements ConnectionPool {
             HostDescription host = getRandomItem(connectionsByHost.keySet());
             return Conversation.of(host, level);
         } catch (NoSuchElementException e) {
-            throw NoHostsAvailableException.builder().cause(e).build();
+            throw NoHostsAvailableException.builder().build();
         }
     }
 
