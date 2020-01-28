@@ -216,13 +216,15 @@ public final class VstConnection extends ArangoConnection {
      * @return the supplied mono
      */
     private <T> Mono<T> publishOnScheduler(final Supplier<Mono<T>> task) {
+        if (scheduler.isDisposed()) {
+            return Mono.error(new IllegalStateException("Scheduler has been disposed!"));
+        }
         return Mono.defer(task).subscribeOn(scheduler);
     }
 
     private Mono<Void> publishOnScheduler(final Runnable task) {
         if (scheduler.isDisposed()) {
-            LOGGER.warn("Scheduler has been disposed!");
-            return Mono.empty();
+            return Mono.error(new IllegalStateException("Scheduler has been disposed!"));
         }
         return Mono.defer(() -> {
             assertCorrectThread();
