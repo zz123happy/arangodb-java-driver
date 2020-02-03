@@ -81,18 +81,3 @@ jobs:
           ARANGO_LICENSE_KEY: ${{secrets.ARANGO_LICENSE_KEY}}
           SONAR_LOGIN: ${{secrets.SONAR_LOGIN}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-
-  deploy-snapshot:
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v1
-      - name: Set up JDK
-        uses: actions/setup-java@v1
-        with:
-          java-version: 11
-      - name: Info
-        run: mvn -version
-      - name: Deploy
-        run: mvn deploy -Dregistry=https://maven.pkg.github.com/ArangoDB-Community -Dtoken=${{secrets.GITHUB_TOKEN}} -Dgpg.skip=true -DskipTests=true
