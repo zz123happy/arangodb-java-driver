@@ -33,7 +33,7 @@ import java.util.Objects;
  */
 public class ContainerUtils {
 
-    private static final String DEFAULT_DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.6.0";
+    private static final String DEFAULT_DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.6.1";
     private static final Logger log = LoggerFactory.getLogger(ContainerUtils.class);
 
     static String getImage() {

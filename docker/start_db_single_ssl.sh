@@ -5,7 +5,7 @@
 #   ./start_db_single_ssl.sh <dockerImage>
 
 # EXAMPLE:
-#   ./start_db_single_ssl.sh docker.io/arangodb/arangodb:3.6.0
+#   ./start_db_single_ssl.sh docker.io/arangodb/arangodb:3.6.1
 
 docker pull "$1"
 
