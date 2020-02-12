@@ -86,7 +86,7 @@ public interface CommunicationConfig {
      */
     @Value.Default
     default boolean getAcquireHostList() {
-        return true;
+        return false;
     }
 
     /**

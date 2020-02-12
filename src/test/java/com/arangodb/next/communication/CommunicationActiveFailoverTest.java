@@ -54,6 +54,7 @@ class CommunicationActiveFailoverTest {
         config = CommunicationConfig.builder()
                 .topology(ArangoTopology.ACTIVE_FAILOVER)
                 .addAllHosts(hosts)
+                .acquireHostList(true)
                 .authenticationMethod(deployment.getAuthentication());
     }
 

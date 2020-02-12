@@ -55,6 +55,7 @@ class CommunicationTest {
         hosts = deployment.getHosts();
         config = CommunicationConfig.builder()
                 .addAllHosts(hosts)
+                .acquireHostList(true)
                 .authenticationMethod(deployment.getAuthentication());
     }
 

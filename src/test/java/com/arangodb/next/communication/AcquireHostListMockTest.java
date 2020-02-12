@@ -54,6 +54,7 @@ public class AcquireHostListMockTest {
     private static CommunicationConfig getConfig(ContentType contentType) {
         return CommunicationConfig.builder()
                 .addHosts(initialHost)
+                .acquireHostList(true)
                 .contentType(contentType)
                 .connectionsPerHost(CONNECTIONS_PER_HOST)
                 .build();
