@@ -1,5 +1,6 @@
 # dev-README
 
+
 ## compile
 
 ```shell script
@@ -34,7 +35,13 @@ To trigger GH Actions:
 Check results [here](https://github.com/ArangoDB-Community/mirror-arangodb-java-driver/actions).
 
 
-
 ## SonarCloud
 
 Check results [here](https://sonarcloud.io/dashboard?id=ArangoDB-Community_mirror-arangodb-java-driver).
+
+
+## check dependecies updates
+
+```shell script
+mvn versions:display-dependency-updates
+```
