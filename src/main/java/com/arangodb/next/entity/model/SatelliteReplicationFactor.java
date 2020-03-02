@@ -28,9 +28,11 @@ import org.immutables.value.Value;
 @Value.Immutable
 public interface SatelliteReplicationFactor extends ReplicationFactor<String> {
 
+    String VALUE = "satellite";
+
     @Override
     default String getValue() {
-        return "satellite";
+        return VALUE;
     }
 
 }
