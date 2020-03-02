@@ -18,7 +18,7 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity;
+package com.arangodb.next.entity.model;
 
 
 import com.arangodb.next.connection.HostDescription;

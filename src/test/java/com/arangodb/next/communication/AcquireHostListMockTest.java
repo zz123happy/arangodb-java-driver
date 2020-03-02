@@ -22,9 +22,9 @@ package com.arangodb.next.communication;
 
 
 import com.arangodb.next.connection.*;
-import com.arangodb.next.entity.ImmutableClusterEndpoints;
-import com.arangodb.next.entity.ImmutableErrorEntity;
 import com.arangodb.next.entity.codec.ArangoSerializer;
+import com.arangodb.next.entity.model.ImmutableClusterEndpoints;
+import com.arangodb.next.entity.model.ImmutableErrorEntity;
 import com.arangodb.next.exceptions.ArangoServerException;
 import com.arangodb.next.exceptions.NoHostsAvailableException;
 import org.junit.jupiter.params.ParameterizedTest;

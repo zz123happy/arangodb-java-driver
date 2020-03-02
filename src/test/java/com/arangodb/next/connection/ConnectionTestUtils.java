@@ -21,7 +21,7 @@
 package com.arangodb.next.connection;
 
 
-import com.arangodb.next.entity.Version;
+import com.arangodb.next.entity.model.Version;
 import com.arangodb.next.entity.codec.ArangoDeserializer;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;

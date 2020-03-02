@@ -21,7 +21,7 @@
 package com.arangodb.next.entity.codec;
 
 import com.arangodb.next.connection.ContentType;
-import com.arangodb.next.entity.*;
+import com.arangodb.next.entity.model.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 

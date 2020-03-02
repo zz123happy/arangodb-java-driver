@@ -20,9 +20,9 @@
 
 package com.arangodb.next.entity.codec;
 
-import com.arangodb.next.entity.ClusterEndpoints;
-import com.arangodb.next.entity.ErrorEntity;
-import com.arangodb.next.entity.Version;
+import com.arangodb.next.entity.model.ClusterEndpoints;
+import com.arangodb.next.entity.model.ErrorEntity;
+import com.arangodb.next.entity.model.Version;
 import com.arangodb.next.exceptions.SerdeException;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;

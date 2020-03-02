@@ -21,7 +21,7 @@
 package com.arangodb.next.entity.codec;
 
 
-import com.arangodb.next.entity.*;
+import com.arangodb.next.entity.model.*;
 import com.arangodb.velocypack.VPackSlice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

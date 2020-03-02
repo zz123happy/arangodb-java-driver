@@ -18,16 +18,12 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity;
+package com.arangodb.next.entity.model;
 
-import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
-public interface ErrorEntity extends ArangoEntity {
-    String getErrorMessage();
-
-    int getErrorNum();
+public enum Sharding {
+    flexible, single
 }

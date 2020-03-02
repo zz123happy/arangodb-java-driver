@@ -1,7 +1,7 @@
 /*
  * DISCLAIMER
  *
- * Copyright 2016 ArangoDB GmbH, Cologne, Germany
+ * Copyright 2018 ArangoDB GmbH, Cologne, Germany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,22 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.exceptions;
+package com.arangodb.next.entity.model;
 
-import com.arangodb.next.entity.model.ErrorEntity;
-import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
-public abstract class ArangoServerException extends ArangoException {
+public interface ReplicationFactor<T> {
 
-    public static ImmutableArangoServerException.Builder builder() {
-        return ImmutableArangoServerException.builder();
+    static ReplicationFactor<Integer> of(int value) {
+        return ImmutableNumericReplicationFactor.builder().value(value).build();
     }
 
-    public abstract ErrorEntity getEntity();
+    static ReplicationFactor<String> ofSatellite() {
+        return ImmutableSatelliteReplicationFactor.builder().build();
+    }
 
-    public abstract int getResponseCode();
+    T getValue();
 
 }

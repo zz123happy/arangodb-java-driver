@@ -20,7 +20,7 @@
 
 package com.arangodb.next.entity.codec;
 
-import com.arangodb.next.entity.*;
+import com.arangodb.next.entity.model.*;
 import com.arangodb.next.exceptions.SerdeException;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;

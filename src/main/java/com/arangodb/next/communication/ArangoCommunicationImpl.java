@@ -21,8 +21,8 @@
 package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.*;
-import com.arangodb.next.entity.ClusterEndpoints;
-import com.arangodb.next.entity.ErrorEntity;
+import com.arangodb.next.entity.model.ClusterEndpoints;
+import com.arangodb.next.entity.model.ErrorEntity;
 import com.arangodb.next.entity.codec.ArangoDeserializer;
 import com.arangodb.next.exceptions.ArangoServerException;
 import com.arangodb.next.exceptions.HostNotAvailableException;

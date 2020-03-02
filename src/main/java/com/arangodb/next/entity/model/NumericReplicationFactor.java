@@ -18,15 +18,17 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity;
+package com.arangodb.next.entity.model;
+
+import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
  */
-public interface ArangoEntity {
+@Value.Immutable
+public interface NumericReplicationFactor extends ReplicationFactor<Integer> {
 
-    boolean getError();
-
-    int getCode();
+    @Override
+    Integer getValue();
 
 }

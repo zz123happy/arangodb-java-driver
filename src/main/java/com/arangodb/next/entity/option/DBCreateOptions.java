@@ -18,23 +18,31 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.exceptions;
+package com.arangodb.next.entity.option;
 
-import com.arangodb.next.entity.model.ErrorEntity;
 import org.immutables.value.Value;
+
+import javax.annotation.Nullable;
 
 /**
  * @author Michele Rastelli
  */
 @Value.Immutable
-public abstract class ArangoServerException extends ArangoException {
+public interface DBCreateOptions {
 
-    public static ImmutableArangoServerException.Builder builder() {
-        return ImmutableArangoServerException.builder();
+    static ImmutableDBCreateOptions.Builder builder() {
+        return ImmutableDBCreateOptions.builder();
     }
 
-    public abstract ErrorEntity getEntity();
+    /**
+     * @return a valid database name
+     */
+    String getName();
 
-    public abstract int getResponseCode();
+    /**
+     * @return {@link DatabaseOptions}
+     */
+    @Nullable
+    DatabaseOptions getOptions();
 
 }

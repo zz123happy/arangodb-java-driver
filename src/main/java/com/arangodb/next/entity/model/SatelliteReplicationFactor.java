@@ -1,7 +1,7 @@
 /*
  * DISCLAIMER
  *
- * Copyright 2016 ArangoDB GmbH, Cologne, Germany
+ * Copyright 2018 ArangoDB GmbH, Cologne, Germany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,19 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity;
-
+package com.arangodb.next.entity.model;
 
 import org.immutables.value.Value;
-
-import javax.annotation.Nullable;
-import java.util.Map;
 
 /**
  * @author Michele Rastelli
  */
 @Value.Immutable
-public interface Version {
+public interface SatelliteReplicationFactor extends ReplicationFactor<String> {
 
-    String getServer();
-
-    String getLicense();
-
-    String getVersion();
-
-    @Nullable
-    Map<String, String> getDetails();
+    @Override
+    default String getValue() {
+        return "satellite";
+    }
 
 }
