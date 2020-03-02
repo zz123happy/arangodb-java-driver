@@ -5,6 +5,7 @@
 
 <suppressions>
     <suppress files=".*" checks="Javadoc"/>
+    <suppress files=".*" checks="TodoComment"/>
     <suppress files=".*" checks="MagicNumber"/>
     <suppress files=".*" checks="AvoidStarImport"/>
     <suppress files=".*" checks="LineLength"/>

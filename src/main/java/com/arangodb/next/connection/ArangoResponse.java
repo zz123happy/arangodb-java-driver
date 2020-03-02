@@ -51,6 +51,7 @@ public interface ArangoResponse {
     Map<String, String> getMeta();
 
     @Value.Default
+    @Value.Auxiliary
     default byte[] getBody() {
         return new byte[0];
     }

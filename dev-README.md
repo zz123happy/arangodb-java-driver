@@ -1,13 +1,27 @@
 # dev-README
 
-## code coverage report
+## compile
+
+```shell script
+mvn clean compile
+```
+
+It triggers:
+- pmd checks
+- spotbugs checks
+- checkstyle validations
+
+
+## test
 
 Run tests:
 ```shell script
 mvn clean test
 ```
 
-Coverage report: [target/site/jacoco/index.html](target/site/jacoco/index.html)
+To skip resiliency tests (which are slower): `-DexcludedGroups="resiliency"`
+
+Code coverage report is generated here: [target/site/jacoco/index.html](target/site/jacoco/index.html)
 
 
 ## GH Actions

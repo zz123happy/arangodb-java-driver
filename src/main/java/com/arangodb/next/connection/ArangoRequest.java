@@ -56,6 +56,7 @@ public interface ArangoRequest {
     Map<String, String> getHeaderParam();
 
     @Value.Default
+    @Value.Auxiliary
     default byte[] getBody() {
         return new byte[0];
     }

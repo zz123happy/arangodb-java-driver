@@ -22,6 +22,9 @@ package com.arangodb.next.entity.codec;
 
 
 import com.arangodb.velocypack.VPack;
+import com.arangodb.velocypack.VPackSlice;
+
+import java.util.Arrays;
 
 /**
  * @author Michele Rastelli
@@ -30,7 +33,9 @@ public final class VpackSerializer implements ArangoSerializer {
 
     @Override
     public byte[] serialize(final Object value) {
-        return new VPack.Builder().build().serialize(value).getBuffer();
+        // TODO: move this logic inside VPackSlice.getBuffer()
+        VPackSlice slice = new VPack.Builder().build().serialize(value);
+        return Arrays.copyOf(slice.getBuffer(), slice.getByteSize());
     }
 
 }

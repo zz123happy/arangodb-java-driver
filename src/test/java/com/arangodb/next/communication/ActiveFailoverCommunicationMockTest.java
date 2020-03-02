@@ -22,6 +22,10 @@ package com.arangodb.next.communication;
 
 
 import com.arangodb.next.connection.*;
+import com.arangodb.next.entity.ErrorEntity;
+import com.arangodb.next.entity.ImmutableErrorEntity;
+import com.arangodb.next.entity.codec.ArangoSerializer;
+import com.arangodb.next.exceptions.ArangoServerException;
 import com.arangodb.next.exceptions.LeaderNotAvailableException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -139,10 +143,22 @@ public class ActiveFailoverCommunicationMockTest {
     @ParameterizedTest
     @EnumSource(ContentType.class)
     void executeThrowing503ShouldTriggerFindLeader(ContentType contentType) {
+        ErrorEntity error = ImmutableErrorEntity.builder()
+                .error(true)
+                .errorMessage("not a leader")
+                .errorNum(1496)
+                .code(503)
+                .build();
+
         MockConnectionFactory factory = new MockConnectionFactory() {
             @Override
             protected void stubExecute(ArangoConnection connection, HostDescription host) {
-                when(connection.execute(any(ArangoRequest.class))).thenReturn(Mono.just(ArangoResponse.builder().responseCode(503).build()));
+                when(connection.execute(any(ArangoRequest.class))).thenReturn(Mono.just(
+                        ArangoResponse.builder()
+                                .responseCode(503)
+                                .body(ArangoSerializer.of(contentType).serialize(error))
+                                .build()
+                ));
             }
 
             @Override
@@ -170,9 +186,13 @@ public class ActiveFailoverCommunicationMockTest {
         assertThat(connectionPool.getConnectionsByHost().keySet()).containsExactlyInAnyOrder(hosts.toArray(new HostDescription[0]));
         connectionPool.getConnectionsByHost().values().forEach(connections -> assertThat(connections).hasSize(CONNECTIONS_PER_HOST));
         assertThat(connectionPool.getLeader()).isEqualTo(hosts.get(0));
-        ArangoResponse response = communication.execute(VERSION_REQUEST).block();
-        assertThat(response).isNotNull();
-        assertThat(response.getResponseCode()).isEqualTo(503);
+
+        Throwable thrown = catchThrowable(() -> communication.execute(VERSION_REQUEST).block());
+        assertThat(thrown).isInstanceOf(ArangoServerException.class);
+        ArangoServerException e = (ArangoServerException) thrown;
+        assertThat(e.getResponseCode()).isEqualTo(503);
+        assertThat(e.getEntity()).isEqualTo(error);
+
         assertThat(connectionPool.getLeader()).isEqualTo(hosts.get(1));
     }
 

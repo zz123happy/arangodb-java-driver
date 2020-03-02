@@ -23,7 +23,7 @@ package com.arangodb.next.entity;
 import org.immutables.value.Value;
 
 /**
- * @author Mark Vollmary
+ * @author Michele Rastelli
  */
 @Value.Immutable
 public interface ErrorEntity extends ArangoEntity {

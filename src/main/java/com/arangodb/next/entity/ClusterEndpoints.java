@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 @Value.Immutable
 public interface ClusterEndpoints extends ArangoEntity {
 
-
     Set<Map<String, String>> getEndpoints();
 
     default Set<HostDescription> getHostDescriptions() {

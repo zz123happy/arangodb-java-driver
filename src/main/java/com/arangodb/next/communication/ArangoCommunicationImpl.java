@@ -116,10 +116,23 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
                 .then(Mono.just(this));
     }
 
+    private ArangoServerException buildError(final ArangoResponse response) {
+        return ArangoServerException.builder()
+                .responseCode(response.getResponseCode())
+                .entity(deserializer.deserialize(response.getBody(), ErrorEntity.class))
+                .build();
+    }
+
+    private void checkError(final ArangoResponse response) {
+        if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
+            throw buildError(response);
+        }
+    }
+
     @Override
     public Mono<ArangoResponse> execute(final ArangoRequest request) {
         LOGGER.debug("execute({})", request);
-        return execute(request, connectionPool);
+        return execute(request, connectionPool).doOnNext(this::checkError);
     }
 
     private Mono<ArangoResponse> execute(final ArangoRequest request, final ConnectionPool cp) {
@@ -139,7 +152,8 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
                     } else {
                         return execute(request);
                     }
-                });
+                })
+                .doOnNext(this::checkError);
     }
 
     private Mono<ArangoResponse> execute(
@@ -219,10 +233,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     private Set<HostDescription> parseAcquireHostListResponse(final ArangoResponse response) {
         LOGGER.debug("parseAcquireHostListResponse({})", response);
         if (response.getResponseCode() != 200) {
-            throw ArangoServerException.builder()
-                    .responseCode(response.getResponseCode())
-                    .entity(deserializer.deserialize(response.getBody(), ErrorEntity.class))
-                    .build();
+            throw buildError(response);
         }
         return deserializer.deserialize(response.getBody(), ClusterEndpoints.class)
                 .getHostDescriptions();
