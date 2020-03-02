@@ -91,7 +91,7 @@ class ActiveFailoverResiliencyTest {
 
         ProxiedHost leaderProxy = proxiedHosts.get(leader);
 
-        for (int j = 0; j < 10; j++) {
+        for (int j = 0; j < 5; j++) {
             executeRequest(communication, 2);
             leaderProxy.disableProxy();
             assertThat(Exceptions.unwrap(catchThrowable(() -> executeRequest(communication, 2))))
