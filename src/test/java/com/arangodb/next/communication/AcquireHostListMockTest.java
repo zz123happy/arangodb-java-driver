@@ -23,6 +23,7 @@ package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.*;
 import com.arangodb.next.entity.codec.ArangoSerializer;
+import com.arangodb.next.entity.model.ClusterEndpointsEntry;
 import com.arangodb.next.entity.model.ImmutableClusterEndpoints;
 import com.arangodb.next.entity.model.ImmutableErrorEntity;
 import com.arangodb.next.exceptions.ArangoServerException;
@@ -335,7 +336,7 @@ public class AcquireHostListMockTest {
                                     .error(false)
                                     .code(200)
                                     .endpoints(getHosts().stream()
-                                            .map(it -> Collections.singletonMap("endpoint", getHostUrl(it)))
+                                            .map(it -> ClusterEndpointsEntry.of(getHostUrl(it)))
                                             .collect(Collectors.toList()))
                                     .build()
                     );

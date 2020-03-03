@@ -25,8 +25,6 @@ import com.arangodb.next.entity.model.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import java.util.Collections;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -57,8 +55,8 @@ class SerializationTest {
                         .error(false)
                         .code(200)
                         .addEndpoints(
-                                Collections.singletonMap("endpoint", "tcp://172.28.3.1:8529"),
-                                Collections.singletonMap("endpoint", "tcp://172.28.3.2:8529")
+                                ClusterEndpointsEntry.of("tcp://172.28.3.1:8529"),
+                                ClusterEndpointsEntry.of("tcp://172.28.3.2:8529")
                         )
                         .build();
 

@@ -22,10 +22,11 @@ package com.arangodb.next.entity.model;
 
 
 import com.arangodb.next.connection.HostDescription;
+import com.arangodb.velocypack.annotations.SerializedName;
+import com.arangodb.velocypack.annotations.VPackCreator;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
 import org.immutables.value.Value;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,11 +41,11 @@ public interface ClusterEndpoints extends ArangoEntity {
         return ImmutableClusterEndpoints.builder();
     }
 
-    Set<Map<String, String>> getEndpoints();
+    Set<ClusterEndpointsEntry> getEndpoints();
 
     default Set<HostDescription> getHostDescriptions() {
         return getEndpoints().stream()
-                .map(it -> it.get("endpoint"))
+                .map(ClusterEndpointsEntry::getEndpoint)
                 .map(it -> it.replaceFirst(".*://", ""))
                 .map(it -> {
                     if (it.matches("\\[.*]:.*")) {    // ipv6
