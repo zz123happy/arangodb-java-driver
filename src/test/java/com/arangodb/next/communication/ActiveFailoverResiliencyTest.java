@@ -34,6 +34,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.Exceptions;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +77,7 @@ class ActiveFailoverResiliencyTest {
     void retry(ArangoProtocol protocol) {
         CommunicationConfig testConfig = config
                 .protocol(protocol)
+                .timeout(Duration.ofMillis(500))
                 .build();
         ArangoCommunication communication = ArangoCommunication.create(testConfig).block();
         assertThat(communication).isNotNull();
