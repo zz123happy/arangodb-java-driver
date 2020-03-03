@@ -29,7 +29,7 @@ import com.arangodb.velocypack.VPackSetupContext;
 /**
  * @author Mark Vollmary
  */
-public class VPackDriverModule implements VPackModule, VPackParserModule {
+public final class VPackDriverModule implements VPackModule, VPackParserModule {
 
     @Override
     public <C extends VPackSetupContext<C>> void setup(final C context) {

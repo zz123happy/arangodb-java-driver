@@ -34,18 +34,18 @@ class VPackDriverModuleTest {
 
     @Test
     void replicationFactor() {
-        final VPack.Builder builder = new VPack.Builder();
-        builder.registerModule(new VPackDriverModule());
-        final VPack vpacker = builder.build();
+        final VPack vPack = new VPack.Builder()
+                .registerModule(new VPackDriverModule())
+                .build();
 
-        ReplicationFactor<?> originalSatellite = ReplicationFactor.ofSatellite();
-        final VPackSlice serializedSatellite = vpacker.serialize(originalSatellite);
-        Object deserializedSatellite = vpacker.deserialize(serializedSatellite, ReplicationFactor.class);
+        ReplicationFactor originalSatellite = ReplicationFactor.ofSatellite();
+        final VPackSlice serializedSatellite = vPack.serialize(originalSatellite);
+        Object deserializedSatellite = vPack.deserialize(serializedSatellite, ReplicationFactor.class);
         assertThat(deserializedSatellite).isEqualTo(originalSatellite);
 
-        ReplicationFactor<?> originalNumeric = ReplicationFactor.of(3);
-        final VPackSlice serializedNumeric = vpacker.serialize(originalNumeric);
-        Object deserializedNumeric = vpacker.deserialize(serializedNumeric, ReplicationFactor.class);
+        ReplicationFactor originalNumeric = ReplicationFactor.of(3);
+        final VPackSlice serializedNumeric = vPack.serialize(originalNumeric);
+        Object deserializedNumeric = vPack.deserialize(serializedNumeric, ReplicationFactor.class);
         assertThat(deserializedNumeric).isEqualTo(originalNumeric);
     }
 

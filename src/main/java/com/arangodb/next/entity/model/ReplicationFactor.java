@@ -24,16 +24,16 @@ package com.arangodb.next.entity.model;
 /**
  * @author Michele Rastelli
  */
-public interface ReplicationFactor<T> {
+public interface ReplicationFactor {
 
-    static ReplicationFactor<Integer> of(int value) {
-        return ImmutableNumericReplicationFactor.builder().value(value).build();
+    static ReplicationFactor of(int value) {
+        return ImmutableNumericReplicationFactor.of(value);
     }
 
-    static ReplicationFactor<String> ofSatellite() {
-        return ImmutableSatelliteReplicationFactor.builder().build();
+    static ReplicationFactor ofSatellite() {
+        return ImmutableSatelliteReplicationFactor.of();
     }
 
-    T getValue();
+    Object getValue();
 
 }

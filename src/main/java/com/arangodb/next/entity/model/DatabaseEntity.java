@@ -62,7 +62,7 @@ public interface DatabaseEntity {
      * @return the default replication factor for collections in this database
      */
     @Nullable
-    ReplicationFactor<?> getReplicationFactor();
+    ReplicationFactor getReplicationFactor();
 
     /**
      * @return the default write concern for collections in this database

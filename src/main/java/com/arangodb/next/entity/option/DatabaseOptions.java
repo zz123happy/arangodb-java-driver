@@ -42,7 +42,7 @@ public interface DatabaseOptions {
      * which will replicate the collection to every DB-server, and 1, which disables replication. (cluster only)
      */
     @Nullable
-    ReplicationFactor<?> getReplicationFactor();
+    ReplicationFactor getReplicationFactor();
 
     /**
      * @return Default write concern for new collections created in this database. It determines how many copies of each

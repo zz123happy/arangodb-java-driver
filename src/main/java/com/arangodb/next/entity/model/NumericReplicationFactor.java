@@ -25,10 +25,11 @@ import org.immutables.value.Value;
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
-public interface NumericReplicationFactor extends ReplicationFactor<Integer> {
+@Value.Immutable(builder = false)
+public abstract class NumericReplicationFactor implements ReplicationFactor {
 
     @Override
-    Integer getValue();
+    @Value.Parameter
+    public abstract Integer getValue();
 
 }

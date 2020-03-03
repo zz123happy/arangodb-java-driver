@@ -27,7 +27,10 @@ import com.arangodb.velocypack.VPackSerializer;
 /**
  * @author Mark Vollmary
  */
-public class VPackSerializers {
+public final class VPackSerializers {
+
+    private VPackSerializers() {
+    }
 
     public static final VPackSerializer<SatelliteReplicationFactor> SATELLITE_REPLICATION_FACTOR = (builder, attribute, value, context) -> {
         builder.add(attribute, value.getValue());

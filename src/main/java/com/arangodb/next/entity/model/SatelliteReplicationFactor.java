@@ -25,13 +25,17 @@ import org.immutables.value.Value;
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
-public interface SatelliteReplicationFactor extends ReplicationFactor<String> {
+@Value.Immutable(builder = false)
+public abstract class SatelliteReplicationFactor implements ReplicationFactor {
 
-    String VALUE = "satellite";
+    public static final String VALUE = "satellite";
 
+    /**
+     * @return {@value #VALUE}
+     */
     @Override
-    default String getValue() {
+    @Value.Parameter
+    public String getValue() {
         return VALUE;
     }
 

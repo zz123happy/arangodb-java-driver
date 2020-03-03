@@ -28,12 +28,15 @@ import com.arangodb.velocypack.VPackDeserializer;
 /**
  * @author Michele Rastelli
  */
-public class VPackDeserializers {
+public final class VPackDeserializers {
 
-    public static final VPackDeserializer<ReplicationFactor<?>> REPLICATION_FACTOR = (parent, vpack, context) -> {
+    private VPackDeserializers() {
+    }
+
+    public static final VPackDeserializer<ReplicationFactor> REPLICATION_FACTOR = (parent, vpack, context) -> {
         if (vpack.isString() && vpack.getAsString().equals(SatelliteReplicationFactor.VALUE)) {
             return ReplicationFactor.ofSatellite();
-        } else if (vpack.isInt()) {
+        } else if (vpack.isInteger()) {
             return ReplicationFactor.of(vpack.getAsInt());
         } else {
             // TODO:
