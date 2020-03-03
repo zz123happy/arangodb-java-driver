@@ -21,6 +21,7 @@
 package com.arangodb.next.entity.model;
 
 
+import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
 import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
@@ -31,6 +32,11 @@ import java.util.Map;
  */
 @Value.Immutable
 public interface Version {
+
+    @VPackPOJOBuilder
+    static ImmutableVersion.Builder builder() {
+        return ImmutableVersion.builder();
+    }
 
     String getServer();
 

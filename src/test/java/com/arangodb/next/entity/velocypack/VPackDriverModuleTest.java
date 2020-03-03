@@ -21,7 +21,9 @@
 package com.arangodb.next.entity.velocypack;
 
 import com.arangodb.next.entity.model.ReplicationFactor;
+import com.arangodb.next.entity.model.Version;
 import com.arangodb.velocypack.VPack;
+import com.arangodb.velocypack.VPackParser;
 import com.arangodb.velocypack.VPackSlice;
 import org.junit.jupiter.api.Test;
 
@@ -34,19 +36,56 @@ class VPackDriverModuleTest {
 
     @Test
     void replicationFactor() {
+        ReplicationFactor satellite = ReplicationFactor.ofSatellite();
+        ReplicationFactor numeric = ReplicationFactor.of(3);
+
+        testVpack(satellite, ReplicationFactor.class);
+        testVpack(numeric, ReplicationFactor.class);
+
+        testJson(satellite, ReplicationFactor.class);
+        testJson(numeric, ReplicationFactor.class);
+    }
+
+    @Test
+    void version() {
+        Version version = Version.builder()
+                .server("server")
+                .version("version")
+                .license("license")
+                .putDetails("bla", "bla")
+                .build();
+
+        testVpack(version, Version.class);
+        testJson(version, Version.class);
+    }
+
+    private void testVpack(Object value, Class<?> clazz) {
         final VPack vPack = new VPack.Builder()
                 .registerModule(new VPackDriverModule())
                 .build();
 
-        ReplicationFactor originalSatellite = ReplicationFactor.ofSatellite();
-        final VPackSlice serializedSatellite = vPack.serialize(originalSatellite);
-        Object deserializedSatellite = vPack.deserialize(serializedSatellite, ReplicationFactor.class);
-        assertThat(deserializedSatellite).isEqualTo(originalSatellite);
+        final VPackSlice slice = vPack.serialize(value);
+        System.out.println(slice);
+        byte[] bytes = slice.toByteArray();
+        Object deserialized = vPack.deserialize(new VPackSlice(bytes), clazz);
+        assertThat(deserialized).isEqualTo(value);
+    }
 
-        ReplicationFactor originalNumeric = ReplicationFactor.of(3);
-        final VPackSlice serializedNumeric = vPack.serialize(originalNumeric);
-        Object deserializedNumeric = vPack.deserialize(serializedNumeric, ReplicationFactor.class);
-        assertThat(deserializedNumeric).isEqualTo(originalNumeric);
+    private void testJson(Object value, Class<?> clazz) {
+        final VPack vPack = new VPack.Builder()
+                .registerModule(new VPackDriverModule())
+                .build();
+
+        final VPackParser parser = new VPackParser.Builder()
+                .registerModule(new VPackDriverModule())
+                .build();
+
+        final VPackSlice slice = vPack.serialize(value);
+        String json = parser.toJson(slice);
+        System.out.println(json);
+        byte[] bytes = json.getBytes();
+        Object deserialized = vPack.deserialize(parser.fromJson(new String(bytes)), clazz);
+        assertThat(deserialized).isEqualTo(value);
     }
 
 
