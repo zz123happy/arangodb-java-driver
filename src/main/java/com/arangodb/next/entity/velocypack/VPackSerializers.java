@@ -32,12 +32,10 @@ public final class VPackSerializers {
     private VPackSerializers() {
     }
 
-    public static final VPackSerializer<SatelliteReplicationFactor> SATELLITE_REPLICATION_FACTOR = (builder, attribute, value, context) -> {
-        builder.add(attribute, value.getValue());
-    };
+    public static final VPackSerializer<SatelliteReplicationFactor> SATELLITE_REPLICATION_FACTOR =
+            (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
 
-    public static final VPackSerializer<NumericReplicationFactor> NUMERIC_REPLICATION_FACTOR = (builder, attribute, value, context) -> {
-        builder.add(attribute, value.getValue());
-    };
+    public static final VPackSerializer<NumericReplicationFactor> NUMERIC_REPLICATION_FACTOR =
+            (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
 
 }

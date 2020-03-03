@@ -21,16 +21,9 @@
 package com.arangodb.next.entity.codec;
 
 
-import com.arangodb.velocypack.VPack;
-
 /**
  * @author Michele Rastelli
  */
-public final class VpackSerializer implements ArangoSerializer {
-
-    @Override
-    public byte[] serialize(final Object value) {
-        return new VPack.Builder().build().serialize(value).toByteArray();
-    }
+public final class VpackSerializer extends ArangoSerializer {
 
 }

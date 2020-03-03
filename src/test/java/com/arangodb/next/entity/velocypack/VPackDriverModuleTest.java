@@ -76,9 +76,7 @@ class VPackDriverModuleTest {
                 .registerModule(new VPackDriverModule())
                 .build();
 
-        final VPackParser parser = new VPackParser.Builder()
-                .registerModule(new VPackDriverModule())
-                .build();
+        final VPackParser parser = new VPackParser.Builder().build();
 
         final VPackSlice slice = vPack.serialize(value);
         String json = parser.toJson(slice);

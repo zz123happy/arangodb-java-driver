@@ -21,13 +21,20 @@
 package com.arangodb.next.entity.codec;
 
 import com.arangodb.next.connection.ContentType;
+import com.arangodb.next.entity.velocypack.VPackDriverModule;
+import com.arangodb.velocypack.VPack;
+import com.arangodb.velocypack.VPackSlice;
 
 /**
  * @author Michele Rastelli
  */
-public interface ArangoSerializer {
+public class ArangoSerializer {
 
-    static ArangoSerializer of(ContentType contentType) {
+    private final VPack vPack = new VPack.Builder()
+            .registerModule(new VPackDriverModule())
+            .build();
+
+    public static ArangoSerializer of(ContentType contentType) {
         switch (contentType) {
             case VPACK:
                 return new VpackSerializer();
@@ -38,5 +45,12 @@ public interface ArangoSerializer {
         }
     }
 
-    byte[] serialize(Object value);
+    public byte[] serialize(final Object value) {
+        return createVPackSlice(value).toByteArray();
+    }
+
+    protected VPackSlice createVPackSlice(final Object value) {
+        return vPack.serialize(value);
+    }
+
 }

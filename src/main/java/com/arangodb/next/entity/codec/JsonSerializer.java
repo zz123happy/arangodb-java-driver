@@ -20,98 +20,20 @@
 
 package com.arangodb.next.entity.codec;
 
-import com.arangodb.next.entity.model.ClusterEndpoints;
-import com.arangodb.next.entity.model.ErrorEntity;
-import com.arangodb.next.entity.model.Version;
-import com.arangodb.next.exceptions.SerdeException;
-import com.fasterxml.jackson.core.JsonEncoding;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
+import com.arangodb.velocypack.VPackParser;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Michele Rastelli
  */
-public final class JsonSerializer implements ArangoSerializer {
+public final class JsonSerializer extends ArangoSerializer {
+
+    private final VPackParser parser = new VPackParser.Builder().build();
 
     @Override
     public byte[] serialize(final Object value) {
-        try {
-            if (value instanceof Version) {
-                return doSerialize((Version) value);
-            } else if (value instanceof ClusterEndpoints) {
-                return doSerialize((ClusterEndpoints) value);
-            } else if (value instanceof ErrorEntity) {
-                return doSerialize((ErrorEntity) value);
-            } else {
-                throw new IllegalArgumentException("Unsupported type: " + value.getClass().getName());
-            }
-        } catch (IOException e) {
-            throw SerdeException.builder().cause(e).build();
-        }
-    }
-
-    private byte[] doSerialize(final Version value) throws IOException {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        try (JsonGenerator generator = new JsonFactory().createGenerator(stream, JsonEncoding.UTF8)) {
-            generator.writeStartObject();
-            generator.writeStringField("license", value.getLicense());
-            generator.writeStringField("server", value.getServer());
-            generator.writeStringField("version", value.getVersion());
-
-            Map<String, String> details = value.getDetails();
-            generator.writeFieldName("details");
-            if (details == null) {
-                generator.writeNull();
-            } else {
-                generator.writeStartObject();
-                for (Map.Entry<String, String> e : details.entrySet()) {
-                    generator.writeStringField(e.getKey(), e.getValue());
-                }
-                generator.writeEndObject();
-            }
-
-            generator.writeEndObject();
-        }
-        return stream.toByteArray();
-    }
-
-    private byte[] doSerialize(final ClusterEndpoints value) throws IOException {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        try (JsonGenerator generator = new JsonFactory().createGenerator(stream, JsonEncoding.UTF8)) {
-            generator.writeStartObject();
-            generator.writeBooleanField("error", value.getError());
-            generator.writeNumberField("code", value.getCode());
-
-            generator.writeArrayFieldStart("endpoints");
-            for (Map<String, String> endpointMap : value.getEndpoints()) {
-                generator.writeStartObject();
-                for (Map.Entry<String, String> endpoint : endpointMap.entrySet()) {
-                    generator.writeStringField(endpoint.getKey(), endpoint.getValue());
-                }
-                generator.writeEndObject();
-            }
-            generator.writeEndArray();
-
-            generator.writeEndObject();
-        }
-        return stream.toByteArray();
-    }
-
-    private byte[] doSerialize(final ErrorEntity value) throws IOException {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        try (JsonGenerator generator = new JsonFactory().createGenerator(stream, JsonEncoding.UTF8)) {
-            generator.writeStartObject();
-            generator.writeNumberField("code", value.getCode());
-            generator.writeBooleanField("error", value.getError());
-            generator.writeStringField("errorMessage", value.getErrorMessage());
-            generator.writeNumberField("errorNum", value.getErrorNum());
-            generator.writeEndObject();
-        }
-        return stream.toByteArray();
+        return parser.toJson(createVPackSlice(value)).getBytes(StandardCharsets.UTF_8);
     }
 
 }

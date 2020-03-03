@@ -20,6 +20,7 @@
 
 package com.arangodb.next.entity.model;
 
+import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
 import org.immutables.value.Value;
 
 /**
@@ -27,6 +28,12 @@ import org.immutables.value.Value;
  */
 @Value.Immutable
 public interface ErrorEntity extends ArangoEntity {
+
+    @VPackPOJOBuilder
+    static ImmutableErrorEntity.Builder builder() {
+        return ImmutableErrorEntity.builder();
+    }
+
     String getErrorMessage();
 
     int getErrorNum();
