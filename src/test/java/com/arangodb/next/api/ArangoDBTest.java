@@ -1,3 +1,21 @@
+package com.arangodb.next.api;
+
+import com.arangodb.next.api.impl.ArangoDBImpl;
+import com.arangodb.next.communication.CommunicationConfig;
+import com.arangodb.next.connection.AuthenticationMethod;
+import com.arangodb.next.connection.HostDescription;
+import com.arangodb.next.entity.model.DatabaseEntity;
+import com.arangodb.next.entity.model.ReplicationFactor;
+import com.arangodb.next.entity.model.Sharding;
+import com.arangodb.next.entity.option.DBCreateOptions;
+import com.arangodb.next.entity.option.DatabaseOptions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 /*
  * DISCLAIMER
  *
@@ -18,29 +36,13 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.api.impl;
-
-import com.arangodb.next.api.ArangoDB;
-import com.arangodb.next.communication.CommunicationConfig;
-import com.arangodb.next.connection.AuthenticationMethod;
-import com.arangodb.next.connection.HostDescription;
-import com.arangodb.next.entity.model.DatabaseEntity;
-import com.arangodb.next.entity.model.ReplicationFactor;
-import com.arangodb.next.entity.model.Sharding;
-import com.arangodb.next.entity.option.DBCreateOptions;
-import com.arangodb.next.entity.option.DatabaseOptions;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Michele Rastelli
  */
-@Disabled
-class ArangoDBImplTest {
+//@Disabled
+
+class ArangoDBTest {
 
     private static final CommunicationConfig config = CommunicationConfig.builder()
 //            .contentType(ContentType.JSON)
@@ -50,14 +52,19 @@ class ArangoDBImplTest {
 
     private final ArangoDB arangoDB;
 
-    ArangoDBImplTest() {
+    ArangoDBTest() {
         arangoDB = new ArangoDBImpl(config);
+    }
+
+    @Test
+    void shutdown() {
     }
 
     @Test
     void createDatabase() {
         arangoDB.createDatabase("db-" + UUID.randomUUID().toString()).block();
     }
+
 
     @Test
     void createDatabaseWithOptions() {
@@ -75,6 +82,19 @@ class ArangoDBImplTest {
 
         assertThat(db.getId()).isNotNull();
         assertThat(db.getName()).isEqualTo(name);
+        assertThat(db.getPath()).isNotNull();
+        assertThat(db.getWriteConcern()).isEqualTo(2);
+        assertThat(db.getReplicationFactor()).isEqualTo(ReplicationFactor.of(2));
+        assertThat(db.getSharding()).isEqualTo(Sharding.single);
+        assertThat(db.isSystem()).isFalse();
+    }
+
+    @Test
+    void getDatabase() {
+        DatabaseEntity db = arangoDB.getDatabase("_system").block();
+
+        assertThat(db.getId()).isNotNull();
+        assertThat(db.getName()).isEqualTo("_system");
         assertThat(db.getPath()).isNotNull();
         assertThat(db.getWriteConcern()).isEqualTo(2);
         assertThat(db.getReplicationFactor()).isEqualTo(ReplicationFactor.of(2));

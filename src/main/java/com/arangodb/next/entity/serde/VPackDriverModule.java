@@ -18,7 +18,7 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity.velocypack;
+package com.arangodb.next.entity.serde;
 
 import com.arangodb.next.entity.model.*;
 import com.arangodb.velocypack.VPackModule;

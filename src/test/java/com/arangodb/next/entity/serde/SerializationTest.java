@@ -35,23 +35,22 @@ class SerializationTest {
     @ParameterizedTest
     @EnumSource(ContentType.class)
     void version(ContentType contentType) {
-        Version original = ImmutableVersion.builder()
-                .server("server")
-                .version("version")
-                .license("license")
-                .putDetails("bla", "bla")
-                .build();
-
-        ArangoSerde serde = ArangoSerde.of(contentType);
-        byte[] serialized = serde.serialize(original);
-        Version deserialized = serde.deserialize(serialized, Version.class);
-        assertThat(deserialized).isEqualTo(original);
+        verify(
+                ImmutableVersion.builder()
+                        .server("server")
+                        .version("version")
+                        .license("license")
+                        .putDetails("bla", "bla")
+                        .build(),
+                contentType,
+                Version.class
+        );
     }
 
     @ParameterizedTest
     @EnumSource(ContentType.class)
     void clusterEndpoints(ContentType contentType) {
-        ClusterEndpoints original =
+        verify(
                 ImmutableClusterEndpoints.builder()
                         .error(false)
                         .code(200)
@@ -59,28 +58,52 @@ class SerializationTest {
                                 ClusterEndpointsEntry.of("tcp://172.28.3.1:8529"),
                                 ClusterEndpointsEntry.of("tcp://172.28.3.2:8529")
                         )
-                        .build();
-
-        ArangoSerde serde = ArangoSerde.of(contentType);
-        byte[] serialized = serde.serialize(original);
-        ClusterEndpoints deserialized = serde.deserialize(serialized, ClusterEndpoints.class);
-        assertThat(deserialized).isEqualTo(original);
+                        .build(),
+                contentType,
+                ClusterEndpoints.class
+        );
     }
 
     @ParameterizedTest
     @EnumSource(ContentType.class)
     void errorEntity(ContentType contentType) {
-        ErrorEntity original =
+        verify(
                 ImmutableErrorEntity.builder()
                         .error(false)
                         .code(200)
                         .errorNum(109)
                         .errorMessage("error 109")
-                        .build();
+                        .build(),
+                contentType,
+                ErrorEntity.class
+        );
+    }
 
+    @ParameterizedTest
+    @EnumSource(ContentType.class)
+    void satelliteReplicationFactor(ContentType contentType) {
+        verify(
+                ReplicationFactor.ofSatellite(),
+                contentType,
+                ReplicationFactor.class
+        );
+    }
+
+    @ParameterizedTest
+    @EnumSource(ContentType.class)
+    void numericReplicationFactor(ContentType contentType) {
+        verify(
+                ReplicationFactor.of(3),
+                contentType,
+                ReplicationFactor.class
+        );
+
+    }
+
+    private void verify(Object original, ContentType contentType, Class<?> clazz) {
         ArangoSerde serde = ArangoSerde.of(contentType);
         byte[] serialized = serde.serialize(original);
-        ErrorEntity deserialized = serde.deserialize(serialized, ErrorEntity.class);
+        Object deserialized = serde.deserialize(serialized, clazz);
         assertThat(deserialized).isEqualTo(original);
     }
 

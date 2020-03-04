@@ -18,30 +18,24 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity.velocypack;
+package com.arangodb.next.entity.serde;
 
-import com.arangodb.next.entity.model.ReplicationFactor;
+import com.arangodb.next.entity.model.NumericReplicationFactor;
 import com.arangodb.next.entity.model.SatelliteReplicationFactor;
-import com.arangodb.velocypack.VPackDeserializer;
-
+import com.arangodb.velocypack.VPackSerializer;
 
 /**
- * @author Michele Rastelli
+ * @author Mark Vollmary
  */
-public final class VPackDeserializers {
+public final class VPackSerializers {
 
-    private VPackDeserializers() {
+    private VPackSerializers() {
     }
 
-    public static final VPackDeserializer<ReplicationFactor> REPLICATION_FACTOR = (parent, vpack, context) -> {
-        if (vpack.isString() && vpack.getAsString().equals(SatelliteReplicationFactor.VALUE)) {
-            return ReplicationFactor.ofSatellite();
-        } else if (vpack.isInteger()) {
-            return ReplicationFactor.of(vpack.getAsInt());
-        } else {
-            // TODO:
-            throw new RuntimeException("TODO");
-        }
-    };
+    public static final VPackSerializer<SatelliteReplicationFactor> SATELLITE_REPLICATION_FACTOR =
+            (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
+
+    public static final VPackSerializer<NumericReplicationFactor> NUMERIC_REPLICATION_FACTOR =
+            (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
 
 }

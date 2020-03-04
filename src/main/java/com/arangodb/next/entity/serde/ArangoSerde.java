@@ -21,7 +21,6 @@
 package com.arangodb.next.entity.serde;
 
 import com.arangodb.next.connection.ContentType;
-import com.arangodb.next.entity.velocypack.VPackDriverModule;
 import com.arangodb.velocypack.VPack;
 import com.arangodb.velocypack.VPackSlice;
 
