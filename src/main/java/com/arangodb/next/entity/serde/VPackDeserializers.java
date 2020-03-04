@@ -22,6 +22,7 @@ package com.arangodb.next.entity.serde;
 
 import com.arangodb.next.entity.model.ReplicationFactor;
 import com.arangodb.next.entity.model.SatelliteReplicationFactor;
+import com.arangodb.next.entity.model.Sharding;
 import com.arangodb.velocypack.VPackDeserializer;
 
 
@@ -39,8 +40,18 @@ public final class VPackDeserializers {
         } else if (vpack.isInteger()) {
             return ReplicationFactor.of(vpack.getAsInt());
         } else {
-            // TODO:
-            throw new RuntimeException("TODO");
+            throw new IllegalArgumentException("Unknown value for replication factor: " + vpack);
+        }
+    };
+
+    public static final VPackDeserializer<Sharding> SHARDING = (parent, vpack, context) -> {
+        String value = vpack.getAsString();
+        if ("".equals(value) || "flexible".equals(value)) {
+            return Sharding.FLEXIBLE;
+        } else if ("single".equals(value)) {
+            return Sharding.SINGLE;
+        } else {
+            throw new IllegalArgumentException("Unknown value for sharding: " + vpack);
         }
     };
 

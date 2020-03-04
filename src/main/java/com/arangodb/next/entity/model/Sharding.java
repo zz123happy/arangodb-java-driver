@@ -25,5 +25,18 @@ package com.arangodb.next.entity.model;
  * @author Michele Rastelli
  */
 public enum Sharding {
-    flexible, single
+
+    FLEXIBLE("flexible"),
+    SINGLE("single");
+
+    private final String value;
+
+    Sharding(final String v) {
+        value = v;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
 }

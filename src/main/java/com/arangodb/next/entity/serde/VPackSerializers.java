@@ -22,6 +22,7 @@ package com.arangodb.next.entity.serde;
 
 import com.arangodb.next.entity.model.NumericReplicationFactor;
 import com.arangodb.next.entity.model.SatelliteReplicationFactor;
+import com.arangodb.next.entity.model.Sharding;
 import com.arangodb.velocypack.VPackSerializer;
 
 /**
@@ -36,6 +37,9 @@ public final class VPackSerializers {
             (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
 
     public static final VPackSerializer<NumericReplicationFactor> NUMERIC_REPLICATION_FACTOR =
+            (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
+
+    public static final VPackSerializer<Sharding> SHARDING =
             (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
 
 }
