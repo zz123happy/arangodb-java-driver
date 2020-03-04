@@ -23,6 +23,7 @@ package com.arangodb.next.entity.serde;
 
 import com.arangodb.velocypack.VPackParser;
 
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -34,12 +35,12 @@ public final class JsonSerde extends ArangoSerde {
 
     @Override
     public byte[] serialize(final Object value) {
-        return parser.toJson(createVPackSlice(value)).getBytes(StandardCharsets.UTF_8);
+        return parser.toJson(createVPackSlice(value), true).getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
-    public <T> T deserialize(final byte[] buffer, final Class<T> clazz) {
-        return deserializeVPackSlice(parser.fromJson(new String(buffer)), clazz);
+    public <T> T deserialize(final byte[] buffer, final Type type) {
+        return deserializeVPackSlice(parser.fromJson(new String(buffer)), type);
     }
 
 }

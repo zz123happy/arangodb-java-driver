@@ -21,9 +21,23 @@
 package com.arangodb.next.entity.serde;
 
 
+import com.arangodb.velocypack.VPackSlice;
+
+import java.lang.reflect.Type;
+
 /**
  * @author Michele Rastelli
  */
 public final class VpackSerde extends ArangoSerde {
+
+    @Override
+    public byte[] serialize(final Object value) {
+        return createVPackSlice(value).toByteArray();
+    }
+
+    @Override
+    public <T> T deserialize(byte[] buffer, final Type type) {
+        return deserializeVPackSlice(new VPackSlice(buffer), type);
+    }
 
 }

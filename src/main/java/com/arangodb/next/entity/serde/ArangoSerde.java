@@ -25,6 +25,8 @@ import com.arangodb.next.entity.velocypack.VPackDriverModule;
 import com.arangodb.velocypack.VPack;
 import com.arangodb.velocypack.VPackSlice;
 
+import java.lang.reflect.Type;
+
 /**
  * @author Michele Rastelli
  */
@@ -45,20 +47,20 @@ public abstract class ArangoSerde {
         }
     }
 
-    public byte[] serialize(final Object value) {
-        return createVPackSlice(value).toByteArray();
-    }
+    public abstract byte[] serialize(final Object value);
+
+    public abstract <T> T deserialize(byte[] buffer, final Type type);
 
     public <T> T deserialize(byte[] buffer, Class<T> clazz) {
-        return deserializeVPackSlice(new VPackSlice(buffer), clazz);
+        return deserialize(buffer, (Type) clazz);
     }
 
     protected VPackSlice createVPackSlice(final Object value) {
         return vPack.serialize(value);
     }
 
-    protected <T> T deserializeVPackSlice(final VPackSlice slice, Class<T> clazz) {
-        return vPack.deserialize(slice, clazz);
+    protected <T> T deserializeVPackSlice(final VPackSlice slice, final Type type) {
+        return vPack.deserialize(slice, type);
     }
 
 }
