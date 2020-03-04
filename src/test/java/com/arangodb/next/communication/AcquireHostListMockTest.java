@@ -22,10 +22,10 @@ package com.arangodb.next.communication;
 
 
 import com.arangodb.next.connection.*;
-import com.arangodb.next.entity.codec.ArangoSerializer;
 import com.arangodb.next.entity.model.ClusterEndpointsEntry;
 import com.arangodb.next.entity.model.ImmutableClusterEndpoints;
 import com.arangodb.next.entity.model.ImmutableErrorEntity;
+import com.arangodb.next.entity.serde.ArangoSerde;
 import com.arangodb.next.exceptions.ArangoServerException;
 import com.arangodb.next.exceptions.NoHostsAvailableException;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -211,7 +211,7 @@ public class AcquireHostListMockTest {
                         ArangoResponse.builder()
                                 .responseCode(500)
                                 .body(
-                                        ArangoSerializer.of(contentType).serialize(ImmutableErrorEntity
+                                        ArangoSerde.of(contentType).serialize(ImmutableErrorEntity
                                                 .builder()
                                                 .errorMessage("Error 8000")
                                                 .errorNum(8000)
@@ -253,7 +253,7 @@ public class AcquireHostListMockTest {
                                 ArangoResponse.builder()
                                         .responseCode(500)
                                         .body(
-                                                ArangoSerializer.of(contentType).serialize(ImmutableErrorEntity
+                                                ArangoSerde.of(contentType).serialize(ImmutableErrorEntity
                                                         .builder()
                                                         .errorMessage("Error 8000")
                                                         .errorNum(8000)
@@ -329,7 +329,7 @@ public class AcquireHostListMockTest {
         }
 
         protected Mono<ArangoResponse> getClusterEndpointsResponse() {
-            byte[] responseBody = ArangoSerializer
+            byte[] responseBody = ArangoSerde
                     .of(contentType)
                     .serialize(
                             ImmutableClusterEndpoints.builder()

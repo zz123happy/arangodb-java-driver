@@ -23,8 +23,8 @@ package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.*;
 import com.arangodb.next.entity.model.ErrorEntity;
-import com.arangodb.next.entity.codec.ArangoSerializer;
 import com.arangodb.next.entity.model.ImmutableErrorEntity;
+import com.arangodb.next.entity.serde.ArangoSerde;
 import com.arangodb.next.exceptions.ArangoServerException;
 import com.arangodb.next.exceptions.LeaderNotAvailableException;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -156,7 +156,7 @@ public class ActiveFailoverCommunicationMockTest {
                 when(connection.execute(any(ArangoRequest.class))).thenReturn(Mono.just(
                         ArangoResponse.builder()
                                 .responseCode(503)
-                                .body(ArangoSerializer.of(contentType).serialize(error))
+                                .body(ArangoSerde.of(contentType).serialize(error))
                                 .build()
                 ));
             }

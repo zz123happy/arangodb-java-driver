@@ -23,7 +23,7 @@ package com.arangodb.next.communication;
 import com.arangodb.next.connection.*;
 import com.arangodb.next.entity.model.ClusterEndpoints;
 import com.arangodb.next.entity.model.ErrorEntity;
-import com.arangodb.next.entity.codec.ArangoDeserializer;
+import com.arangodb.next.entity.serde.ArangoSerde;
 import com.arangodb.next.exceptions.ArangoServerException;
 import com.arangodb.next.exceptions.HostNotAvailableException;
 import org.slf4j.Logger;
@@ -49,7 +49,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     private static final Logger LOGGER = LoggerFactory.getLogger(ArangoCommunicationImpl.class);
 
     private final CommunicationConfig config;
-    private final ArangoDeserializer deserializer;
+    private final ArangoSerde serde;
     private final ConnectionFactory connectionFactory;
     private final Semaphore updatingHostListSemaphore;
 
@@ -73,7 +73,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
         config = communicationConfig;
         connectionFactory = connFactory;
         updatingHostListSemaphore = new Semaphore(1);
-        deserializer = ArangoDeserializer.of(communicationConfig.getContentType());
+        serde = ArangoSerde.of(communicationConfig.getContentType());
     }
 
     @Override
@@ -119,7 +119,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     private ArangoServerException buildError(final ArangoResponse response) {
         return ArangoServerException.builder()
                 .responseCode(response.getResponseCode())
-                .entity(deserializer.deserialize(response.getBody(), ErrorEntity.class))
+                .entity(serde.deserialize(response.getBody(), ErrorEntity.class))
                 .build();
     }
 
@@ -235,7 +235,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
         if (response.getResponseCode() != 200) {
             throw buildError(response);
         }
-        return deserializer.deserialize(response.getBody(), ClusterEndpoints.class)
+        return serde.deserialize(response.getBody(), ClusterEndpoints.class)
                 .getHostDescriptions();
     }
 

@@ -22,7 +22,7 @@ package com.arangodb.next.connection;
 
 
 import com.arangodb.next.entity.model.Version;
-import com.arangodb.next.entity.codec.ArangoDeserializer;
+import com.arangodb.next.entity.serde.ArangoSerde;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.VPackSlice;
 import com.arangodb.velocypack.ValueType;
@@ -81,8 +81,8 @@ public class ConnectionTestUtils {
         assertThat(response.getType()).isEqualTo(2);
         assertThat(response.getResponseCode()).isEqualTo(200);
 
-        ArangoDeserializer deserializer = ArangoDeserializer.of(ContentType.VPACK);
-        Version version = deserializer.deserialize(response.getBody(), Version.class);
+        ArangoSerde serde = ArangoSerde.of(ContentType.VPACK);
+        Version version = serde.deserialize(response.getBody(), Version.class);
         assertThat(version.getServer()).isEqualTo("arango");
     }
 

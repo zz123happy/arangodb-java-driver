@@ -18,7 +18,7 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity.codec;
+package com.arangodb.next.entity.serde;
 
 import com.arangodb.next.connection.ContentType;
 import com.arangodb.next.entity.velocypack.VPackDriverModule;
@@ -28,18 +28,18 @@ import com.arangodb.velocypack.VPackSlice;
 /**
  * @author Michele Rastelli
  */
-public class ArangoSerializer {
+public abstract class ArangoSerde {
 
     private final VPack vPack = new VPack.Builder()
             .registerModule(new VPackDriverModule())
             .build();
 
-    public static ArangoSerializer of(ContentType contentType) {
+    public static ArangoSerde of(ContentType contentType) {
         switch (contentType) {
             case VPACK:
-                return new VpackSerializer();
+                return new VpackSerde();
             case JSON:
-                return new JsonSerializer();
+                return new JsonSerde();
             default:
                 throw new IllegalArgumentException(String.valueOf(contentType));
         }
@@ -49,8 +49,16 @@ public class ArangoSerializer {
         return createVPackSlice(value).toByteArray();
     }
 
+    public <T> T deserialize(byte[] buffer, Class<T> clazz) {
+        return deserializeVPackSlice(new VPackSlice(buffer), clazz);
+    }
+
     protected VPackSlice createVPackSlice(final Object value) {
         return vPack.serialize(value);
+    }
+
+    protected <T> T deserializeVPackSlice(final VPackSlice slice, Class<T> clazz) {
+        return vPack.deserialize(slice, clazz);
     }
 
 }

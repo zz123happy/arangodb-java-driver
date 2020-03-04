@@ -22,8 +22,6 @@ package com.arangodb.next.entity.model;
 
 
 import com.arangodb.next.connection.HostDescription;
-import com.arangodb.velocypack.annotations.SerializedName;
-import com.arangodb.velocypack.annotations.VPackCreator;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
 import org.immutables.value.Value;
 

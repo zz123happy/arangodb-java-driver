@@ -18,7 +18,7 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity.codec;
+package com.arangodb.next.entity.serde;
 
 import com.arangodb.next.connection.ContentType;
 import com.arangodb.next.entity.model.*;
@@ -42,8 +42,9 @@ class SerializationTest {
                 .putDetails("bla", "bla")
                 .build();
 
-        byte[] serialized = ArangoSerializer.of(contentType).serialize(original);
-        Version deserialized = ArangoDeserializer.of(contentType).deserialize(serialized, Version.class);
+        ArangoSerde serde = ArangoSerde.of(contentType);
+        byte[] serialized = serde.serialize(original);
+        Version deserialized = serde.deserialize(serialized, Version.class);
         assertThat(deserialized).isEqualTo(original);
     }
 
@@ -60,8 +61,9 @@ class SerializationTest {
                         )
                         .build();
 
-        byte[] serialized = ArangoSerializer.of(contentType).serialize(original);
-        ClusterEndpoints deserialized = ArangoDeserializer.of(contentType).deserialize(serialized, ClusterEndpoints.class);
+        ArangoSerde serde = ArangoSerde.of(contentType);
+        byte[] serialized = serde.serialize(original);
+        ClusterEndpoints deserialized = serde.deserialize(serialized, ClusterEndpoints.class);
         assertThat(deserialized).isEqualTo(original);
     }
 
@@ -76,8 +78,9 @@ class SerializationTest {
                         .errorMessage("error 109")
                         .build();
 
-        byte[] serialized = ArangoSerializer.of(contentType).serialize(original);
-        ErrorEntity deserialized = ArangoDeserializer.of(contentType).deserialize(serialized, ErrorEntity.class);
+        ArangoSerde serde = ArangoSerde.of(contentType);
+        byte[] serialized = serde.serialize(original);
+        ErrorEntity deserialized = serde.deserialize(serialized, ErrorEntity.class);
         assertThat(deserialized).isEqualTo(original);
     }
 

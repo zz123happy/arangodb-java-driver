@@ -18,22 +18,12 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity.codec;
+package com.arangodb.next.entity.serde;
 
-import com.arangodb.velocypack.VPackParser;
-
-import java.nio.charset.StandardCharsets;
 
 /**
  * @author Michele Rastelli
  */
-public final class JsonSerializer extends ArangoSerializer {
-
-    private final VPackParser parser = new VPackParser.Builder().build();
-
-    @Override
-    public byte[] serialize(final Object value) {
-        return parser.toJson(createVPackSlice(value)).getBytes(StandardCharsets.UTF_8);
-    }
+public final class VpackSerde extends ArangoSerde {
 
 }
