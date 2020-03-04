@@ -21,6 +21,7 @@
 package com.arangodb.next.entity.model;
 
 
+import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
 import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
@@ -30,6 +31,11 @@ import javax.annotation.Nullable;
  */
 @Value.Immutable
 public interface DatabaseEntity {
+
+    @VPackPOJOBuilder
+    static ImmutableDatabaseEntity.Builder builder() {
+        return ImmutableDatabaseEntity.builder();
+    }
 
     /**
      * @return the name of the current database
