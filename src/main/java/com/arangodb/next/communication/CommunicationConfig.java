@@ -110,7 +110,7 @@ public interface CommunicationConfig {
      */
     @Value.Default
     default Duration getTimeout() {
-        return Duration.ofSeconds(10);
+        return Duration.ofSeconds(30);
     }
 
     /**

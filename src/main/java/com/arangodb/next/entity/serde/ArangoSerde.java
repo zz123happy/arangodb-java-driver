@@ -36,7 +36,7 @@ public abstract class ArangoSerde {
             .registerModule(new VPackDriverModule())
             .build();
 
-    public static ArangoSerde of(ContentType contentType) {
+    public static ArangoSerde of(final ContentType contentType) {
         switch (contentType) {
             case VPACK:
                 return new VpackSerde();
@@ -47,20 +47,26 @@ public abstract class ArangoSerde {
         }
     }
 
-    public abstract byte[] serialize(final Object value);
+    public abstract VPackSlice createVPackSlice(byte[] buffer);
 
-    public abstract <T> T deserialize(byte[] buffer, final Type type);
+    public abstract byte[] serialize(Object value);
 
-    public <T> T deserialize(byte[] buffer, Class<T> clazz) {
+    public abstract <T> T deserialize(byte[] buffer, Type type);
+
+    public final <T> T deserialize(final VPackSlice slice, final Type type) {
+        return vPack.deserialize(slice, type);
+    }
+
+    public final <T> T deserialize(final byte[] buffer, final Class<T> clazz) {
         return deserialize(buffer, (Type) clazz);
     }
 
-    protected VPackSlice createVPackSlice(final Object value) {
-        return vPack.serialize(value);
+    public final <T> T deserialize(final VPackSlice slice, final Class<T> clazz) {
+        return deserialize(slice, (Type) clazz);
     }
 
-    protected <T> T deserializeVPackSlice(final VPackSlice slice, final Type type) {
-        return vPack.deserialize(slice, type);
+    protected final VPackSlice serializeToVPackSlice(final Object value) {
+        return vPack.serialize(value);
     }
 
 }

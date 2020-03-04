@@ -31,13 +31,18 @@ import java.lang.reflect.Type;
 public final class VpackSerde extends ArangoSerde {
 
     @Override
-    public byte[] serialize(final Object value) {
-        return createVPackSlice(value).toByteArray();
+    public VPackSlice createVPackSlice(final byte[] buffer) {
+        return new VPackSlice(buffer);
     }
 
     @Override
-    public <T> T deserialize(byte[] buffer, final Type type) {
-        return deserializeVPackSlice(new VPackSlice(buffer), type);
+    public byte[] serialize(final Object value) {
+        return serializeToVPackSlice(value).toByteArray();
+    }
+
+    @Override
+    public <T> T deserialize(final byte[] buffer, final Type type) {
+        return deserialize(new VPackSlice(buffer), type);
     }
 
 }

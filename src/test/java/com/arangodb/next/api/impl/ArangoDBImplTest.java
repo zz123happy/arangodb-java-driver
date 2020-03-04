@@ -25,6 +25,7 @@ import com.arangodb.next.communication.CommunicationConfig;
 import com.arangodb.next.connection.AuthenticationMethod;
 import com.arangodb.next.connection.HostDescription;
 import com.arangodb.next.entity.model.DatabaseEntity;
+import com.arangodb.next.entity.model.ReplicationFactor;
 import com.arangodb.next.entity.model.Sharding;
 import com.arangodb.next.entity.option.DBCreateOptions;
 import com.arangodb.next.entity.option.DatabaseOptions;
@@ -66,6 +67,8 @@ class ArangoDBImplTest {
                 .name(name)
                 .options(DatabaseOptions.builder()
                         .sharding(Sharding.single)
+                        .writeConcern(2)
+                        .replicationFactor(ReplicationFactor.of(2))
                         .build())
                 .build()).block();
         DatabaseEntity db = arangoDB.getDatabase(name).block();
@@ -73,10 +76,10 @@ class ArangoDBImplTest {
         assertThat(db.getId()).isNotNull();
         assertThat(db.getName()).isEqualTo(name);
         assertThat(db.getPath()).isNotNull();
-//        assertThat(db.getReplicationFactor()).;
+        assertThat(db.getWriteConcern()).isEqualTo(2);
+        assertThat(db.getReplicationFactor()).isEqualTo(ReplicationFactor.of(2));
         assertThat(db.getSharding()).isEqualTo(Sharding.single);
-        assertThat(db.getSystem()).isFalse();
-
+        assertThat(db.isSystem()).isFalse();
     }
 
 }

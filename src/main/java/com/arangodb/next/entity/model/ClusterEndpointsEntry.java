@@ -31,7 +31,7 @@ import org.immutables.value.Value;
 public abstract class ClusterEndpointsEntry {
 
     @VPackCreator
-    public static ClusterEndpointsEntry of(@SerializedName("endpoint") String endpoint) {
+    public static ClusterEndpointsEntry of(@SerializedName("endpoint") final String endpoint) {
         return ImmutableClusterEndpointsEntry.of(endpoint);
     }
 

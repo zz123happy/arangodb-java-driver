@@ -25,6 +25,7 @@ import com.arangodb.next.api.ArangoDB;
 import com.arangodb.next.communication.ArangoCommunication;
 import com.arangodb.next.communication.CommunicationConfig;
 import com.arangodb.next.connection.ArangoRequest;
+import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.entity.model.DatabaseEntity;
 import com.arangodb.next.entity.option.DBCreateOptions;
 import com.arangodb.next.entity.serde.ArangoSerde;
@@ -65,7 +66,7 @@ public final class ArangoDBImpl implements ArangoDB {
     }
 
     @Override
-    public Mono<DatabaseEntity> getDatabase(String name) {
+    public Mono<DatabaseEntity> getDatabase(final String name) {
         return communication.execute(
                 ArangoRequest.builder()
                         .database(name)
@@ -73,10 +74,10 @@ public final class ArangoDBImpl implements ArangoDB {
                         .path(PATH_API_DATABASE + "/current")
                         .build()
         )
-                // TODO: use this type:
-                // new ModifiableSuccessEntity<DatabaseEntity>() {}.getClass().getGenericSuperclass()
-                // TODO: also overload deserializer.deserialize(byte[], Type)
-                .map(response -> serde.deserialize(response.getBody(), DatabaseEntity.class));
+                .map(ArangoResponse::getBody)
+                .map(serde::createVPackSlice)
+                .map(it -> it.get("result"))
+                .map(slice -> serde.deserialize(slice, DatabaseEntity.class));
     }
 
 }

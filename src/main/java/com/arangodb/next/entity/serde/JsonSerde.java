@@ -20,11 +20,12 @@
 
 package com.arangodb.next.entity.serde;
 
-
 import com.arangodb.velocypack.VPackParser;
+import com.arangodb.velocypack.VPackSlice;
 
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+
 
 /**
  * @author Michele Rastelli
@@ -34,13 +35,18 @@ public final class JsonSerde extends ArangoSerde {
     private final VPackParser parser = new VPackParser.Builder().build();
 
     @Override
+    public VPackSlice createVPackSlice(final byte[] buffer) {
+        return parser.fromJson(new String(buffer));
+    }
+
+    @Override
     public byte[] serialize(final Object value) {
-        return parser.toJson(createVPackSlice(value), true).getBytes(StandardCharsets.UTF_8);
+        return parser.toJson(serializeToVPackSlice(value), true).getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
     public <T> T deserialize(final byte[] buffer, final Type type) {
-        return deserializeVPackSlice(parser.fromJson(new String(buffer)), type);
+        return deserialize(parser.fromJson(new String(buffer)), type);
     }
 
 }

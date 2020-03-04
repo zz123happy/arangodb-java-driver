@@ -77,7 +77,7 @@ class ActiveFailoverResiliencyTest {
     void retry(ArangoProtocol protocol) {
         CommunicationConfig testConfig = config
                 .protocol(protocol)
-                .timeout(Duration.ofMillis(500))
+                .timeout(Duration.ofMillis(1000))
                 .build();
         ArangoCommunication communication = ArangoCommunication.create(testConfig).block();
         assertThat(communication).isNotNull();

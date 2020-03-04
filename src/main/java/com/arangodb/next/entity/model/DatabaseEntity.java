@@ -56,7 +56,7 @@ public interface DatabaseEntity {
     /**
      * @return whether or not the current database is the _system database
      */
-    Boolean getSystem();
+    Boolean isSystem();
 
     /**
      * @return the default sharding method for collections created in this database
