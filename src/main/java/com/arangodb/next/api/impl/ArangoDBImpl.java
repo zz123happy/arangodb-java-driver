@@ -60,7 +60,8 @@ public final class ArangoDBImpl implements ArangoDB {
                         .requestType(ArangoRequest.RequestType.POST)
                         .path(PATH_API_DATABASE)
                         .body(serde.serialize(options))
-                        .build()
+                        .build(),
+                communication.getDefaultConversation()
         )
                 .then();
     }
@@ -72,7 +73,8 @@ public final class ArangoDBImpl implements ArangoDB {
                         .database(name)
                         .requestType(ArangoRequest.RequestType.GET)
                         .path(PATH_API_DATABASE + "/current")
-                        .build()
+                        .build(),
+                communication.getDefaultConversation()
         )
                 .map(ArangoResponse::getBody)
                 .map(serde::createVPackSlice)

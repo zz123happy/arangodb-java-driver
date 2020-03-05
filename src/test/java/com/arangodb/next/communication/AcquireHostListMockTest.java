@@ -148,7 +148,8 @@ public class AcquireHostListMockTest {
         };
 
         ArangoCommunicationImpl communication = new ArangoCommunicationImpl(getConfig(contentType), factory);
-        communication.initialize().block();
+        Throwable thrown = catchThrowable(() -> communication.initialize().block());
+        assertThat(Exceptions.unwrap(thrown)).isInstanceOf(NoHostsAvailableException.class);
 
         ConnectionPoolImpl connectionPool = (ConnectionPoolImpl) communication.getConnectionPool();
         assertThat(connectionPool.getConnectionsByHost().keySet()).isEmpty();

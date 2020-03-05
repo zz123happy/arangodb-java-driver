@@ -54,6 +54,16 @@ public interface ArangoCommunication {
     Mono<ArangoCommunication> initialize();
 
     /**
+     * The ArangoCommunication keeps a default conversation having level {@link Conversation.Level#REQUIRED}. It is
+     * updated every time that the hostList is updated. This conversation can be used for creating sequences of requests
+     * which need to hit the same coordinator.
+     *
+     * @return the default conversation
+     * @apiNote the value is updated in a scheduled way, so subsequent requests could get a different conversation.
+     */
+    Conversation getDefaultConversation();
+
+    /**
      * Send the request to a random host over a random connection
      *
      * @param request to send
