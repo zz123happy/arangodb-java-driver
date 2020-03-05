@@ -36,7 +36,7 @@ public final class JsonSerde extends ArangoSerde {
 
     @Override
     public VPackSlice createVPackSlice(final byte[] buffer) {
-        return parser.fromJson(new String(buffer));
+        return parser.fromJson(new String(buffer, StandardCharsets.UTF_8));
     }
 
     @Override
@@ -46,7 +46,7 @@ public final class JsonSerde extends ArangoSerde {
 
     @Override
     public <T> T deserialize(final byte[] buffer, final Type type) {
-        return deserialize(parser.fromJson(new String(buffer)), type);
+        return deserialize(parser.fromJson(new String(buffer, StandardCharsets.UTF_8)), type);
     }
 
 }
