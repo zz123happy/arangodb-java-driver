@@ -1,6 +1,7 @@
 package deployments;
 
 
+import com.arangodb.next.communication.ArangoTopology;
 import com.arangodb.next.connection.HostDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,11 @@ public class ProxiedSingleServerDeployment extends ProxiedContainerDeployment {
     @Override
     public List<HostDescription> getHosts() {
         return Collections.singletonList(HostDescription.of(proxy.getContainerIpAddress(), proxy.getProxyPort()));
+    }
+
+    @Override
+    public ArangoTopology getTopology() {
+        return ArangoTopology.SINGLE_SERVER;
     }
 
     @Override

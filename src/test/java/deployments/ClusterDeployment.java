@@ -1,6 +1,7 @@
 package deployments;
 
 
+import com.arangodb.next.communication.ArangoTopology;
 import com.arangodb.next.connection.HostDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,6 +113,11 @@ public class ClusterDeployment extends ContainerDeployment {
         return coordinators.values().stream()
                 .map(it -> HostDescription.of(getContainerIP(it), 8529))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public ArangoTopology getTopology() {
+        return ArangoTopology.CLUSTER;
     }
 
     private GenericContainer<?> createContainer(String name, int port) {

@@ -1,6 +1,7 @@
 package deployments;
 
 
+import com.arangodb.next.communication.ArangoTopology;
 import com.arangodb.next.connection.AuthenticationMethod;
 import com.arangodb.next.connection.HostDescription;
 import org.slf4j.Logger;
@@ -56,6 +57,11 @@ public class SingleServerNoAuthDeployment extends ContainerDeployment {
     @Override
     public List<HostDescription> getHosts() {
         return Collections.singletonList(HostDescription.of(container.getContainerIpAddress(), container.getFirstMappedPort()));
+    }
+
+    @Override
+    public ArangoTopology getTopology() {
+        return ArangoTopology.SINGLE_SERVER;
     }
 
     @Override

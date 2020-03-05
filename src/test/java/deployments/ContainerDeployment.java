@@ -20,6 +20,7 @@
 
 package deployments;
 
+import com.arangodb.next.communication.ArangoTopology;
 import com.arangodb.next.connection.AuthenticationMethod;
 import com.arangodb.next.connection.HostDescription;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,6 +48,10 @@ public abstract class ContainerDeployment implements Startable {
 
     private static final Logger log = LoggerFactory.getLogger(ContainerDeployment.class);
 
+    public static ContainerDeployment ofSingleServer() {
+        return new SingleServerDeployment();
+    }
+
     public static ContainerDeployment ofSingleServerWithSsl() {
         return new SingleServerSslDeployment();
     }
@@ -68,6 +73,9 @@ public abstract class ContainerDeployment implements Startable {
     }
 
     public static ContainerDeployment ofActiveFailover(int servers) {
+        if(servers < 3){
+            throw new IllegalArgumentException("servers must be >= 3");
+        }
         return new ActiveFailoverDeployment(servers);
     }
 
@@ -130,6 +138,17 @@ public abstract class ContainerDeployment implements Startable {
     }
 
     public abstract List<HostDescription> getHosts();
+
+    public boolean isEnterprise() {
+        return getImage().contains("enterprise");
+    }
+
+    public abstract ArangoTopology getTopology();
+
+    public boolean isAtLeastVersion(final int major, final int minor){
+        final String[] split = getImage().split(":")[1].split("\\.");
+        return Integer.parseInt(split[0]) >= major && Integer.parseInt(split[1]) >= minor;
+    }
 
     protected String getImage() {
         return ContainerUtils.getImage();

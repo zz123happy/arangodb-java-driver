@@ -1,6 +1,7 @@
 package deployments;
 
 
+import com.arangodb.next.communication.ArangoTopology;
 import com.arangodb.next.connection.HostDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,6 +109,11 @@ public class ProxiedClusterDeployment extends ProxiedContainerDeployment {
         return getProxiedHosts().stream()
                 .map(ProxiedHost::getHostDescription)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public ArangoTopology getTopology() {
+        return ArangoTopology.CLUSTER;
     }
 
     private GenericContainer<?> createContainer(String name, int port) {
