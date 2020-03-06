@@ -5,17 +5,15 @@ import com.arangodb.next.communication.ArangoTopology;
 import com.arangodb.next.connection.HostDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 
+import java.io.IOException;
 import java.time.Duration;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -25,7 +23,7 @@ public class ActiveFailoverDeployment extends ContainerDeployment {
 
     private final Logger log = LoggerFactory.getLogger(ActiveFailoverDeployment.class);
     private final Map<String, GenericContainer<?>> servers;
-    private volatile Network network;
+    private volatile ReusableNetwork network;
 
     ActiveFailoverDeployment(int servers) {
 
@@ -40,35 +38,71 @@ public class ActiveFailoverDeployment extends ContainerDeployment {
     public CompletableFuture<ContainerDeployment> asyncStart() {
         return CompletableFuture
                 .runAsync(() -> {
-                    network = Network.newNetwork();
+                    network = ReusableNetwork.INSTANCE;
                     servers.values().forEach(agent -> agent.withNetwork(network));
                 })
                 .thenCompose(__ -> CompletableFuture.allOf(
                         performActionOnGroup(servers.values(), GenericContainer::start)
                 ))
-                .thenCompose(__ -> {
-                    CompletableFuture<Void> future = new CompletableFuture<>();
-                    try {
-                        for (GenericContainer<?> server : servers.values()) {
-                            server.execInContainer(
-                                    "arangosh",
-                                    "--server.authentication=false",
-                                    "--javascript.execute-string=require('org/arangodb/users').update('" + getUser() + "', '" + getPassword() + "')");
-                        }
-                        future.complete(null);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        future.completeExceptionally(e);
+                .thenCompose(__ -> verifyAuthentication())
+                .thenCompose(authenticationConfigured -> {
+                    if (authenticationConfigured) {
+                        return CompletableFuture.completedFuture(null);
+                    } else {
+                        return configureAuthentication();
                     }
-                    return future;
                 })
                 .thenCompose(__ -> CompletableFuture.runAsync(() -> ContainerUtils.waitForAuthenticationUpdate(this)))
                 .thenAccept(__ -> log.info("Cluster is ready!"))
                 .thenApply(__ -> this);
     }
 
+    private CompletableFuture<Void> configureAuthentication() {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        try {
+            for (GenericContainer<?> server : servers.values()) {
+                server.execInContainer(
+                        "arangosh",
+                        "--server.authentication=false",
+                        "--javascript.execute-string=require('org/arangodb/users').update('" + getUser() + "', '" + getPassword() + "')");
+            }
+            future.complete(null);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            future.completeExceptionally(e);
+        }
+        return future;
+    }
+
+    private CompletableFuture<Boolean> verifyAuthentication() {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        try {
+            for (GenericContainer<?> server : servers.values()) {
+                Container.ExecResult result = server.execInContainer(
+                        "arangosh",
+                        "--server.username=" + getUser(),
+                        "--server.password=" + getPassword(),
+                        "--javascript.execute-string=db._version()");
+
+                if (result.getExitCode() != 0) {
+                    future.complete(false);
+                }
+            }
+
+            future.complete(true);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            future.completeExceptionally(e);
+        }
+        return future;
+    }
+
     @Override
     public CompletableFuture<ContainerDeployment> asyncStop() {
+        if (isReuse()) {
+            return CompletableFuture.completedFuture(this);
+        }
+
         return CompletableFuture.allOf(
                 performActionOnGroup(servers.values(), GenericContainer::stop)
         )
@@ -81,7 +115,7 @@ public class ActiveFailoverDeployment extends ContainerDeployment {
         return container.getContainerInfo()
                 .getNetworkSettings()
                 .getNetworks()
-                .get(((Network.NetworkImpl) network).getName())
+                .get(network.getName())
                 .getIpAddress();
     }
 
@@ -98,13 +132,17 @@ public class ActiveFailoverDeployment extends ContainerDeployment {
     }
 
     private GenericContainer<?> createContainer(String name) {
-        return new GenericContainer<>(getImage())
+        GenericContainer<?> c = new GenericContainer<>(getImage())
+                .withReuse(isReuse())
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
                 .withCopyFileToContainer(MountableFile.forClasspathResource("deployments/jwtSecret"), "/jwtSecret")
                 .withExposedPorts(8529)
-                .withNetworkAliases(name)
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[" + name + "]"))
                 .waitingFor(Wait.forLogMessage(".*resilientsingle up and running.*", 1).withStartupTimeout(Duration.ofSeconds(60)));
+
+        // .withNetworkAliases creates also a random alias, which prevents container reuse
+        c.setNetworkAliases(Collections.singletonList(name));
+        return c;
     }
 
     private GenericContainer<?> createServer(String name) {

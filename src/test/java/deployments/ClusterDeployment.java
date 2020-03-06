@@ -7,16 +7,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 
+import java.io.IOException;
 import java.time.Duration;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -29,7 +26,7 @@ public class ClusterDeployment extends ContainerDeployment {
     private final List<GenericContainer<?>> agents;
     private final List<GenericContainer<?>> dbServers;
     private final Map<String, GenericContainer<?>> coordinators;
-    private volatile Network network;
+    private volatile ReusableNetwork network;
 
     ClusterDeployment(int dbServers, int coordinators) {
 
@@ -53,43 +50,72 @@ public class ClusterDeployment extends ContainerDeployment {
     public CompletableFuture<ContainerDeployment> asyncStart() {
         return CompletableFuture
                 .runAsync(() -> {
-                    network = Network.newNetwork();
+                    network = ReusableNetwork.INSTANCE;
                     agents.forEach(agent -> agent.withNetwork(network));
                     dbServers.forEach(agent -> agent.withNetwork(network));
                     coordinators.values().forEach(agent -> agent.withNetwork(network));
                 })
-                .thenAccept(__ -> agents.forEach(agent -> agent.withNetwork(network)))
                 .thenCompose(__ -> performActionOnGroup(agents, GenericContainer::start))
                 .thenCompose(__ -> CompletableFuture.allOf(
                         performActionOnGroup(dbServers, GenericContainer::start),
                         performActionOnGroup(coordinators.values(), GenericContainer::start)
                 ))
-                .thenCompose(__ -> {
-                    CompletableFuture<Void> future = new CompletableFuture<>();
-                    try {
-                        Container.ExecResult result = coordinators.values().iterator().next().execInContainer(
-                                "arangosh",
-                                "--server.authentication=false",
-                                "--javascript.execute-string=require('org/arangodb/users').update('" + getUser() + "', '" + getPassword() + "')");
-
-                        if (result.getExitCode() != 0) {
-                            throw new RuntimeException(result.getStderr() + "\n" + result.getStdout());
-                        }
-
-                        future.complete(null);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        future.completeExceptionally(e);
+                .thenCompose(__ -> verifyClusterAuthentication())
+                .thenCompose(authenticationConfigured -> {
+                    if (authenticationConfigured) {
+                        return CompletableFuture.completedFuture(null);
+                    } else {
+                        return configureClusterAuthentication();
                     }
-                    return future;
                 })
                 .thenCompose(__ -> CompletableFuture.runAsync(() -> ContainerUtils.waitForAuthenticationUpdate(this)))
                 .thenAccept(__ -> log.info("Cluster is ready!"))
                 .thenApply(__ -> this);
     }
 
+    private CompletableFuture<Boolean> verifyClusterAuthentication() {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        Container.ExecResult result = null;
+        try {
+            result = coordinators.values().iterator().next().execInContainer(
+                    "arangosh",
+                    "--server.username=" + getUser(),
+                    "--server.password=" + getPassword(),
+                    "--javascript.execute-string=db._version()");
+            future.complete(result.getExitCode() == 0);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            future.completeExceptionally(e);
+        }
+        return future;
+    }
+
+    private CompletableFuture<Void> configureClusterAuthentication() {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        try {
+            Container.ExecResult result = coordinators.values().iterator().next().execInContainer(
+                    "arangosh",
+                    "--server.authentication=false",
+                    "--javascript.execute-string=require('org/arangodb/users').update('" + getUser() + "', '" + getPassword() + "')");
+
+            if (result.getExitCode() != 0) {
+                throw new RuntimeException(result.getStderr() + "\n" + result.getStdout());
+            }
+
+            future.complete(null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            future.completeExceptionally(e);
+        }
+        return future;
+    }
+
     @Override
     public CompletableFuture<ContainerDeployment> asyncStop() {
+        if (isReuse()) {
+            return CompletableFuture.completedFuture(this);
+        }
+
         return CompletableFuture.allOf(
                 performActionOnGroup(agents, GenericContainer::stop),
                 performActionOnGroup(dbServers, GenericContainer::stop),
@@ -104,7 +130,7 @@ public class ClusterDeployment extends ContainerDeployment {
         return container.getContainerInfo()
                 .getNetworkSettings()
                 .getNetworks()
-                .get(((Network.NetworkImpl) network).getName())
+                .get(network.getName())
                 .getIpAddress();
     }
 
@@ -121,13 +147,17 @@ public class ClusterDeployment extends ContainerDeployment {
     }
 
     private GenericContainer<?> createContainer(String name, int port) {
-        return new GenericContainer<>(getImage())
+        GenericContainer<?> c = new GenericContainer<>(getImage())
+                .withReuse(isReuse())
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
                 .withCopyFileToContainer(MountableFile.forClasspathResource("deployments/jwtSecret"), "/jwtSecret")
                 .withExposedPorts(port)
-                .withNetworkAliases(name)
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[" + name + "]"))
                 .waitingFor(Wait.forLogMessage(".*up and running.*", 1).withStartupTimeout(Duration.ofSeconds(60)));
+
+        // .withNetworkAliases creates also a random alias, which prevents container reuse
+        c.setNetworkAliases(Collections.singletonList(name));
+        return c;
     }
 
     private GenericContainer<?> createAgent(int count) {

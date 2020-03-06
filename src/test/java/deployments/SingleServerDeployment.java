@@ -21,6 +21,7 @@ public class SingleServerDeployment extends ContainerDeployment {
 
     public SingleServerDeployment() {
         container = new GenericContainer<>(getImage())
+                .withReuse(isReuse())
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
                 .withEnv("ARANGO_ROOT_PASSWORD", getPassword())
                 .withExposedPorts(8529)
@@ -45,6 +46,10 @@ public class SingleServerDeployment extends ContainerDeployment {
 
     @Override
     public CompletableFuture<ContainerDeployment> asyncStop() {
+        if (isReuse()) {
+            return CompletableFuture.completedFuture(this);
+        }
+
         return CompletableFuture.runAsync(container::stop).thenAccept((v) -> log.info("Stopped!")).thenApply((v) -> this);
     }
 

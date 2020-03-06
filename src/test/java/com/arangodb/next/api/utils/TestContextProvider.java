@@ -21,10 +21,12 @@
 package com.arangodb.next.api.utils;
 
 import deployments.ContainerDeployment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -35,23 +37,38 @@ import java.util.stream.Collectors;
 public enum TestContextProvider implements Supplier<List<TestContext>> {
     INSTANCE;
 
+    private final Logger log = LoggerFactory.getLogger(TestContextProvider.class);
+
     private final List<TestContext> contexts;
 
     TestContextProvider() {
+        long start = new Date().getTime();
+
         List<ContainerDeployment> deployments = Arrays.asList(
                 ContainerDeployment.ofSingleServer(),
-//                ContainerDeployment.ofActiveFailover(3),
+                ContainerDeployment.ofActiveFailover(3),
                 ContainerDeployment.ofCluster(2, 2)
         );
 
-        List<CompletableFuture<Void>> startingTasks = deployments.stream()
-                .map(it -> CompletableFuture.runAsync(it::start))
+        List<Thread> startingTasks = deployments.stream()
+                .map(it -> new Thread(it::start))
                 .collect(Collectors.toList());
-        startingTasks.forEach(CompletableFuture::join);
+
+        startingTasks.forEach(Thread::start);
+        for (Thread t : startingTasks) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         contexts = deployments.stream()
                 .flatMap(TestContext::createContexts)
                 .collect(Collectors.toList());
+
+        long end = new Date().getTime();
+        log.info("TestContextProvider initialized in [ms]: {}", end - start);
     }
 
     @Override

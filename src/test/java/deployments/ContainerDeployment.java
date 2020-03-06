@@ -73,10 +73,16 @@ public abstract class ContainerDeployment implements Startable {
     }
 
     public static ContainerDeployment ofActiveFailover(int servers) {
-        if(servers < 3){
+        if (servers < 3) {
             throw new IllegalArgumentException("servers must be >= 3");
         }
         return new ActiveFailoverDeployment(servers);
+    }
+
+    private final boolean reuse;
+
+    public ContainerDeployment() {
+        reuse = Boolean.parseBoolean(System.getProperty("testcontainers.reuse.enable"));
     }
 
     @Override
@@ -160,6 +166,10 @@ public abstract class ContainerDeployment implements Startable {
 
     protected String getSslProtocol() {
         return null;
+    }
+
+    protected boolean isReuse() {
+        return reuse;
     }
 
 }
