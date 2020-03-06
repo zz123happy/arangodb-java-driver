@@ -40,12 +40,12 @@ public class SingleServerDeployment extends ContainerDeployment {
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> asyncStart() {
+    CompletableFuture<ContainerDeployment> asyncStart() {
         return CompletableFuture.runAsync(container::start).thenAccept((v) -> log.info("Ready!")).thenApply((v) -> this);
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> asyncStop() {
+    CompletableFuture<ContainerDeployment> asyncStop() {
         if (isReuse()) {
             return CompletableFuture.completedFuture(this);
         }

@@ -37,9 +37,12 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Michele Rastelli
@@ -47,9 +50,34 @@ import java.util.concurrent.CompletionException;
 public abstract class ContainerDeployment implements Startable {
 
     private static final Logger log = LoggerFactory.getLogger(ContainerDeployment.class);
+    private static final ContainerDeployment REUSABLE_SINGLE_SERVER_DEPLOYMENT = new SingleServerDeployment();
+    private static final ConcurrentMap<AbstractMap.SimpleImmutableEntry<Integer, Integer>, ContainerDeployment> REUSABLE_CLUSTER = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Integer, ContainerDeployment> REUSABLE_ACTIVE_FAILOVER = new ConcurrentHashMap<>();
 
-    public static ContainerDeployment ofSingleServer() {
-        return new SingleServerDeployment();
+    public synchronized static ContainerDeployment ofReusableSingleServer() {
+        return REUSABLE_SINGLE_SERVER_DEPLOYMENT;
+    }
+
+    public synchronized static ContainerDeployment ofReusableCluster(int dbServers, int coordinators) {
+        AbstractMap.SimpleImmutableEntry<Integer, Integer> key = new AbstractMap.SimpleImmutableEntry<>(dbServers, coordinators);
+        if (REUSABLE_CLUSTER.containsKey(key)) {
+            return REUSABLE_CLUSTER.get(key);
+        }
+        ClusterDeployment deployment = new ClusterDeployment(dbServers, coordinators);
+        REUSABLE_CLUSTER.put(key, deployment);
+        return deployment;
+    }
+
+    public synchronized static ContainerDeployment ofReusableActiveFailover(int servers) {
+        if (servers < 3) {
+            throw new IllegalArgumentException("servers must be >= 3");
+        }
+        if (REUSABLE_ACTIVE_FAILOVER.containsKey(servers)) {
+            return REUSABLE_ACTIVE_FAILOVER.get(servers);
+        }
+        ActiveFailoverDeployment deployment = new ActiveFailoverDeployment(servers);
+        REUSABLE_ACTIVE_FAILOVER.put(servers, deployment);
+        return deployment;
     }
 
     public static ContainerDeployment ofSingleServerWithSsl() {
@@ -68,25 +96,18 @@ public abstract class ContainerDeployment implements Startable {
         return new SingleServerNoAuthDeployment(vstMaxSize);
     }
 
-    public static ContainerDeployment ofCluster(int dbServers, int coordinators) {
-        return new ClusterDeployment(dbServers, coordinators);
-    }
-
-    public static ContainerDeployment ofActiveFailover(int servers) {
-        if (servers < 3) {
-            throw new IllegalArgumentException("servers must be >= 3");
-        }
-        return new ActiveFailoverDeployment(servers);
-    }
-
     private final boolean reuse;
+    private volatile boolean started = false;
 
     public ContainerDeployment() {
         reuse = Boolean.parseBoolean(System.getProperty("testcontainers.reuse.enable"));
     }
 
     @Override
-    public void start() {
+    public synchronized void start() {
+        if (started) return;
+        started = true;
+
         try {
             asyncStart().join();
         } catch (CompletionException e) {
@@ -102,7 +123,7 @@ public abstract class ContainerDeployment implements Startable {
     }
 
     @Override
-    public void stop() {
+    public synchronized void stop() {
         asyncStop().join();
     }
 
@@ -160,9 +181,9 @@ public abstract class ContainerDeployment implements Startable {
         return ContainerUtils.getImage();
     }
 
-    protected abstract CompletableFuture<? extends ContainerDeployment> asyncStart();
+    abstract CompletableFuture<? extends ContainerDeployment> asyncStart();
 
-    protected abstract CompletableFuture<ContainerDeployment> asyncStop();
+    abstract CompletableFuture<ContainerDeployment> asyncStop();
 
     protected String getSslProtocol() {
         return null;

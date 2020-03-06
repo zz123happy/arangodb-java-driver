@@ -47,7 +47,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 class CommunicationTest {
 
     @Container
-    private final static ContainerDeployment deployment = ContainerDeployment.ofCluster(2, 2);
+    private final static ContainerDeployment deployment = ContainerDeployment.ofReusableCluster(2, 2);
     private final ImmutableCommunicationConfig.Builder config;
     private final List<HostDescription> hosts;
 

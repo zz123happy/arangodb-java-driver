@@ -59,7 +59,7 @@ public class ProxiedActiveFailoverDeployment extends ProxiedContainerDeployment 
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> asyncStart() {
+    CompletableFuture<ContainerDeployment> asyncStart() {
         return CompletableFuture
                 .runAsync(() -> {
                     network = Network.newNetwork();
@@ -93,7 +93,7 @@ public class ProxiedActiveFailoverDeployment extends ProxiedContainerDeployment 
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> asyncStop() {
+    CompletableFuture<ContainerDeployment> asyncStop() {
         return CompletableFuture.allOf(
                 performActionOnGroup(servers.values(), GenericContainer::stop)
         )

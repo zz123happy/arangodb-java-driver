@@ -47,7 +47,7 @@ public class ClusterDeployment extends ContainerDeployment {
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> asyncStart() {
+    CompletableFuture<ContainerDeployment> asyncStart() {
         return CompletableFuture
                 .runAsync(() -> {
                     network = ReusableNetwork.INSTANCE;
@@ -75,9 +75,8 @@ public class ClusterDeployment extends ContainerDeployment {
 
     private CompletableFuture<Boolean> verifyClusterAuthentication() {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
-        Container.ExecResult result = null;
         try {
-            result = coordinators.values().iterator().next().execInContainer(
+            Container.ExecResult result = coordinators.values().iterator().next().execInContainer(
                     "arangosh",
                     "--server.username=" + getUser(),
                     "--server.password=" + getPassword(),
@@ -111,7 +110,7 @@ public class ClusterDeployment extends ContainerDeployment {
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> asyncStop() {
+    CompletableFuture<ContainerDeployment> asyncStop() {
         if (isReuse()) {
             return CompletableFuture.completedFuture(this);
         }

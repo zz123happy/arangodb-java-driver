@@ -35,7 +35,7 @@ public class ActiveFailoverDeployment extends ContainerDeployment {
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> asyncStart() {
+    CompletableFuture<ContainerDeployment> asyncStart() {
         return CompletableFuture
                 .runAsync(() -> {
                     network = ReusableNetwork.INSTANCE;
@@ -98,7 +98,7 @@ public class ActiveFailoverDeployment extends ContainerDeployment {
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> asyncStop() {
+    CompletableFuture<ContainerDeployment> asyncStop() {
         if (isReuse()) {
             return CompletableFuture.completedFuture(this);
         }

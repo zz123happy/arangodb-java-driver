@@ -52,7 +52,7 @@ public class ProxiedClusterDeployment extends ProxiedContainerDeployment {
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> asyncStart() {
+    CompletableFuture<ContainerDeployment> asyncStart() {
         return CompletableFuture
                 .runAsync(() -> {
                     network = Network.newNetwork();
@@ -93,7 +93,7 @@ public class ProxiedClusterDeployment extends ProxiedContainerDeployment {
     }
 
     @Override
-    public CompletableFuture<ContainerDeployment> asyncStop() {
+    CompletableFuture<ContainerDeployment> asyncStop() {
         return CompletableFuture.allOf(
                 performActionOnGroup(agents, GenericContainer::stop),
                 performActionOnGroup(dbServers, GenericContainer::stop),

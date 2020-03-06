@@ -54,7 +54,7 @@ public class ProxiedSingleServerDeployment extends ProxiedContainerDeployment {
     }
 
     @Override
-    public CompletableFuture<ProxiedContainerDeployment> asyncStart() {
+    CompletableFuture<ProxiedContainerDeployment> asyncStart() {
         return CompletableFuture
                 .runAsync(() -> {
                     network = Network.newNetwork();
@@ -71,7 +71,7 @@ public class ProxiedSingleServerDeployment extends ProxiedContainerDeployment {
 
 
     @Override
-    public CompletableFuture<ContainerDeployment> asyncStop() {
+    CompletableFuture<ContainerDeployment> asyncStop() {
         return CompletableFuture.allOf(
                 CompletableFuture.runAsync(container::stop).thenAccept((v) -> log.info("STOPPED: db")),
                 CompletableFuture.runAsync(toxiproxy::stop).thenAccept((v) -> log.info("STOPPED: toxiproxy"))
