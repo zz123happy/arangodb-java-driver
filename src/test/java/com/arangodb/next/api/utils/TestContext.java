@@ -79,7 +79,6 @@ public class TestContext {
     @Override
     public String toString() {
         return deployment.getTopology() + ", " +
-                (deployment.isEnterprise() ? "enterprise" : "community") + ", " +
                 config.getProtocol() + ", " +
                 config.getContentType();
     }

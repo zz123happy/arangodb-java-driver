@@ -59,7 +59,7 @@ class ArangoDBTest {
         assertThat(db.getPath()).isNotNull();
         assertThat(db.isSystem()).isFalse();
 
-        if (ctx.isCluster()) {
+        if (ctx.isCluster() && ctx.isAtLeastVersion(3, 6)) {
             assertThat(db.getWriteConcern()).isEqualTo(1);
             assertThat(db.getReplicationFactor()).isEqualTo(ReplicationFactor.of(1));
             assertThat(db.getSharding()).isEqualTo(Sharding.FLEXIBLE);
@@ -87,7 +87,7 @@ class ArangoDBTest {
         assertThat(db.getPath()).isNotNull();
         assertThat(db.isSystem()).isFalse();
 
-        if (ctx.isCluster()) {
+        if (ctx.isCluster() && ctx.isAtLeastVersion(3, 6)) {
             assertThat(db.getWriteConcern()).isEqualTo(2);
             assertThat(db.getReplicationFactor()).isEqualTo(ReplicationFactor.of(2));
             assertThat(db.getSharding()).isEqualTo(Sharding.SINGLE);
@@ -105,7 +105,7 @@ class ArangoDBTest {
         assertThat(db.getPath()).isNotNull();
         assertThat(db.isSystem()).isTrue();
 
-        if (ctx.isCluster()) {
+        if (ctx.isCluster() && ctx.isAtLeastVersion(3, 6)) {
             assertThat(db.getWriteConcern()).isEqualTo(1);
             assertThat(db.getReplicationFactor()).isEqualTo(ReplicationFactor.of(1));
             assertThat(db.getSharding()).isEqualTo(Sharding.FLEXIBLE);
