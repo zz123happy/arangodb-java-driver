@@ -140,7 +140,11 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     @Override
     public Mono<ArangoResponse> execute(final ArangoRequest request) {
         LOGGER.debug("execute({})", request);
-        return execute(request, connectionPool).doOnNext(this::checkError);
+        return Mono.subscriberContext()
+                .flatMap(ctx -> ctx.getOrEmpty(ArangoCommunication.CONVERSATION_CTX)
+                        .map(conversation -> execute(request, (Conversation) conversation))
+                        .orElseGet(() -> execute(request, connectionPool)))
+                .doOnNext(this::checkError);
     }
 
     private Mono<ArangoResponse> execute(final ArangoRequest request, final ConnectionPool cp) {
@@ -150,18 +154,16 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
                 .timeout(config.getTimeout());
     }
 
-    @Override
-    public Mono<ArangoResponse> execute(final ArangoRequest request, final Conversation conversation) {
+    private Mono<ArangoResponse> execute(final ArangoRequest request, final Conversation conversation) {
         LOGGER.debug("execute({}, {})", request, conversation);
         return execute(request, conversation.getHost())
                 .onErrorResume(HostNotAvailableException.class, e -> {
                     if (Conversation.Level.REQUIRED.equals(conversation.getLevel())) {
                         throw e;
                     } else {
-                        return execute(request);
+                        return execute(request, connectionPool);
                     }
-                })
-                .doOnNext(this::checkError);
+                });
     }
 
     private Mono<ArangoResponse> execute(

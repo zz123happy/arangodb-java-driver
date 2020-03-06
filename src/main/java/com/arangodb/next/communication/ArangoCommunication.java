@@ -44,6 +44,11 @@ public interface ArangoCommunication {
     }
 
     /**
+     * Reactor Context key identifying the conversation
+     */
+    String CONVERSATION_CTX = "conversation";
+
+    /**
      * Initializes the communication asynchronously performing the following tasks:
      * - negotiate authentication (eg. Kerberos),
      * - acquire the host list from server,
@@ -64,21 +69,27 @@ public interface ArangoCommunication {
     Conversation getDefaultConversation();
 
     /**
-     * Send the request to a random host over a random connection
+     * Send the request to a random host over a random connection.
+     * In case the request should be sent to a specific host, a {@link Conversation} can be specified setting the
+     * {@link ArangoCommunication#CONVERSATION_CTX} field in the subscriberContext.
+     * Such conversation will be shared with all the upstream steps.
+     * <p>
+     * In the following example {@code request1} and {@code request2} will be executed within the same conversation:
+     *
+     * <pre>
+     * {@code
+     * arangoCommunication.execute(request1)
+     *     .then(arangoCommunication.execute(request2))
+     *     .subscriberContext(ctx ->
+     *         ctx.put(ArangoCommunication.CONVERSATION_CTX, arangoCommunication.createConversation(Conversation.Level.REQUIRED)));
+     * }
+     * </pre>
      *
      * @param request to send
      * @return response from the server
+     * @see <a href="https://projectreactor.io/docs/core/release/reference/#context.api">Reactor Context</a>
      */
     Mono<ArangoResponse> execute(ArangoRequest request);
-
-    /**
-     * Send the request to the conversation host, according to the conversation level
-     *
-     * @param request      to send
-     * @param conversation to specify the desired host affinity
-     * @return response from the server
-     */
-    Mono<ArangoResponse> execute(ArangoRequest request, Conversation conversation);
 
     /**
      * @return a new conversation
