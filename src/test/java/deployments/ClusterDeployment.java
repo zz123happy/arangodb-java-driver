@@ -50,7 +50,7 @@ public class ClusterDeployment extends ContainerDeployment {
     CompletableFuture<ContainerDeployment> asyncStart() {
         return CompletableFuture
                 .runAsync(() -> {
-                    network = ReusableNetwork.INSTANCE;
+                    network = ReusableNetwork.of("cluster");
                     agents.forEach(agent -> agent.withNetwork(network));
                     dbServers.forEach(agent -> agent.withNetwork(network));
                     coordinators.values().forEach(agent -> agent.withNetwork(network));

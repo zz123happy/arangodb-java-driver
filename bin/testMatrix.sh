@@ -8,8 +8,8 @@ for img in \
   docker.io/arangodb/enterprise:3.4.9 \
   docker.io/arangodb/arangodb:3.5.4 \
   docker.io/arangodb/enterprise:3.5.4 \
-  docker.io/arangodb/arangodb:3.6.1 \
-  docker.io/arangodb/enterprise:3.6.1; do
+  docker.io/arangodb/arangodb:3.6.2 \
+  docker.io/arangodb/enterprise:3.6.2; do
   ./bin/testSingle.sh $img
 done
 

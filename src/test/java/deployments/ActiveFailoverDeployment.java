@@ -38,7 +38,7 @@ public class ActiveFailoverDeployment extends ContainerDeployment {
     CompletableFuture<ContainerDeployment> asyncStart() {
         return CompletableFuture
                 .runAsync(() -> {
-                    network = ReusableNetwork.INSTANCE;
+                    network = ReusableNetwork.of("active-failover");
                     servers.values().forEach(agent -> agent.withNetwork(network));
                 })
                 .thenCompose(__ -> CompletableFuture.allOf(

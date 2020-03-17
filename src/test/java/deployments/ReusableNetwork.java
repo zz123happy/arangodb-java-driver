@@ -26,16 +26,33 @@ import org.junit.runners.model.Statement;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Network;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static deployments.ContainerUtils.getImage;
+
 /**
  * @author Michele Rastelli
  */
-public enum ReusableNetwork implements Network {
-    INSTANCE;
+public class ReusableNetwork implements Network {
 
-    private final String NAME = "arangodb-java";
+    private static final String NAME_SUFFIX = "-arangodb-java-" + getImage().split(":")[1];
+    private static final Map<String, ReusableNetwork> instances = new HashMap<>();
+    private final String name;
     private final String id;
 
-    ReusableNetwork() {
+    synchronized public static ReusableNetwork of(String namePrefix) {
+        String name = namePrefix + NAME_SUFFIX;
+        ReusableNetwork instance = instances.get(name);
+        if (instance == null) {
+            instance = new ReusableNetwork(name);
+            instances.put(name, instance);
+        }
+        return instance;
+    }
+
+    private ReusableNetwork(String name) {
+        this.name = name;
         id = ensureNetwork();
     }
 
@@ -45,7 +62,7 @@ public enum ReusableNetwork implements Network {
     }
 
     public String getName() {
-        return NAME;
+        return name;
     }
 
     @Override
@@ -61,7 +78,7 @@ public enum ReusableNetwork implements Network {
     private String ensureNetwork() {
         return DockerClientFactory.lazyClient()
                 .listNetworksCmd()
-                .withNameFilter(NAME)
+                .withNameFilter(name)
                 .exec()
                 .stream()
                 .findAny()
@@ -72,7 +89,7 @@ public enum ReusableNetwork implements Network {
     private String createNetwork() {
         return DockerClientFactory.lazyClient()
                 .createNetworkCmd()
-                .withName(NAME)
+                .withName(name)
                 .exec()
                 .getId();
     }

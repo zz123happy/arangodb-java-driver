@@ -47,8 +47,8 @@ jobs:
           - docker.io/arangodb/enterprise:3.4.9
           - docker.io/arangodb/arangodb:3.5.4
           - docker.io/arangodb/enterprise:3.5.4
-          - docker.io/arangodb/arangodb:3.6.1
-          - docker.io/arangodb/enterprise:3.6.1
+          - docker.io/arangodb/arangodb:3.6.2
+          - docker.io/arangodb/enterprise:3.6.2
 
     steps:
       - uses: actions/checkout@v1
@@ -78,7 +78,7 @@ jobs:
       - name: Info
         run: mvn -version
       - name: Analyze
-        run: mvn -e --no-transfer-progress clean verify sonar:sonar -Dgpg.skip -Dtest.docker.image="docker.io/arangodb/enterprise:3.6.1" -Darango.license.key="$ARANGO_LICENSE_KEY"
+        run: mvn -e --no-transfer-progress clean verify sonar:sonar -Dgpg.skip -Dtest.docker.image="docker.io/arangodb/enterprise:3.6.2" -Darango.license.key="$ARANGO_LICENSE_KEY"
         env:
           ARANGO_LICENSE_KEY: ${{secrets.ARANGO_LICENSE_KEY}}
           SONAR_LOGIN: ${{secrets.SONAR_LOGIN}}
