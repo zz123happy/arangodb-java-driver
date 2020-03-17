@@ -59,9 +59,6 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     // connection pool used for all other operations
     private volatile ConnectionPool connectionPool;
 
-    // conversation used for all non-data related requests
-    private volatile Conversation defaultConversation;
-
     private volatile boolean initialized = false;
 
     @Nullable
@@ -112,16 +109,11 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
                         return contactConnectionPool.updateConnections(config.getHosts());
                     } else {
                         connectionPool = ConnectionPool.create(config, authentication, connectionFactory);
-                        return updateConnections(config.getHosts());
+                        return connectionPool.updateConnections(config.getHosts());
                     }
                 }))
                 .then(Mono.defer(this::scheduleUpdateHostList))
                 .then(Mono.just(this));
-    }
-
-    @Override
-    public Conversation getDefaultConversation() {
-        return defaultConversation;
     }
 
     private ArangoServerException buildError(final ArangoResponse response) {
@@ -235,14 +227,9 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
                 .retry(config.getRetries())
                 .doOnNext(acquiredHostList -> LOGGER.debug("Acquired hosts: {}", acquiredHostList))
                 .doOnError(e -> LOGGER.warn("Error acquiring hostList:", e))
-                .flatMap(this::updateConnections)
+                .flatMap(hostList -> connectionPool.updateConnections(hostList))
                 .timeout(config.getTimeout())
                 .doFinally(s -> updatingHostListSemaphore.release());
-    }
-
-    private Mono<Void> updateConnections(final Set<HostDescription> hostList) {
-        return connectionPool.updateConnections(hostList)
-                .doOnSuccess(it -> defaultConversation = createConversation(Conversation.Level.REQUIRED));
     }
 
     private Set<HostDescription> parseAcquireHostListResponse(final ArangoResponse response) {

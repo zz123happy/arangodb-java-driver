@@ -22,6 +22,8 @@ package com.arangodb.next.api;
 
 import com.arangodb.next.api.utils.ArangoDBProvider;
 import com.arangodb.next.api.utils.TestContext;
+import com.arangodb.next.communication.ArangoCommunication;
+import com.arangodb.next.communication.Conversation;
 import com.arangodb.next.entity.model.DatabaseEntity;
 import com.arangodb.next.entity.model.ReplicationFactor;
 import com.arangodb.next.entity.model.Sharding;
@@ -51,9 +53,15 @@ class ArangoDBTest {
     @ArgumentsSource(ArangoDBProvider.class)
     void createDatabase(TestContext ctx, ArangoDB arangoDB) {
         String name = "db-" + UUID.randomUUID().toString();
-        arangoDB.createDatabase(name).block();
-        DatabaseEntity db = arangoDB.getDatabase(name).block();
+        DatabaseEntity db = arangoDB.createDatabase(name)
+                .then(arangoDB.getDatabase(name))
+                .subscriberContext(sCtx -> sCtx.put(
+                        ArangoCommunication.CONVERSATION_CTX,
+                        arangoDB.createConversation(Conversation.Level.REQUIRED)
+                ))
+                .block();
 
+        assertThat(db).isNotNull();
         assertThat(db.getId()).isNotNull();
         assertThat(db.getName()).isEqualTo(name);
         assertThat(db.getPath()).isNotNull();
@@ -71,17 +79,24 @@ class ArangoDBTest {
     @ArgumentsSource(ArangoDBProvider.class)
     void createDatabaseWithOptions(TestContext ctx, ArangoDB arangoDB) {
         String name = "db-" + UUID.randomUUID().toString();
-        arangoDB.createDatabase(DBCreateOptions
-                .builder()
-                .name(name)
-                .options(DatabaseOptions.builder()
-                        .sharding(Sharding.SINGLE)
-                        .writeConcern(2)
-                        .replicationFactor(ReplicationFactor.of(2))
+        DatabaseEntity db = arangoDB
+                .createDatabase(DBCreateOptions
+                        .builder()
+                        .name(name)
+                        .options(DatabaseOptions.builder()
+                                .sharding(Sharding.SINGLE)
+                                .writeConcern(2)
+                                .replicationFactor(ReplicationFactor.of(2))
+                                .build())
                         .build())
-                .build()).block();
-        DatabaseEntity db = arangoDB.getDatabase(name).block();
+                .then(arangoDB.getDatabase(name))
+                .subscriberContext(sCtx -> sCtx.put(
+                        ArangoCommunication.CONVERSATION_CTX,
+                        arangoDB.createConversation(Conversation.Level.REQUIRED)
+                ))
+                .block();
 
+        assertThat(db).isNotNull();
         assertThat(db.getId()).isNotNull();
         assertThat(db.getName()).isEqualTo(name);
         assertThat(db.getPath()).isNotNull();

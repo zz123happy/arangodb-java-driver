@@ -24,6 +24,7 @@ package com.arangodb.next.api.impl;
 import com.arangodb.next.api.ArangoDB;
 import com.arangodb.next.communication.ArangoCommunication;
 import com.arangodb.next.communication.CommunicationConfig;
+import com.arangodb.next.communication.Conversation;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.entity.model.DatabaseEntity;
@@ -62,7 +63,6 @@ public final class ArangoDBImpl implements ArangoDB {
                         .body(serde.serialize(options))
                         .build()
         )
-                .subscriberContext(ctx -> ctx.put(ArangoCommunication.CONVERSATION_CTX, communication.getDefaultConversation()))
                 .then();
     }
 
@@ -75,11 +75,14 @@ public final class ArangoDBImpl implements ArangoDB {
                         .path(PATH_API_DATABASE + "/current")
                         .build()
         )
-                .subscriberContext(ctx -> ctx.put(ArangoCommunication.CONVERSATION_CTX, communication.getDefaultConversation()))
                 .map(ArangoResponse::getBody)
                 .map(serde::createVPackSlice)
                 .map(it -> it.get("result"))
                 .map(slice -> serde.deserialize(slice, DatabaseEntity.class));
     }
 
+    @Override
+    public Conversation createConversation(Conversation.Level level) {
+        return communication.createConversation(level);
+    }
 }

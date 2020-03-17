@@ -20,6 +20,8 @@
 
 package com.arangodb.next.api;
 
+import com.arangodb.next.communication.ArangoCommunication;
+import com.arangodb.next.communication.Conversation;
 import com.arangodb.next.entity.model.DatabaseEntity;
 import com.arangodb.next.entity.option.DBCreateOptions;
 import reactor.core.publisher.Mono;
@@ -59,4 +61,10 @@ public interface ArangoDB {
      */
     Mono<DatabaseEntity> getDatabase(String name);
 
+    /**
+     * Creates a new {@link Conversation} delegating {@link ArangoCommunication#createConversation(Conversation.Level)}
+     *
+     * @return a new conversation
+     */
+    Conversation createConversation(Conversation.Level level);
 }
