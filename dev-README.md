@@ -66,3 +66,30 @@ Check results [here](https://sonarcloud.io/dashboard?id=ArangoDB-Community_mirro
 ```shell script
 mvn versions:display-dependency-updates
 ```
+
+
+## snapshot release
+
+Tagging a git revision with `v**-SNAPSHOT` will automatically trigger a snapshot release in [Github Packages](https://github.com/ArangoDB-Community/mirror-arangodb-java-driver/packages).
+To import such package in another project:
+
+```xml
+    <dependencies>
+        <!-- ... -->
+        <dependency>
+            <groupId>com.arangodb</groupId>
+            <artifactId>arangodb-java-driver</artifactId>
+            <version>7.0.0-20200203.102705-1</version>
+        </dependency>    
+    </dependencies>
+    <repositories>
+        <repository>
+            <id>mirror-arangodb-java-driver</id>
+            <name>mirror-arangodb-java-driver</name>
+            <url>https://maven.pkg.github.com/ArangoDB-Community/mirror-arangodb-java-driver</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+```
