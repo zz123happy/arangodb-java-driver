@@ -19,18 +19,17 @@
  */
 
 
-package com.arangodb.next.api.impl;
+package com.arangodb.next.api.reactive.impl;
 
-import com.arangodb.next.api.ArangoDB;
+import com.arangodb.next.api.reactive.ArangoDB;
+import com.arangodb.next.api.reactive.ConversationManager;
 import com.arangodb.next.communication.ArangoCommunication;
 import com.arangodb.next.communication.CommunicationConfig;
-import com.arangodb.next.communication.Conversation;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.entity.model.DatabaseEntity;
 import com.arangodb.next.entity.option.DBCreateOptions;
 import com.arangodb.next.entity.serde.ArangoSerde;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -41,48 +40,20 @@ public final class ArangoDBImpl implements ArangoDB {
     private static final String DB = "_system";
     private static final String PATH_API_DATABASE = "/_api/database";
 
+    private final ConversationManager conversationManager;
     private final ArangoCommunication communication;
     private final ArangoSerde serde;
 
     public ArangoDBImpl(final CommunicationConfig config) {
         communication = ArangoCommunication.create(config).block();
         serde = ArangoSerde.of(config.getContentType());
-    }
-
-    //region CONVERSATION MANAGEMENT
-    @Override
-    public Conversation createConversation(Conversation.Level level) {
-        return communication.createConversation(level);
+        conversationManager = new ConversationManagerImpl(communication);
     }
 
     @Override
-    public <T> Mono<T> requireConversation(Mono<T> publisher) {
-        return wrapInConversation(publisher, createConversation(Conversation.Level.REQUIRED));
+    public ConversationManager getConversationManager() {
+        return conversationManager;
     }
-
-    @Override
-    public <T> Flux<T> requireConversation(Flux<T> publisher) {
-        return wrapInConversation(publisher, createConversation(Conversation.Level.REQUIRED));
-    }
-
-    @Override
-    public <T> Mono<T> preferConversation(Mono<T> publisher) {
-        return wrapInConversation(publisher, createConversation(Conversation.Level.PREFERRED));
-    }
-
-    @Override
-    public <T> Flux<T> preferConversation(Flux<T> publisher) {
-        return wrapInConversation(publisher, createConversation(Conversation.Level.PREFERRED));
-    }
-
-    private <T> Mono<T> wrapInConversation(Mono<T> publisher, Conversation conversation) {
-        return publisher.subscriberContext(sCtx -> sCtx.put(ArangoCommunication.CONVERSATION_CTX, conversation));
-    }
-
-    private <T> Flux<T> wrapInConversation(Flux<T> publisher, Conversation conversation) {
-        return publisher.subscriberContext(sCtx -> sCtx.put(ArangoCommunication.CONVERSATION_CTX, conversation));
-    }
-    //endregion
 
     @Override
     public Mono<Void> shutdown() {

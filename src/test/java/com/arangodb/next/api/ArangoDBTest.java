@@ -20,6 +20,7 @@
 
 package com.arangodb.next.api;
 
+import com.arangodb.next.api.reactive.ArangoDB;
 import com.arangodb.next.api.utils.ArangoDBProvider;
 import com.arangodb.next.api.utils.TestContext;
 import com.arangodb.next.entity.model.DatabaseEntity;
@@ -51,7 +52,7 @@ class ArangoDBTest {
     @ArgumentsSource(ArangoDBProvider.class)
     void createDatabase(TestContext ctx, ArangoDB arangoDB) {
         String name = "db-" + UUID.randomUUID().toString();
-        DatabaseEntity db = arangoDB.requireConversation(
+        DatabaseEntity db = arangoDB.getConversationManager().requireConversation(
                 arangoDB
                         .createDatabase(name)
                         .then(arangoDB.getDatabase(name))
@@ -76,7 +77,7 @@ class ArangoDBTest {
     void createDatabaseWithOptions(TestContext ctx, ArangoDB arangoDB) {
         String name = "db-" + UUID.randomUUID().toString();
         DatabaseEntity db =
-                arangoDB.requireConversation(
+                arangoDB.getConversationManager().requireConversation(
                         arangoDB
                                 .createDatabase(DBCreateOptions
                                         .builder()

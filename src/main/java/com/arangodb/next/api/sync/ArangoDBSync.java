@@ -18,7 +18,7 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.api;
+package com.arangodb.next.api.sync;
 
 import com.arangodb.next.communication.ArangoCommunication;
 import com.arangodb.next.communication.Conversation;
@@ -27,9 +27,9 @@ import com.arangodb.next.entity.option.DBCreateOptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public interface ArangoDB {
+public interface ArangoDBSync {
 
-    Mono<Void> shutdown();
+    void shutdown();
 
     //region CONVERSATION MANAGEMENT
 

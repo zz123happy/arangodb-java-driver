@@ -20,7 +20,7 @@
 
 package com.arangodb.next.api.utils;
 
-import com.arangodb.next.api.impl.ArangoDBImpl;
+import com.arangodb.next.api.reactive.impl.ArangoDBImpl;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
