@@ -18,10 +18,9 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.api;
+package com.arangodb.next.api.sync;
 
-import com.arangodb.next.api.reactive.ArangoDB;
-import com.arangodb.next.api.utils.ArangoDBProvider;
+import com.arangodb.next.api.utils.ArangoDBSyncProvider;
 import com.arangodb.next.api.utils.TestContext;
 import com.arangodb.next.entity.model.DatabaseEntity;
 import com.arangodb.next.entity.model.ReplicationFactor;
@@ -40,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Michele Rastelli
  */
-class ArangoDBTest {
+class ArangoDBSyncTest {
 
 
     @Test
@@ -49,14 +48,14 @@ class ArangoDBTest {
 
 
     @ParameterizedTest(name = "{0}")
-    @ArgumentsSource(ArangoDBProvider.class)
-    void createDatabase(TestContext ctx, ArangoDB arangoDB) {
+    @ArgumentsSource(ArangoDBSyncProvider.class)
+    void createDatabase(TestContext ctx, ArangoDBSync arangoDB) {
         String name = "db-" + UUID.randomUUID().toString();
-        DatabaseEntity db = arangoDB.getConversationManager().requireConversation(
-                arangoDB
-                        .createDatabase(name)
-                        .then(arangoDB.getDatabase(name))
-        ).block();
+        DatabaseEntity db;
+        try (ThreadConversation tc = arangoDB.getConversationManager().requireConversation()) {
+            arangoDB.createDatabase(name);
+            db = arangoDB.getDatabase(name);
+        }
 
         assertThat(db).isNotNull();
         assertThat(db.getId()).isNotNull();
@@ -73,23 +72,23 @@ class ArangoDBTest {
 
 
     @ParameterizedTest(name = "{0}")
-    @ArgumentsSource(ArangoDBProvider.class)
-    void createDatabaseWithOptions(TestContext ctx, ArangoDB arangoDB) {
+    @ArgumentsSource(ArangoDBSyncProvider.class)
+    void createDatabaseWithOptions(TestContext ctx, ArangoDBSync arangoDB) {
         String name = "db-" + UUID.randomUUID().toString();
-        DatabaseEntity db =
-                arangoDB.getConversationManager().requireConversation(
-                        arangoDB
-                                .createDatabase(DBCreateOptions
-                                        .builder()
-                                        .name(name)
-                                        .options(DatabaseOptions.builder()
-                                                .sharding(Sharding.SINGLE)
-                                                .writeConcern(2)
-                                                .replicationFactor(ReplicationFactor.of(2))
-                                                .build())
-                                        .build())
-                                .then(arangoDB.getDatabase(name))
-                ).block();
+        DatabaseEntity db;
+        try (ThreadConversation tc = arangoDB.getConversationManager().requireConversation()) {
+            arangoDB
+                    .createDatabase(DBCreateOptions
+                            .builder()
+                            .name(name)
+                            .options(DatabaseOptions.builder()
+                                    .sharding(Sharding.SINGLE)
+                                    .writeConcern(2)
+                                    .replicationFactor(ReplicationFactor.of(2))
+                                    .build())
+                            .build());
+            db = arangoDB.getDatabase(name);
+        }
 
         assertThat(db).isNotNull();
         assertThat(db.getId()).isNotNull();
@@ -106,9 +105,9 @@ class ArangoDBTest {
 
 
     @ParameterizedTest(name = "{0}")
-    @ArgumentsSource(ArangoDBProvider.class)
-    void getDatabase(TestContext ctx, ArangoDB arangoDB) {
-        DatabaseEntity db = arangoDB.getDatabase("_system").block();
+    @ArgumentsSource(ArangoDBSyncProvider.class)
+    void getDatabase(TestContext ctx, ArangoDBSync arangoDB) {
+        DatabaseEntity db = arangoDB.getDatabase("_system");
 
         assertThat(db.getId()).isNotNull();
         assertThat(db.getName()).isEqualTo("_system");

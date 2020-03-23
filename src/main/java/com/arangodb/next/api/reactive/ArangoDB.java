@@ -20,11 +20,20 @@
 
 package com.arangodb.next.api.reactive;
 
+import com.arangodb.next.api.sync.ArangoDBSync;
+import com.arangodb.next.api.sync.impl.ArangoDBSyncImpl;
 import com.arangodb.next.entity.model.DatabaseEntity;
 import com.arangodb.next.entity.option.DBCreateOptions;
 import reactor.core.publisher.Mono;
 
 public interface ArangoDB {
+
+    /**
+     * @return the synchronous blocking version of this object
+     */
+    default ArangoDBSync sync() {
+        return new ArangoDBSyncImpl(this);
+    }
 
     /**
      * @return {@link ConversationManager}

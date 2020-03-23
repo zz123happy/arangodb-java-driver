@@ -21,7 +21,6 @@
 package com.arangodb.next.api.reactive;
 
 
-import com.arangodb.next.communication.ArangoCommunication;
 import com.arangodb.next.communication.Conversation;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -32,7 +31,7 @@ import reactor.core.publisher.Mono;
 public interface ConversationManager {
 
     /**
-     * Creates a new {@link Conversation} delegating {@link ArangoCommunication#createConversation(Conversation.Level)}
+     * Creates a new {@link Conversation} delegating {@link com.arangodb.next.communication.ArangoCommunication#createConversation(Conversation.Level)}
      *
      * @return a new conversation
      */

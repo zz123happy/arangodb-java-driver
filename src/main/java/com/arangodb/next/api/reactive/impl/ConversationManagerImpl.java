@@ -30,44 +30,44 @@ import reactor.core.publisher.Mono;
 /**
  * @author Michele Rastelli
  */
-public class ConversationManagerImpl implements ConversationManager {
+public final class ConversationManagerImpl implements ConversationManager {
 
     private final ArangoCommunication communication;
 
-    public ConversationManagerImpl(final ArangoCommunication communication) {
-        this.communication = communication;
+    public ConversationManagerImpl(final ArangoCommunication arangoCommunication) {
+        this.communication = arangoCommunication;
     }
 
     @Override
-    public Conversation createConversation(Conversation.Level level) {
+    public Conversation createConversation(final Conversation.Level level) {
         return communication.createConversation(level);
     }
 
     @Override
-    public <T> Mono<T> requireConversation(Mono<T> publisher) {
+    public <T> Mono<T> requireConversation(final Mono<T> publisher) {
         return wrapInConversation(publisher, createConversation(Conversation.Level.REQUIRED));
     }
 
     @Override
-    public <T> Flux<T> requireConversation(Flux<T> publisher) {
+    public <T> Flux<T> requireConversation(final Flux<T> publisher) {
         return wrapInConversation(publisher, createConversation(Conversation.Level.REQUIRED));
     }
 
     @Override
-    public <T> Mono<T> preferConversation(Mono<T> publisher) {
+    public <T> Mono<T> preferConversation(final Mono<T> publisher) {
         return wrapInConversation(publisher, createConversation(Conversation.Level.PREFERRED));
     }
 
     @Override
-    public <T> Flux<T> preferConversation(Flux<T> publisher) {
+    public <T> Flux<T> preferConversation(final Flux<T> publisher) {
         return wrapInConversation(publisher, createConversation(Conversation.Level.PREFERRED));
     }
 
-    private <T> Mono<T> wrapInConversation(Mono<T> publisher, Conversation conversation) {
+    private <T> Mono<T> wrapInConversation(final Mono<T> publisher, final Conversation conversation) {
         return publisher.subscriberContext(sCtx -> sCtx.put(ArangoCommunication.CONVERSATION_CTX, conversation));
     }
 
-    private <T> Flux<T> wrapInConversation(Flux<T> publisher, Conversation conversation) {
+    private <T> Flux<T> wrapInConversation(final Flux<T> publisher, final Conversation conversation) {
         return publisher.subscriberContext(sCtx -> sCtx.put(ArangoCommunication.CONVERSATION_CTX, conversation));
     }
 

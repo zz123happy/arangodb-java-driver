@@ -20,6 +20,7 @@
 
 package com.arangodb.next.communication;
 
+import com.arangodb.next.api.sync.ThreadConversation;
 import com.arangodb.next.connection.*;
 import com.arangodb.next.entity.model.ClusterEndpoints;
 import com.arangodb.next.entity.model.ErrorEntity;
@@ -109,11 +110,17 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
                         return contactConnectionPool.updateConnections(config.getHosts());
                     } else {
                         connectionPool = ConnectionPool.create(config, authentication, connectionFactory);
-                        return connectionPool.updateConnections(config.getHosts());
+                        return updateConnections(config.getHosts());
                     }
                 }))
                 .then(Mono.defer(this::scheduleUpdateHostList))
                 .then(Mono.just(this));
+    }
+
+    private Mono<Void> updateConnections(final Set<HostDescription> hostList) {
+        return connectionPool.updateConnections(hostList)
+                // check if at least 1 coordinator is connected
+                .doOnSuccess(it -> connectionPool.createConversation(Conversation.Level.REQUIRED));
     }
 
     private ArangoServerException buildError(final ArangoResponse response) {
@@ -133,8 +140,11 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     public Mono<ArangoResponse> execute(final ArangoRequest request) {
         LOGGER.debug("execute({})", request);
         return Mono.subscriberContext()
-                .flatMap(ctx -> ctx.getOrEmpty(ArangoCommunication.CONVERSATION_CTX)
-                        .map(conversation -> execute(request, (Conversation) conversation))
+                .flatMap(ctx -> ctx
+                        .<Conversation>getOrEmpty(ArangoCommunication.CONVERSATION_CTX)
+                        .map(Optional::of)
+                        .orElseGet(ThreadConversation::getThreadLocalConversation)
+                        .map(conversation -> execute(request, conversation))
                         .orElseGet(() -> execute(request, connectionPool)))
                 .doOnNext(this::checkError);
     }
@@ -227,7 +237,7 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
                 .retry(config.getRetries())
                 .doOnNext(acquiredHostList -> LOGGER.debug("Acquired hosts: {}", acquiredHostList))
                 .doOnError(e -> LOGGER.warn("Error acquiring hostList:", e))
-                .flatMap(hostList -> connectionPool.updateConnections(hostList))
+                .flatMap(this::updateConnections)
                 .timeout(config.getTimeout())
                 .doFinally(s -> updatingHostListSemaphore.release());
     }

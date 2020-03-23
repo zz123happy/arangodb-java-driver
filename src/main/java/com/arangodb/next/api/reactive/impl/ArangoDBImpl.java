@@ -83,7 +83,7 @@ public final class ArangoDBImpl implements ArangoDB {
                         .build()
         )
                 .map(ArangoResponse::getBody)
-                .map(bytes -> serde.deserialize("result", bytes, DatabaseEntity.class));
+                .map(bytes -> serde.deserializeField("result", bytes, DatabaseEntity.class));
     }
 
 }
