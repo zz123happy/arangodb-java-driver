@@ -112,10 +112,7 @@ public final class ArangoDBImpl implements ArangoDB {
                         .build()
         )
                 .map(ArangoResponse::getBody)
-                // TODO: mv all VPack related operations inside serde classes
-                .map(serde::createVPackSlice)
-                .map(it -> it.get("result"))
-                .map(slice -> serde.deserialize(slice, DatabaseEntity.class));
+                .map(bytes -> serde.deserialize("result", bytes, DatabaseEntity.class));
     }
 
 }

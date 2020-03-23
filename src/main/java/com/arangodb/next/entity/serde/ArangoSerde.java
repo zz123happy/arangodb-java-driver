@@ -60,6 +60,11 @@ public abstract class ArangoSerde {
         return deserialize(buffer, (Type) clazz);
     }
 
+    public final <T> T deserialize(String fieldName, final byte[] buffer, final Class<T> clazz) {
+        VPackSlice slice = createVPackSlice(buffer);
+        return deserialize(slice.get(fieldName), (Type) clazz);
+    }
+
     public final <T> T deserialize(final VPackSlice slice, final Class<T> clazz) {
         return deserialize(slice, (Type) clazz);
     }
