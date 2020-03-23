@@ -24,11 +24,103 @@ import com.arangodb.next.communication.ArangoCommunication;
 import com.arangodb.next.communication.Conversation;
 import com.arangodb.next.entity.model.DatabaseEntity;
 import com.arangodb.next.entity.option.DBCreateOptions;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface ArangoDB {
 
     Mono<Void> shutdown();
+
+    //region CONVERSATION MANAGEMENT
+
+    /**
+     * Creates a new {@link Conversation} delegating {@link ArangoCommunication#createConversation(Conversation.Level)}
+     *
+     * @return a new conversation
+     */
+    Conversation createConversation(Conversation.Level level);
+
+    /**
+     * Creates a new conversation and binds {@param publisher} to it. All the requests performed by {@param publisher}
+     * will be executed against the same coordinator. In case this is not possible it will behave according to the
+     * specified conversation level {@link Conversation.Level}. Eg.:
+     *
+     * <pre>
+     * {@code
+     *         Mono<DatabaseEntity> db = arangoDB.requireConversation(
+     *                 arangoDB
+     *                         .createDatabase(name)
+     *                         .then(arangoDB.getDatabase(name))
+     *         );
+     * }
+     * </pre>
+     *
+     * @param publisher a {@link org.reactivestreams.Publisher} performing many db requests
+     * @return a contextualized {@link org.reactivestreams.Publisher} with configured context conversation
+     */
+    <T> Mono<T> requireConversation(Mono<T> publisher);
+
+    /**
+     * Creates a new conversation and binds {@param publisher} to it. All the requests performed by {@param publisher}
+     * will be executed against the same coordinator. In case this is not possible it will behave according to the
+     * specified conversation level {@link Conversation.Level}. Eg.:
+     *
+     * <pre>
+     * {@code
+     *         Mono<DatabaseEntity> db = arangoDB.requireConversation(
+     *                 arangoDB
+     *                         .createDatabase(name)
+     *                         .then(arangoDB.getDatabase(name))
+     *         );
+     * }
+     * </pre>
+     *
+     * @param publisher a {@link org.reactivestreams.Publisher} performing many db requests
+     * @return a contextualized {@link org.reactivestreams.Publisher} with configured context conversation
+     */
+    <T> Flux<T> requireConversation(Flux<T> publisher);
+
+    /**
+     * Creates a new conversation and binds {@param publisher} to it. All the requests performed by {@param publisher}
+     * will be executed against the same coordinator. In case this is not possible it will behave according to the
+     * specified conversation level {@link Conversation.Level}. Eg.:
+     *
+     * <pre>
+     * {@code
+     *         Mono<DatabaseEntity> db = arangoDB.preferConversation(
+     *                 arangoDB
+     *                         .createDatabase(name)
+     *                         .then(arangoDB.getDatabase(name))
+     *         );
+     * }
+     * </pre>
+     *
+     * @param publisher a {@link org.reactivestreams.Publisher} performing many db requests
+     * @return a contextualized {@link org.reactivestreams.Publisher} with configured context conversation
+     */
+    <T> Mono<T> preferConversation(Mono<T> publisher);
+
+    /**
+     * Creates a new conversation and binds {@param publisher} to it. All the requests performed by {@param publisher}
+     * will be executed against the same coordinator. In case this is not possible it will behave according to the
+     * specified conversation level {@link Conversation.Level}. Eg.:
+     *
+     * <pre>
+     * {@code
+     *         Mono<DatabaseEntity> db = arangoDB.preferConversation(
+     *                 arangoDB
+     *                         .createDatabase(name)
+     *                         .then(arangoDB.getDatabase(name))
+     *         );
+     * }
+     * </pre>
+     *
+     * @param publisher a {@link org.reactivestreams.Publisher} performing many db requests
+     * @return a contextualized {@link org.reactivestreams.Publisher} with configured context conversation
+     */
+    <T> Flux<T> preferConversation(Flux<T> publisher);
+    //endregion
+
 
     /**
      * Creates a new database with the given name.
@@ -61,10 +153,4 @@ public interface ArangoDB {
      */
     Mono<DatabaseEntity> getDatabase(String name);
 
-    /**
-     * Creates a new {@link Conversation} delegating {@link ArangoCommunication#createConversation(Conversation.Level)}
-     *
-     * @return a new conversation
-     */
-    Conversation createConversation(Conversation.Level level);
 }

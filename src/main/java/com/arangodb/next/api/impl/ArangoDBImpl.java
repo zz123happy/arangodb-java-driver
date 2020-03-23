@@ -30,6 +30,7 @@ import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.entity.model.DatabaseEntity;
 import com.arangodb.next.entity.option.DBCreateOptions;
 import com.arangodb.next.entity.serde.ArangoSerde;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -47,6 +48,41 @@ public final class ArangoDBImpl implements ArangoDB {
         communication = ArangoCommunication.create(config).block();
         serde = ArangoSerde.of(config.getContentType());
     }
+
+    //region CONVERSATION MANAGEMENT
+    @Override
+    public Conversation createConversation(Conversation.Level level) {
+        return communication.createConversation(level);
+    }
+
+    @Override
+    public <T> Mono<T> requireConversation(Mono<T> publisher) {
+        return wrapInConversation(publisher, createConversation(Conversation.Level.REQUIRED));
+    }
+
+    @Override
+    public <T> Flux<T> requireConversation(Flux<T> publisher) {
+        return wrapInConversation(publisher, createConversation(Conversation.Level.REQUIRED));
+    }
+
+    @Override
+    public <T> Mono<T> preferConversation(Mono<T> publisher) {
+        return wrapInConversation(publisher, createConversation(Conversation.Level.PREFERRED));
+    }
+
+    @Override
+    public <T> Flux<T> preferConversation(Flux<T> publisher) {
+        return wrapInConversation(publisher, createConversation(Conversation.Level.PREFERRED));
+    }
+
+    private <T> Mono<T> wrapInConversation(Mono<T> publisher, Conversation conversation) {
+        return publisher.subscriberContext(sCtx -> sCtx.put(ArangoCommunication.CONVERSATION_CTX, conversation));
+    }
+
+    private <T> Flux<T> wrapInConversation(Flux<T> publisher, Conversation conversation) {
+        return publisher.subscriberContext(sCtx -> sCtx.put(ArangoCommunication.CONVERSATION_CTX, conversation));
+    }
+    //endregion
 
     @Override
     public Mono<Void> shutdown() {
@@ -76,13 +112,10 @@ public final class ArangoDBImpl implements ArangoDB {
                         .build()
         )
                 .map(ArangoResponse::getBody)
+                // TODO: mv all VPack related operations inside serde classes
                 .map(serde::createVPackSlice)
                 .map(it -> it.get("result"))
                 .map(slice -> serde.deserialize(slice, DatabaseEntity.class));
     }
 
-    @Override
-    public Conversation createConversation(Conversation.Level level) {
-        return communication.createConversation(level);
-    }
 }
