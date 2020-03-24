@@ -20,7 +20,7 @@ jobs:
         java-version:
           - 8
           - 11
-          - 13
+          - 14
 
     steps:
       - uses: actions/checkout@v1
@@ -43,7 +43,7 @@ jobs:
         java-version:
           - 8
           - 11
-          - 13
+          - 14
         docker-img:
           - docker.io/arangodb/arangodb:3.4.9
           - docker.io/arangodb/enterprise:3.4.9
@@ -51,6 +51,8 @@ jobs:
           - docker.io/arangodb/enterprise:3.5.4
           - docker.io/arangodb/arangodb:3.6.2
           - docker.io/arangodb/enterprise:3.6.2
+          - docker.io/arangodb/arangodb-preview:3.7.0-alpha.2
+          - docker.io/arangodb/enterprise-preview:3.7.0-alpha.2
 
     steps:
       - uses: actions/checkout@v1
