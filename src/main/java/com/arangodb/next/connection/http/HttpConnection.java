@@ -106,7 +106,8 @@ public final class HttpConnection extends ArangoConnection {
         // perform a request to check if credentials are ok
         return requestUser()
                 .doOnNext(response -> {
-                    if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
+                    if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()
+                            || response.getResponseCode() == HttpResponseStatus.FORBIDDEN.code()) {
                         connected = false;
                         throw ArangoConnectionAuthenticationException.of(response);
                     }

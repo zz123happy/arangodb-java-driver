@@ -201,7 +201,8 @@ public final class VstConnection extends ArangoConnection {
                 // perform a request to check if credentials are ok
                 requestUser()
                         .doOnNext(response -> {
-                            if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
+                            if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()
+                                    || response.getResponseCode() == HttpResponseStatus.FORBIDDEN.code()) {
                                 throw ArangoConnectionAuthenticationException.of(response);
                             }
                         })

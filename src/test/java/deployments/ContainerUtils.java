@@ -78,7 +78,7 @@ public class ContainerUtils {
         return ImmutableArangoVersion.of(
                 Integer.parseInt(parts[0]),
                 Integer.parseInt(parts[1]),
-                Integer.parseInt(parts[2])
+                Integer.parseInt(parts[2].split("-")[0])
         );
     }
 
