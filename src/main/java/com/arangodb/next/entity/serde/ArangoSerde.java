@@ -65,8 +65,12 @@ public abstract class ArangoSerde {
     }
 
     public final <T> T deserializeField(final String fieldName, final byte[] buffer, final Class<T> clazz) {
+        return deserializeField(fieldName, buffer, (Type) clazz);
+    }
+
+    public final <T> T deserializeField(final String fieldName, final byte[] buffer, final Type type) {
         VPackSlice slice = createVPackSlice(buffer);
-        return deserialize(slice.get(fieldName), (Type) clazz);
+        return deserialize(slice.get(fieldName), type);
     }
 
     protected final VPackSlice serializeToVPackSlice(final Object value) {

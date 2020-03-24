@@ -22,15 +22,14 @@ package com.arangodb.next.api.reactive;
 
 import com.arangodb.next.api.utils.ArangoDBProvider;
 import com.arangodb.next.api.utils.TestContext;
-import com.arangodb.next.entity.model.DatabaseEntity;
-import com.arangodb.next.entity.model.ReplicationFactor;
-import com.arangodb.next.entity.model.Sharding;
+import com.arangodb.next.entity.model.*;
 import com.arangodb.next.entity.option.DBCreateOptions;
 import com.arangodb.next.entity.option.DatabaseOptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -118,6 +117,60 @@ class ArangoDBTest {
             assertThat(db.getReplicationFactor()).isEqualTo(ReplicationFactor.of(1));
             assertThat(db.getSharding()).isEqualTo(Sharding.FLEXIBLE);
         }
+    }
+
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ArangoDBProvider.class)
+    void getDatabases(TestContext ctx, ArangoDB arangoDB) {
+        List<String> databases = arangoDB.getDatabases().collectList().block();
+        assertThat(databases).isNotNull();
+        assertThat(databases).contains("_system");
+    }
+
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ArangoDBProvider.class)
+    void getAccessibleDatabases(TestContext ctx, ArangoDB arangoDB) {
+        List<String> databases = arangoDB.getAccessibleDatabases().collectList().block();
+        assertThat(databases).isNotNull();
+        assertThat(databases).contains("_system");
+    }
+
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ArangoDBProvider.class)
+    void getAccessibleDatabasesFor(TestContext ctx, ArangoDB arangoDB) {
+        List<String> databases = arangoDB.getAccessibleDatabasesFor("root").collectList().block();
+        assertThat(databases).isNotNull();
+        assertThat(databases).contains("_system");
+    }
+
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ArangoDBProvider.class)
+    void getVersion(TestContext ctx, ArangoDB arangoDB) {
+        Version version = arangoDB.getVersion().block();
+        assertThat(version).isNotNull();
+        assertThat(version.getServer()).isNotNull();
+        assertThat(version.getVersion()).isNotNull();
+    }
+
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ArangoDBProvider.class)
+    void getEngine(TestContext ctx, ArangoDB arangoDB) {
+        Engine engine = arangoDB.getEngine().block();
+        assertThat(engine).isNotNull();
+        assertThat(engine.getName()).isEqualTo(Engine.StorageEngineName.ROCKSDB);
+    }
+
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ArangoDBProvider.class)
+    void getRole(TestContext ctx, ArangoDB arangoDB) {
+        ServerRole role = arangoDB.getRole().block();
+        assertThat(role).isNotNull();
     }
 
 }

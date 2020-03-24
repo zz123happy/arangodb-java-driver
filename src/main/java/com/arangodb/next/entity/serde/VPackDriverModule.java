@@ -20,10 +20,7 @@
 
 package com.arangodb.next.entity.serde;
 
-import com.arangodb.next.entity.model.ImmutableNumericReplicationFactor;
-import com.arangodb.next.entity.model.ImmutableSatelliteReplicationFactor;
-import com.arangodb.next.entity.model.ReplicationFactor;
-import com.arangodb.next.entity.model.Sharding;
+import com.arangodb.next.entity.model.*;
 import com.arangodb.velocypack.VPackModule;
 import com.arangodb.velocypack.VPackParserModule;
 import com.arangodb.velocypack.VPackParserSetupContext;
@@ -42,6 +39,7 @@ public final class VPackDriverModule implements VPackModule, VPackParserModule {
 
         context.registerDeserializer(ReplicationFactor.class, VPackDeserializers.REPLICATION_FACTOR);
         context.registerDeserializer(Sharding.class, VPackDeserializers.SHARDING);
+        context.registerDeserializer(Engine.StorageEngineName.class, VPackDeserializers.STORAGE_ENGINE_NAME);
     }
 
     @Override

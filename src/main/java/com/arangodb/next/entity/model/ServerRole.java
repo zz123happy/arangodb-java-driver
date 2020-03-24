@@ -20,35 +20,9 @@
 
 package com.arangodb.next.entity.model;
 
-
 /**
- * @author Michele Rastelli
+ * @author Mark Vollmary
  */
-public enum Sharding {
-
-    FLEXIBLE("flexible"),
-    SINGLE("single");
-
-    private final String value;
-
-    public static Sharding of(String value) {
-        for (Sharding e : values()) {
-            if (e.value.equals(value)) {
-                return e;
-            }
-        }
-        if ("".equals(value)) {
-            return FLEXIBLE;
-        }
-        throw new IllegalArgumentException("Unknown value for sharding: " + value);
-    }
-
-    Sharding(final String v) {
-        value = v;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
+public enum ServerRole {
+    SINGLE, AGENT, COORDINATOR, PRIMARY, SECONDARY, UNDEFINED
 }

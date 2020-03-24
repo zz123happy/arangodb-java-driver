@@ -23,9 +23,17 @@ package com.arangodb.next.api.reactive;
 import com.arangodb.next.api.sync.ArangoDBSync;
 import com.arangodb.next.api.sync.impl.ArangoDBSyncImpl;
 import com.arangodb.next.entity.model.DatabaseEntity;
+import com.arangodb.next.entity.model.Engine;
+import com.arangodb.next.entity.model.ServerRole;
+import com.arangodb.next.entity.model.Version;
 import com.arangodb.next.entity.option.DBCreateOptions;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/**
+ * @author Michele Rastelli
+ * @author Mark Vollmary
+ */
 public interface ArangoDB {
 
     /**
@@ -73,9 +81,67 @@ public interface ArangoDB {
     /**
      * @param name db name
      * @return information about the database having the given name
-     * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#information-of-the-database">API
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/database-database-management.html#information-of-the-database">API
      * Documentation</a>
      */
     Mono<DatabaseEntity> getDatabase(String name);
+
+    /**
+     * Retrieves a list of all existing databases
+     *
+     * @return all existing databases
+     * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#list-of-databases">API
+     * Documentation</a>
+     */
+    Flux<String> getDatabases();
+
+    /**
+     * Retrieves a list of all databases the current user can access
+     *
+     * @return all databases the current user can access
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/database-database-management.html#list-of-accessible-databases">API
+     * Documentation</a>
+     */
+    Flux<String> getAccessibleDatabases();
+
+    /**
+     * List available database to the specified user
+     *
+     * @param user The name of the user for which you want to query the databases
+     * @return database names which are available for the specified user
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/user-management.html#list-the-accessible-databases-for-a-user">API
+     * Documentation</a>
+     */
+    Flux<String> getAccessibleDatabasesFor(String user);
+
+    /**
+     * Returns the server name and version number.
+     *
+     * @return the server version, number
+     * @see <a href="https://www.arangodb.com/docs/stable/http/miscellaneous-functions.html#return-server-version">API
+     * Documentation</a>
+     */
+    Mono<Version> getVersion();
+
+    /**
+     * Returns the server storage engine.
+     *
+     * @return the storage engine name
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/miscellaneous-functions.html#return-server-database-engine-type">API
+     * Documentation</a>
+     */
+    Mono<Engine> getEngine();
+
+    /**
+     * Returns the server role.
+     *
+     * @return the server role
+     * @see <a href="https://www.arangodb.com/docs/stable/http/cluster-server-role.html">API Documentation</a>
+     */
+    Mono<ServerRole> getRole();
 
 }

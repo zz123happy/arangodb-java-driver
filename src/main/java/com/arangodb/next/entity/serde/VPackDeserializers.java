@@ -20,6 +20,7 @@
 
 package com.arangodb.next.entity.serde;
 
+import com.arangodb.next.entity.model.Engine;
 import com.arangodb.next.entity.model.ReplicationFactor;
 import com.arangodb.next.entity.model.SatelliteReplicationFactor;
 import com.arangodb.next.entity.model.Sharding;
@@ -44,15 +45,10 @@ public final class VPackDeserializers {
         }
     };
 
-    public static final VPackDeserializer<Sharding> SHARDING = (parent, vpack, context) -> {
-        String value = vpack.getAsString();
-        if ("".equals(value) || "flexible".equals(value)) {
-            return Sharding.FLEXIBLE;
-        } else if ("single".equals(value)) {
-            return Sharding.SINGLE;
-        } else {
-            throw new IllegalArgumentException("Unknown value for sharding: " + vpack);
-        }
-    };
+    public static final VPackDeserializer<Sharding> SHARDING = (parent, vpack, context) ->
+            Sharding.of(vpack.getAsString());
+
+    public static final VPackDeserializer<Engine.StorageEngineName> STORAGE_ENGINE_NAME = (parent, vpack, context) ->
+            Engine.StorageEngineName.of(vpack.getAsString());
 
 }

@@ -45,7 +45,10 @@ public interface ArangoRequest {
         return 1;
     }
 
-    String getDatabase();
+    @Value.Default
+    default String getDatabase() {
+        return "_system";
+    }
 
     RequestType getRequestType();
 
