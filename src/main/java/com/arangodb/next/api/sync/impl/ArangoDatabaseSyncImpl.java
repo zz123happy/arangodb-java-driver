@@ -18,11 +18,26 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity.model;
+package com.arangodb.next.api.sync.impl;
+
+
+import com.arangodb.next.api.reactive.ArangoDatabase;
+import com.arangodb.next.api.sync.ArangoDatabaseSync;
 
 /**
- * @author Mark Vollmary
+ * @author Michele Rastelli
  */
-public enum ServerRole {
-    SINGLE, AGENT, COORDINATOR, PRIMARY, SECONDARY, UNDEFINED
+public final class ArangoDatabaseSyncImpl implements ArangoDatabaseSync {
+
+    private final ArangoDatabase delegate;
+
+    public ArangoDatabaseSyncImpl(final ArangoDatabase arangoDatabase) {
+        this.delegate = arangoDatabase;
+    }
+
+    @Override
+    public ArangoDatabase reactive() {
+        return delegate;
+    }
+
 }

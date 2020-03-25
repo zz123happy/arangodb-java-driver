@@ -53,8 +53,8 @@ class ArangoDBSyncTest {
         String name = "db-" + UUID.randomUUID().toString();
         DatabaseEntity db;
         try (ThreadConversation tc = arangoDB.getConversationManager().requireConversation()) {
-            arangoDB.createDatabase(name);
-            db = arangoDB.getDatabase(name);
+            arangoDB.db().createDatabase(name);
+            db = arangoDB.db().getDatabase(name);
         }
 
         assertThat(db).isNotNull();
@@ -77,7 +77,7 @@ class ArangoDBSyncTest {
         String name = "db-" + UUID.randomUUID().toString();
         DatabaseEntity db;
         try (ThreadConversation tc = arangoDB.getConversationManager().requireConversation()) {
-            arangoDB
+            arangoDB.db()
                     .createDatabase(DBCreateOptions
                             .builder()
                             .name(name)
@@ -87,7 +87,7 @@ class ArangoDBSyncTest {
                                     .replicationFactor(ReplicationFactor.of(2))
                                     .build())
                             .build());
-            db = arangoDB.getDatabase(name);
+            db = arangoDB.db().getDatabase(name);
         }
 
         assertThat(db).isNotNull();
@@ -107,7 +107,7 @@ class ArangoDBSyncTest {
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ArangoDBSyncProvider.class)
     void getDatabase(TestContext ctx, ArangoDBSync arangoDB) {
-        DatabaseEntity db = arangoDB.getDatabase("_system");
+        DatabaseEntity db = arangoDB.db().getDatabase("_system");
 
         assertThat(db.getId()).isNotNull();
         assertThat(db.getName()).isEqualTo("_system");

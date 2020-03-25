@@ -22,7 +22,10 @@
 package com.arangodb.next.api.sync.impl;
 
 import com.arangodb.next.api.reactive.ArangoDB;
+import com.arangodb.next.api.reactive.impl.ArangoDBImpl;
+import com.arangodb.next.api.reactive.impl.ArangoDatabaseImpl;
 import com.arangodb.next.api.sync.ArangoDBSync;
+import com.arangodb.next.api.sync.ArangoDatabaseSync;
 import com.arangodb.next.api.sync.ConversationManagerSync;
 
 /**
@@ -30,10 +33,10 @@ import com.arangodb.next.api.sync.ConversationManagerSync;
  */
 public final class ArangoDBSyncImpl implements ArangoDBSync {
 
-    private final ArangoDB delegate;
+    private final ArangoDBImpl delegate;
     private final ConversationManagerSync conversationManager;
 
-    public ArangoDBSyncImpl(final ArangoDB arangoDB) {
+    public ArangoDBSyncImpl(final ArangoDBImpl arangoDB) {
         delegate = arangoDB;
         conversationManager = new ConversationManagerSyncImpl(arangoDB.getConversationManager());
     }
@@ -41,6 +44,11 @@ public final class ArangoDBSyncImpl implements ArangoDBSync {
     @Override
     public ArangoDB reactive() {
         return delegate;
+    }
+
+    @Override
+    public ArangoDatabaseSync db(final String name) {
+        return new ArangoDatabaseSyncImpl(new ArangoDatabaseImpl(delegate, name));
     }
 
     @Override

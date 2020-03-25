@@ -31,7 +31,7 @@ public enum Sharding {
 
     private final String value;
 
-    public static Sharding of(String value) {
+    public static Sharding of(final String value) {
         for (Sharding e : values()) {
             if (e.value.equals(value)) {
                 return e;

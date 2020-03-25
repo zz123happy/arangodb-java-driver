@@ -42,11 +42,11 @@ public interface Engine {
 
         private final String value;
 
-        StorageEngineName(String value) {
-            this.value = value;
+        StorageEngineName(final String name) {
+            value = name;
         }
 
-        public static StorageEngineName of(String value) {
+        public static StorageEngineName of(final String value) {
             for (StorageEngineName e : values()) {
                 if (e.value.equals(value)) {
                     return e;
