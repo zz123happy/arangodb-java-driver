@@ -22,7 +22,6 @@ package com.arangodb.next.api.reactive.impl;
 
 import com.arangodb.next.api.reactive.ArangoDB;
 import com.arangodb.next.api.reactive.ArangoDatabase;
-import com.arangodb.next.communication.ArangoCommunication;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.entity.model.DatabaseEntity;
@@ -30,17 +29,15 @@ import com.arangodb.next.entity.model.Engine;
 import com.arangodb.next.entity.model.ServerRole;
 import com.arangodb.next.entity.model.Version;
 import com.arangodb.next.entity.option.DBCreateOptions;
-import com.arangodb.next.entity.serde.ArangoSerde;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
  * @author Michele Rastelli
  */
-public final class ArangoDatabaseImpl implements ArangoDatabase {
+public final class ArangoDatabaseImpl extends BaseClient implements ArangoDatabase {
 
     private static final String PATH_API_DATABASE = "/_api/database";
     private static final String PATH_API_USER = "/_api/user";
@@ -49,30 +46,18 @@ public final class ArangoDatabaseImpl implements ArangoDatabase {
     private static final String PATH_API_ROLE = "/_admin/server/role";
     public static final String RESULT = "result";
 
-    private final ArangoDB arangoDB;
+    private final ArangoDB arango;
     private final String name;
-    private final ArangoCommunication communication;
-    private final ArangoSerde serde;
 
-
-    //region DESERIALIZATION TYPES
-    private final Type iterableOfStringType = new com.arangodb.velocypack.Type<Iterable<String>>() {
-    }.getType();
-
-    private final Type mapOfStringStringType = new com.arangodb.velocypack.Type<Map<String, String>>() {
-    }.getType();
-    //endregion
-
-    public ArangoDatabaseImpl(final ArangoDBImpl arangoDBImpl, final String dbName) {
-        this.arangoDB = arangoDBImpl;
-        this.name = dbName;
-        communication = arangoDBImpl.getCommunication();
-        serde = arangoDBImpl.getSerde();
+    public ArangoDatabaseImpl(final ArangoDB arangoDB, final String dbName) {
+        super((BaseClient) arangoDB);
+        arango = arangoDB;
+        name = dbName;
     }
 
     @Override
     public ArangoDB arango() {
-        return arangoDB;
+        return arango;
     }
 
     @Override
@@ -82,12 +67,12 @@ public final class ArangoDatabaseImpl implements ArangoDatabase {
 
     @Override
     public Mono<Void> createDatabase(final DBCreateOptions options) {
-        return communication.execute(
+        return getCommunication().execute(
                 ArangoRequest.builder()
                         .database(name)
                         .requestType(ArangoRequest.RequestType.POST)
                         .path(PATH_API_DATABASE)
-                        .body(serde.serialize(options))
+                        .body(getSerde().serialize(options))
                         .build()
         )
                 .then();
@@ -95,7 +80,7 @@ public final class ArangoDatabaseImpl implements ArangoDatabase {
 
     @Override
     public Mono<DatabaseEntity> getDatabase(final String dbName) {
-        return communication.execute(
+        return getCommunication().execute(
                 ArangoRequest.builder()
                         .database(dbName)
                         .requestType(ArangoRequest.RequestType.GET)
@@ -103,7 +88,7 @@ public final class ArangoDatabaseImpl implements ArangoDatabase {
                         .build()
         )
                 .map(ArangoResponse::getBody)
-                .map(bytes -> serde.deserializeField(RESULT, bytes, DatabaseEntity.class));
+                .map(bytes -> getSerde().deserializeField(RESULT, bytes, DatabaseEntity.class));
     }
 
     @Override
@@ -118,7 +103,7 @@ public final class ArangoDatabaseImpl implements ArangoDatabase {
 
     @Override
     public Flux<String> getAccessibleDatabasesFor(final String user) {
-        return communication.execute(
+        return getCommunication().execute(
                 ArangoRequest.builder()
                         .database(name)
                         .requestType(ArangoRequest.RequestType.GET)
@@ -126,14 +111,14 @@ public final class ArangoDatabaseImpl implements ArangoDatabase {
                         .build()
         )
                 .map(ArangoResponse::getBody)
-                .map(bytes -> serde.<Map<String, String>>deserializeField(RESULT, bytes, mapOfStringStringType))
+                .map(bytes -> getSerde().<Map<String, String>>deserializeField(RESULT, bytes, DeserializationTypes.MAP_OF_STRING_STRING))
                 .map(Map::keySet)
                 .flatMapMany(Flux::fromIterable);
     }
 
     @Override
     public Mono<Version> getVersion() {
-        return communication.execute(
+        return getCommunication().execute(
                 ArangoRequest.builder()
                         .database(name)
                         .requestType(ArangoRequest.RequestType.GET)
@@ -141,12 +126,12 @@ public final class ArangoDatabaseImpl implements ArangoDatabase {
                         .build()
         )
                 .map(ArangoResponse::getBody)
-                .map(bytes -> serde.deserialize(bytes, Version.class));
+                .map(bytes -> getSerde().deserialize(bytes, Version.class));
     }
 
     @Override
     public Mono<Engine> getEngine() {
-        return communication.execute(
+        return getCommunication().execute(
                 ArangoRequest.builder()
                         .database(name)
                         .requestType(ArangoRequest.RequestType.GET)
@@ -154,12 +139,12 @@ public final class ArangoDatabaseImpl implements ArangoDatabase {
                         .build()
         )
                 .map(ArangoResponse::getBody)
-                .map(bytes -> serde.deserialize(bytes, Engine.class));
+                .map(bytes -> getSerde().deserialize(bytes, Engine.class));
     }
 
     @Override
     public Mono<ServerRole> getRole() {
-        return communication.execute(
+        return getCommunication().execute(
                 ArangoRequest.builder()
                         .database(name)
                         .requestType(ArangoRequest.RequestType.GET)
@@ -167,11 +152,11 @@ public final class ArangoDatabaseImpl implements ArangoDatabase {
                         .build()
         )
                 .map(ArangoResponse::getBody)
-                .map(bytes -> serde.deserializeField("role", bytes, ServerRole.class));
+                .map(bytes -> getSerde().deserializeField("role", bytes, ServerRole.class));
     }
 
     private Flux<String> getDatabasesFromPath(final String path) {
-        return communication.execute(
+        return getCommunication().execute(
                 ArangoRequest.builder()
                         .database(name)
                         .requestType(ArangoRequest.RequestType.GET)
@@ -179,7 +164,8 @@ public final class ArangoDatabaseImpl implements ArangoDatabase {
                         .build()
         )
                 .map(ArangoResponse::getBody)
-                .map(bytes -> serde.<Iterable<String>>deserializeField(RESULT, bytes, iterableOfStringType))
+                .map(bytes -> getSerde().<Iterable<String>>deserializeField(RESULT, bytes, DeserializationTypes.ITERABLE_OF_STRING))
                 .flatMapMany(Flux::fromIterable);
     }
+
 }

@@ -18,38 +18,24 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-
 package com.arangodb.next.api.reactive.impl;
 
-import com.arangodb.next.api.reactive.ArangoDB;
-import com.arangodb.next.api.reactive.ArangoDatabase;
-import com.arangodb.next.api.sync.ArangoDBSync;
-import com.arangodb.next.api.sync.impl.ArangoDBSyncImpl;
-import com.arangodb.next.communication.CommunicationConfig;
-import reactor.core.publisher.Mono;
+
+import java.lang.reflect.Type;
+import java.util.Map;
 
 /**
  * @author Michele Rastelli
  */
-public final class ArangoDBImpl extends BaseClient implements ArangoDB {
+public final class DeserializationTypes {
 
-    public ArangoDBImpl(final CommunicationConfig config) {
-        super(config);
+    private DeserializationTypes() {
     }
 
-    @Override
-    public ArangoDBSync sync() {
-        return new ArangoDBSyncImpl(this);
-    }
+    public static final Type ITERABLE_OF_STRING = new com.arangodb.velocypack.Type<Iterable<String>>() {
+    }.getType();
 
-    @Override
-    public ArangoDatabase db(final String name) {
-        return new ArangoDatabaseImpl(this, name);
-    }
-
-    @Override
-    public Mono<Void> shutdown() {
-        return getCommunication().close();
-    }
+    public static final Type MAP_OF_STRING_STRING = new com.arangodb.velocypack.Type<Map<String, String>>() {
+    }.getType();
 
 }
