@@ -23,8 +23,6 @@ package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.AuthenticationMethod;
 import com.arangodb.next.connection.HostDescription;
-import com.arangodb.velocypack.VPackSlice;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
@@ -35,10 +33,9 @@ import static com.arangodb.next.connection.ConnectionTestUtils.VERSION_REQUEST;
 /**
  * @author Michele Rastelli
  */
-@Disabled
 class CommunicationPerformanceTest {
 
-    private final HostDescription host = HostDescription.of("172.28.3.1", 8529);
+    private final HostDescription host = HostDescription.of("127.0.0.1", 8529);
     private final AuthenticationMethod authentication = AuthenticationMethod.ofBasic("root", "test");
     private final CommunicationConfig config = CommunicationConfig.builder()
             .addHosts(host)
@@ -47,38 +44,22 @@ class CommunicationPerformanceTest {
             .acquireHostList(false)
             .build();
 
-    private volatile long chunkStart;
-
     @Test
     @SuppressWarnings("squid:S2699")
         // Tests should include assertions
     void infiniteParallelLoop() {
-        int requests = 10_000_000;
-        int chunkSize = 1_000_000;
-        chunkStart = new Date().getTime();
-
+        int requests = 1_000_000;
         long start = new Date().getTime();
 
-        ArangoCommunication.create(config)
-                .flatMapMany(communication -> Flux.range(1, requests)
-                        .doOnNext(i -> {
-                            if (i % chunkSize == 0) {
-                                System.out.println(i);
-                                long chunkRate = chunkSize * 1000 / (new Date().getTime() - chunkStart);
-                                System.out.println("rate: " + chunkRate + " reqs/s");
-                                chunkStart = new Date().getTime();
-                            }
-                        })
+        ArangoCommunication.create(config).flatMapMany(communication ->
+                Flux
+                        .range(1, requests)
                         .flatMap(i -> communication.execute(VERSION_REQUEST))
-                        .doOnNext(v -> new VPackSlice(v.getBody()).get("server"))
-                )
-                .then()
-                .block();
+        ).then().block();
 
         long end = new Date().getTime();
         long elapsed = end - start;
         System.out.println("rate: " + (1_000.0 * requests / elapsed));
     }
-
 
 }
