@@ -22,10 +22,10 @@ package com.arangodb.next.api.sync.impl;
 
 
 import com.arangodb.next.api.reactive.ArangoDatabase;
-import com.arangodb.next.api.reactive.database.impl.DatabaseApiImpl;
+import com.arangodb.next.api.database.impl.DatabaseApiImpl;
 import com.arangodb.next.api.sync.ArangoDatabaseSync;
-import com.arangodb.next.api.sync.database.DatabaseApiSync;
-import com.arangodb.next.api.sync.database.impl.DatabaseApiSyncImpl;
+import com.arangodb.next.api.database.DatabaseApiSync;
+import com.arangodb.next.api.database.impl.DatabaseApiSyncImpl;
 
 /**
  * @author Michele Rastelli

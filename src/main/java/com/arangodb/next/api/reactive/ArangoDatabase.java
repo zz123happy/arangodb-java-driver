@@ -21,7 +21,7 @@
 
 package com.arangodb.next.api.reactive;
 
-import com.arangodb.next.api.reactive.database.DatabaseApi;
+import com.arangodb.next.api.database.DatabaseApi;
 import com.arangodb.next.entity.model.Engine;
 import com.arangodb.next.entity.model.ServerRole;
 import com.arangodb.next.entity.model.Version;

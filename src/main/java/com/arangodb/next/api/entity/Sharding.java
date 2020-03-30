@@ -1,7 +1,7 @@
 /*
  * DISCLAIMER
  *
- * Copyright 2018 ArangoDB GmbH, Cologne, Germany
+ * Copyright 2016 ArangoDB GmbH, Cologne, Germany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,37 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity.model;
+package com.arangodb.next.api.entity;
 
-import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable(builder = false)
-public abstract class SatelliteReplicationFactor implements ReplicationFactor {
+public enum Sharding {
 
-    public static final String VALUE = "satellite";
+    FLEXIBLE("flexible"),
+    SINGLE("single");
 
-    /**
-     * @return {@value #VALUE}
-     */
-    @Override
-    @Value.Parameter
+    private final String value;
+
+    public static Sharding of(final String value) {
+        for (Sharding e : values()) {
+            if (e.value.equals(value)) {
+                return e;
+            }
+        }
+        if ("".equals(value)) {
+            return FLEXIBLE;
+        }
+        throw new IllegalArgumentException("Unknown value for sharding: " + value);
+    }
+
+    Sharding(final String v) {
+        value = v;
+    }
+
     public String getValue() {
-        return VALUE;
+        return value;
     }
 
 }

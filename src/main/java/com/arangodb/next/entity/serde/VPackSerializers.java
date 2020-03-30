@@ -20,9 +20,9 @@
 
 package com.arangodb.next.entity.serde;
 
-import com.arangodb.next.entity.model.NumericReplicationFactor;
-import com.arangodb.next.entity.model.SatelliteReplicationFactor;
-import com.arangodb.next.entity.model.Sharding;
+import com.arangodb.next.api.entity.NumericReplicationFactor;
+import com.arangodb.next.api.entity.SatelliteReplicationFactor;
+import com.arangodb.next.api.entity.Sharding;
 import com.arangodb.velocypack.VPackSerializer;
 
 /**

@@ -18,9 +18,11 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity.model;
+package com.arangodb.next.api.database.entity;
 
 
+import com.arangodb.next.api.entity.ReplicationFactor;
+import com.arangodb.next.api.entity.Sharding;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
 import org.immutables.value.Value;
 

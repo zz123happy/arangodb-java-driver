@@ -20,7 +20,11 @@
 
 package com.arangodb.next.entity.serde;
 
-import com.arangodb.next.entity.model.*;
+import com.arangodb.next.api.entity.ImmutableNumericReplicationFactor;
+import com.arangodb.next.api.entity.ImmutableSatelliteReplicationFactor;
+import com.arangodb.next.api.entity.ReplicationFactor;
+import com.arangodb.next.api.entity.Sharding;
+import com.arangodb.next.entity.model.Engine;
 import com.arangodb.velocypack.VPackModule;
 import com.arangodb.velocypack.VPackParserModule;
 import com.arangodb.velocypack.VPackParserSetupContext;

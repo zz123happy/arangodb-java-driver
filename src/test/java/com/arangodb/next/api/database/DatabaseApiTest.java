@@ -18,18 +18,17 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.api.reactive.database;
+package com.arangodb.next.api.database;
 
 
 import com.arangodb.next.api.reactive.ArangoDB;
 import com.arangodb.next.api.utils.ArangoDBProvider;
 import com.arangodb.next.api.utils.TestContext;
 import com.arangodb.next.communication.Conversation;
-import com.arangodb.next.entity.model.DatabaseEntity;
-import com.arangodb.next.entity.model.ReplicationFactor;
-import com.arangodb.next.entity.model.Sharding;
-import com.arangodb.next.entity.option.DBCreateOptions;
-import com.arangodb.next.entity.option.DatabaseOptions;
+import com.arangodb.next.api.database.entity.DatabaseEntity;
+import com.arangodb.next.api.entity.ReplicationFactor;
+import com.arangodb.next.api.entity.Sharding;
+import com.arangodb.next.api.database.entity.DatabaseCreateOptions;
 import com.arangodb.next.exceptions.ArangoServerException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -80,9 +79,9 @@ class DatabaseApiTest {
         // create database
         arangoDB.getConversationManager().useConversation(conversation,
                 arangoDB.db().databaseApi().createDatabase(
-                        DBCreateOptions.builder()
+                        DatabaseCreateOptions.builder()
                                 .name(name)
-                                .options(DatabaseOptions.builder()
+                                .options(DatabaseCreateOptions.Options.builder()
                                         .sharding(Sharding.SINGLE)
                                         .writeConcern(2)
                                         .replicationFactor(ReplicationFactor.of(2))

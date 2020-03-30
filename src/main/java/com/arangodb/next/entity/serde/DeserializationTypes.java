@@ -18,21 +18,24 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
+package com.arangodb.next.entity.serde;
 
-package com.arangodb.next.api.sync.database.impl;
 
-
-import com.arangodb.next.api.reactive.database.DatabaseApi;
-import com.arangodb.next.api.sync.database.DatabaseApiSync;
-import com.arangodb.next.api.sync.impl.ClientSyncImpl;
+import java.lang.reflect.Type;
+import java.util.Map;
 
 /**
  * @author Michele Rastelli
  */
-public final class DatabaseApiSyncImpl extends ClientSyncImpl<DatabaseApi> implements DatabaseApiSync {
+public final class DeserializationTypes {
 
-    public DatabaseApiSyncImpl(final DatabaseApi databaseApi) {
-        super(databaseApi);
+    private DeserializationTypes() {
     }
+
+    public static final Type ITERABLE_OF_STRING = new com.arangodb.velocypack.Type<Iterable<String>>() {
+    }.getType();
+
+    public static final Type MAP_OF_STRING_STRING = new com.arangodb.velocypack.Type<Map<String, String>>() {
+    }.getType();
 
 }

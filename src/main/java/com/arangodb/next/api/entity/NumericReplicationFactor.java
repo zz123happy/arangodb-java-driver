@@ -18,7 +18,7 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity.model;
+package com.arangodb.next.api.entity;
 
 import org.immutables.value.Value;
 

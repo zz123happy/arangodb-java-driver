@@ -18,70 +18,50 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.api.reactive.database;
+package com.arangodb.next.api.database;
 
 
-import com.arangodb.next.api.reactive.ArangoClient;
-import com.arangodb.next.entity.model.DatabaseEntity;
-import com.arangodb.next.entity.option.DBCreateOptions;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import com.arangodb.next.api.sync.ArangoClientSync;
+import com.arangodb.next.api.database.entity.DatabaseEntity;
+import com.arangodb.next.api.database.entity.DatabaseCreateOptions;
 
 /**
  * @author Michele Rastelli
  */
-public interface DatabaseApi extends ArangoClient {
+public interface DatabaseApiSync extends ArangoClientSync<DatabaseApi> {
 
     /**
      * Creates a new database with the given name.
      *
      * @param name Name of the database to create
-     * @return a Mono completing when the db has been created successfully
      * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#create-database">API
      * Documentation</a>
      */
-    default Mono<Void> createDatabase(String name) {
-        return createDatabase(DBCreateOptions.builder().name(name).build());
+    default void createDatabase(String name) {
+        reactive().createDatabase(name).block();
     }
 
     /**
      * Creates a new database with the given name.
      *
      * @param options Creation options
-     * @return a Mono completing when the db has been created successfully
      * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#create-database">API
      * Documentation</a>
      * @since ArangoDB 3.6.0
      */
-    Mono<Void> createDatabase(DBCreateOptions options);
+    default void createDatabase(DatabaseCreateOptions options) {
+        reactive().createDatabase(options).block();
+    }
 
     /**
      * @param name db name
      * @return information about the database having the given name
-     * @see <a href=
-     * "https://www.arangodb.com/docs/stable/http/database-database-management.html#information-of-the-database">API
+     * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#information-of-the-database">API
      * Documentation</a>
      */
-    Mono<DatabaseEntity> getDatabase(String name);
-
-    /**
-     * Retrieves a list of all existing databases
-     *
-     * @return all existing databases
-     * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#list-of-databases">API
-     * Documentation</a>
-     */
-    Flux<String> getDatabases();
-
-    /**
-     * Retrieves a list of all databases the current user can access
-     *
-     * @return all databases the current user can access
-     * @see <a href=
-     * "https://www.arangodb.com/docs/stable/http/database-database-management.html#list-of-accessible-databases">API
-     * Documentation</a>
-     */
-    Flux<String> getAccessibleDatabases();
+    default DatabaseEntity getDatabase(String name) {
+        return reactive().getDatabase(name).block();
+    }
 
     /**
      * Deletes the database from the server.
@@ -90,5 +70,8 @@ public interface DatabaseApi extends ArangoClient {
      * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#drop-database">API
      * Documentation</a>
      */
-    Mono<Void> dropDatabase(String name);
+    default Void dropDatabase(String name) {
+        return reactive().dropDatabase(name).block();
+    }
+
 }

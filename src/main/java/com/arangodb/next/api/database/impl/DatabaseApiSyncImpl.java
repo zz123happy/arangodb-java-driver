@@ -18,31 +18,21 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity.option;
 
-import org.immutables.value.Value;
+package com.arangodb.next.api.database.impl;
 
-import javax.annotation.Nullable;
+
+import com.arangodb.next.api.database.DatabaseApi;
+import com.arangodb.next.api.database.DatabaseApiSync;
+import com.arangodb.next.api.sync.impl.ClientSyncImpl;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
-public interface DBCreateOptions {
+public final class DatabaseApiSyncImpl extends ClientSyncImpl<DatabaseApi> implements DatabaseApiSync {
 
-    static ImmutableDBCreateOptions.Builder builder() {
-        return ImmutableDBCreateOptions.builder();
+    public DatabaseApiSyncImpl(final DatabaseApi databaseApi) {
+        super(databaseApi);
     }
-
-    /**
-     * @return a valid database name
-     */
-    String getName();
-
-    /**
-     * @return {@link DatabaseOptions}
-     */
-    @Nullable
-    DatabaseOptions getOptions();
 
 }

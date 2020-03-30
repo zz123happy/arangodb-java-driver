@@ -18,22 +18,25 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.entity.model;
+package com.arangodb.next.api.entity;
 
+import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
  */
-public interface ReplicationFactor {
+@Value.Immutable(builder = false)
+public abstract class SatelliteReplicationFactor implements ReplicationFactor {
 
-    static ReplicationFactor of(int value) {
-        return ImmutableNumericReplicationFactor.of(value);
+    public static final String VALUE = "satellite";
+
+    /**
+     * @return {@value #VALUE}
+     */
+    @Override
+    @Value.Parameter
+    public String getValue() {
+        return VALUE;
     }
-
-    static ReplicationFactor ofSatellite() {
-        return ImmutableSatelliteReplicationFactor.of();
-    }
-
-    Object getValue();
 
 }

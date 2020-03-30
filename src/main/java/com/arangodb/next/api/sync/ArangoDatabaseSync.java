@@ -22,7 +22,7 @@ package com.arangodb.next.api.sync;
 
 
 import com.arangodb.next.api.reactive.ArangoDatabase;
-import com.arangodb.next.api.sync.database.DatabaseApiSync;
+import com.arangodb.next.api.database.DatabaseApiSync;
 
 /**
  * @author Michele Rastelli

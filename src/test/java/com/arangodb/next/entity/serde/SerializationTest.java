@@ -20,6 +20,7 @@
 
 package com.arangodb.next.entity.serde;
 
+import com.arangodb.next.api.entity.ReplicationFactor;
 import com.arangodb.next.connection.ContentType;
 import com.arangodb.next.entity.model.*;
 import org.junit.jupiter.params.ParameterizedTest;

@@ -24,11 +24,10 @@ import com.arangodb.next.api.sync.ArangoDBSync;
 import com.arangodb.next.api.sync.ThreadConversation;
 import com.arangodb.next.api.utils.ArangoDBSyncProvider;
 import com.arangodb.next.api.utils.TestContext;
-import com.arangodb.next.entity.model.DatabaseEntity;
-import com.arangodb.next.entity.model.ReplicationFactor;
-import com.arangodb.next.entity.model.Sharding;
-import com.arangodb.next.entity.option.DBCreateOptions;
-import com.arangodb.next.entity.option.DatabaseOptions;
+import com.arangodb.next.api.database.entity.DatabaseEntity;
+import com.arangodb.next.api.entity.ReplicationFactor;
+import com.arangodb.next.api.entity.Sharding;
+import com.arangodb.next.api.database.entity.DatabaseCreateOptions;
 import com.arangodb.next.exceptions.ArangoServerException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -76,10 +75,10 @@ class DatabaseApiSyncTest {
         try (ThreadConversation tc = arangoDB.getConversationManager().requireConversation()) {
             arangoDB.db()
                     .databaseApi()
-                    .createDatabase(DBCreateOptions
+                    .createDatabase(DatabaseCreateOptions
                             .builder()
                             .name(name)
-                            .options(DatabaseOptions.builder()
+                            .options(DatabaseCreateOptions.Options.builder()
                                     .sharding(Sharding.SINGLE)
                                     .writeConcern(2)
                                     .replicationFactor(ReplicationFactor.of(2))

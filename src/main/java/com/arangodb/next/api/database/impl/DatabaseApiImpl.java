@@ -18,17 +18,17 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.api.reactive.database.impl;
+package com.arangodb.next.api.database.impl;
 
 
 import com.arangodb.next.api.reactive.ArangoDatabase;
-import com.arangodb.next.api.reactive.database.DatabaseApi;
+import com.arangodb.next.api.database.DatabaseApi;
 import com.arangodb.next.api.reactive.impl.ClientImpl;
-import com.arangodb.next.api.reactive.impl.DeserializationTypes;
+import com.arangodb.next.entity.serde.DeserializationTypes;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
-import com.arangodb.next.entity.model.DatabaseEntity;
-import com.arangodb.next.entity.option.DBCreateOptions;
+import com.arangodb.next.api.database.entity.DatabaseEntity;
+import com.arangodb.next.api.database.entity.DatabaseCreateOptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -50,7 +50,7 @@ public final class DatabaseApiImpl extends ClientImpl implements DatabaseApi {
     }
 
     @Override
-    public Mono<Void> createDatabase(final DBCreateOptions options) {
+    public Mono<Void> createDatabase(final DatabaseCreateOptions options) {
         return getCommunication().execute(
                 ArangoRequest.builder()
                         .database(SYSTEM)

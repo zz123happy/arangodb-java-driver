@@ -22,13 +22,14 @@ package com.arangodb.next.api.reactive.impl;
 
 import com.arangodb.next.api.reactive.ArangoDB;
 import com.arangodb.next.api.reactive.ArangoDatabase;
-import com.arangodb.next.api.reactive.database.DatabaseApi;
-import com.arangodb.next.api.reactive.database.impl.DatabaseApiImpl;
+import com.arangodb.next.api.database.DatabaseApi;
+import com.arangodb.next.api.database.impl.DatabaseApiImpl;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.entity.model.Engine;
 import com.arangodb.next.entity.model.ServerRole;
 import com.arangodb.next.entity.model.Version;
+import com.arangodb.next.entity.serde.DeserializationTypes;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

@@ -1,7 +1,7 @@
 /*
  * DISCLAIMER
  *
- * Copyright 2016 ArangoDB GmbH, Cologne, Germany
+ * Copyright 2018 ArangoDB GmbH, Cologne, Germany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +18,22 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.api.reactive.impl;
+package com.arangodb.next.api.entity;
 
-
-import java.lang.reflect.Type;
-import java.util.Map;
 
 /**
  * @author Michele Rastelli
  */
-public final class DeserializationTypes {
+public interface ReplicationFactor {
 
-    private DeserializationTypes() {
+    static ReplicationFactor of(int value) {
+        return ImmutableNumericReplicationFactor.of(value);
     }
 
-    public static final Type ITERABLE_OF_STRING = new com.arangodb.velocypack.Type<Iterable<String>>() {
-    }.getType();
+    static ReplicationFactor ofSatellite() {
+        return ImmutableSatelliteReplicationFactor.of();
+    }
 
-    public static final Type MAP_OF_STRING_STRING = new com.arangodb.velocypack.Type<Map<String, String>>() {
-    }.getType();
+    Object getValue();
 
 }
