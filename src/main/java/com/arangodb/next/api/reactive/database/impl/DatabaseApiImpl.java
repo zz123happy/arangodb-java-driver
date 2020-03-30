@@ -32,6 +32,7 @@ import com.arangodb.next.entity.option.DBCreateOptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static com.arangodb.next.api.util.ArangoRequestParam.SYSTEM;
 import static com.arangodb.next.api.util.ArangoResponseField.RESULT;
 
 
@@ -52,7 +53,7 @@ public final class DatabaseApiImpl extends ClientImpl implements DatabaseApi {
     public Mono<Void> createDatabase(final DBCreateOptions options) {
         return getCommunication().execute(
                 ArangoRequest.builder()
-                        .database(db.name())
+                        .database(SYSTEM)
                         .requestType(ArangoRequest.RequestType.POST)
                         .path(PATH_API)
                         .body(getSerde().serialize(options))
@@ -76,20 +77,25 @@ public final class DatabaseApiImpl extends ClientImpl implements DatabaseApi {
 
     @Override
     public Flux<String> getDatabases() {
-        return getDatabasesFromPath(PATH_API);
+        return getCommunication().execute(
+                ArangoRequest.builder()
+                        .database(SYSTEM)
+                        .requestType(ArangoRequest.RequestType.GET)
+                        .path(PATH_API)
+                        .build()
+        )
+                .map(ArangoResponse::getBody)
+                .map(bytes -> getSerde().<Iterable<String>>deserializeField(RESULT, bytes, DeserializationTypes.ITERABLE_OF_STRING))
+                .flatMapMany(Flux::fromIterable);
     }
 
     @Override
     public Flux<String> getAccessibleDatabases() {
-        return getDatabasesFromPath(PATH_API + "/user");
-    }
-
-    private Flux<String> getDatabasesFromPath(final String path) {
         return getCommunication().execute(
                 ArangoRequest.builder()
                         .database(db.name())
                         .requestType(ArangoRequest.RequestType.GET)
-                        .path(path)
+                        .path(PATH_API + "/user")
                         .build()
         )
                 .map(ArangoResponse::getBody)
