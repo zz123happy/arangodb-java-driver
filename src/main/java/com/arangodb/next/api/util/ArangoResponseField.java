@@ -1,7 +1,7 @@
 /*
  * DISCLAIMER
  *
- * Copyright 2016 ArangoDB GmbH, Cologne, Germany
+ * Copyright 2018 ArangoDB GmbH, Cologne, Germany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,18 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.api.sync;
-
-
-import com.arangodb.next.api.reactive.ArangoDatabase;
-import com.arangodb.next.api.sync.database.DatabaseApiSync;
+package com.arangodb.next.api.util;
 
 /**
- * @author Michele Rastelli
+ * @author Mark Vollmary
  */
-public interface ArangoDatabaseSync {
+public final class ArangoResponseField {
 
-    /**
-     * @return the reactive version of this object
-     */
-    ArangoDatabase reactive();
+    private ArangoResponseField() {
+        super();
+    }
 
-    /**
-     * @return DatabaseApi for the current database
-     */
-    DatabaseApiSync databaseApi();
+    public static final String ERROR = "error";
+    public static final String RESULT = "result";
 
 }

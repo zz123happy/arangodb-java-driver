@@ -22,7 +22,10 @@ package com.arangodb.next.api.sync.impl;
 
 
 import com.arangodb.next.api.reactive.ArangoDatabase;
+import com.arangodb.next.api.reactive.database.impl.DatabaseApiImpl;
 import com.arangodb.next.api.sync.ArangoDatabaseSync;
+import com.arangodb.next.api.sync.database.DatabaseApiSync;
+import com.arangodb.next.api.sync.database.impl.DatabaseApiSyncImpl;
 
 /**
  * @author Michele Rastelli
@@ -38,6 +41,11 @@ public final class ArangoDatabaseSyncImpl implements ArangoDatabaseSync {
     @Override
     public ArangoDatabase reactive() {
         return delegate;
+    }
+
+    @Override
+    public DatabaseApiSync databaseApi() {
+        return new DatabaseApiSyncImpl(new DatabaseApiImpl(delegate));
     }
 
 }

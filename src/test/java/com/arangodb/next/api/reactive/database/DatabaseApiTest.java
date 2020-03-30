@@ -17,20 +17,20 @@
  *
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
+package com.arangodb.next.api.reactive.database;
 
-package com.arangodb.next.api.sync;
-
-import com.arangodb.next.api.utils.ArangoDBSyncProvider;
+import com.arangodb.next.api.reactive.ArangoDB;
+import com.arangodb.next.api.utils.ArangoDBProvider;
 import com.arangodb.next.api.utils.TestContext;
 import com.arangodb.next.entity.model.DatabaseEntity;
 import com.arangodb.next.entity.model.ReplicationFactor;
 import com.arangodb.next.entity.model.Sharding;
 import com.arangodb.next.entity.option.DBCreateOptions;
 import com.arangodb.next.entity.option.DatabaseOptions;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,23 +39,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Michele Rastelli
  */
-class ArangoDBSyncTest {
-
-
-    @Test
-    void shutdown() {
-    }
-
+class DatabaseApiTest {
 
     @ParameterizedTest(name = "{0}")
-    @ArgumentsSource(ArangoDBSyncProvider.class)
-    void createDatabase(TestContext ctx, ArangoDBSync arangoDB) {
+    @ArgumentsSource(ArangoDBProvider.class)
+    void createDatabase(TestContext ctx, ArangoDB arangoDB) {
         String name = "db-" + UUID.randomUUID().toString();
-        DatabaseEntity db;
-        try (ThreadConversation tc = arangoDB.getConversationManager().requireConversation()) {
-            arangoDB.db().databaseApi().createDatabase(name);
-            db = arangoDB.db().databaseApi().getDatabase(name);
-        }
+        DatabaseEntity db = arangoDB.getConversationManager().requireConversation(
+                arangoDB
+                        .db()
+                        .databaseApi()
+                        .createDatabase(name)
+                        .then(arangoDB.db().databaseApi().getDatabase(name))
+        ).block();
 
         assertThat(db).isNotNull();
         assertThat(db.getId()).isNotNull();
@@ -70,26 +66,25 @@ class ArangoDBSyncTest {
         }
     }
 
-
     @ParameterizedTest(name = "{0}")
-    @ArgumentsSource(ArangoDBSyncProvider.class)
-    void createDatabaseWithOptions(TestContext ctx, ArangoDBSync arangoDB) {
+    @ArgumentsSource(ArangoDBProvider.class)
+    void createDatabaseWithOptions(TestContext ctx, ArangoDB arangoDB) {
         String name = "db-" + UUID.randomUUID().toString();
-        DatabaseEntity db;
-        try (ThreadConversation tc = arangoDB.getConversationManager().requireConversation()) {
-            arangoDB.db()
-                    .databaseApi()
-                    .createDatabase(DBCreateOptions
-                            .builder()
-                            .name(name)
-                            .options(DatabaseOptions.builder()
-                                    .sharding(Sharding.SINGLE)
-                                    .writeConcern(2)
-                                    .replicationFactor(ReplicationFactor.of(2))
-                                    .build())
-                            .build());
-            db = arangoDB.db().databaseApi().getDatabase(name);
-        }
+        DatabaseEntity db = arangoDB.getConversationManager().requireConversation(
+                arangoDB
+                        .db()
+                        .databaseApi()
+                        .createDatabase(DBCreateOptions
+                                .builder()
+                                .name(name)
+                                .options(DatabaseOptions.builder()
+                                        .sharding(Sharding.SINGLE)
+                                        .writeConcern(2)
+                                        .replicationFactor(ReplicationFactor.of(2))
+                                        .build())
+                                .build())
+                        .then(arangoDB.db().databaseApi().getDatabase(name))
+        ).block();
 
         assertThat(db).isNotNull();
         assertThat(db.getId()).isNotNull();
@@ -104,11 +99,10 @@ class ArangoDBSyncTest {
         }
     }
 
-
     @ParameterizedTest(name = "{0}")
-    @ArgumentsSource(ArangoDBSyncProvider.class)
-    void getDatabase(TestContext ctx, ArangoDBSync arangoDB) {
-        DatabaseEntity db = arangoDB.db().databaseApi().getDatabase("_system");
+    @ArgumentsSource(ArangoDBProvider.class)
+    void getDatabase(TestContext ctx, ArangoDB arangoDB) {
+        DatabaseEntity db = arangoDB.db().databaseApi().getDatabase("_system").block();
 
         assertThat(db.getId()).isNotNull();
         assertThat(db.getName()).isEqualTo("_system");
@@ -120,6 +114,23 @@ class ArangoDBSyncTest {
             assertThat(db.getReplicationFactor()).isEqualTo(ReplicationFactor.of(1));
             assertThat(db.getSharding()).isEqualTo(Sharding.FLEXIBLE);
         }
+    }
+
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ArangoDBProvider.class)
+    void getDatabases(TestContext ctx, ArangoDB arangoDB) {
+        List<String> databases = arangoDB.db().databaseApi().getDatabases().collectList().block();
+        assertThat(databases).isNotNull();
+        assertThat(databases).contains("_system");
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ArangoDBProvider.class)
+    void getAccessibleDatabases(TestContext ctx, ArangoDB arangoDB) {
+        List<String> databases = arangoDB.db().databaseApi().getAccessibleDatabases().collectList().block();
+        assertThat(databases).isNotNull();
+        assertThat(databases).contains("_system");
     }
 
 }

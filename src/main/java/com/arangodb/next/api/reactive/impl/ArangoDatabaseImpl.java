@@ -22,29 +22,29 @@ package com.arangodb.next.api.reactive.impl;
 
 import com.arangodb.next.api.reactive.ArangoDB;
 import com.arangodb.next.api.reactive.ArangoDatabase;
+import com.arangodb.next.api.reactive.database.DatabaseApi;
+import com.arangodb.next.api.reactive.database.impl.DatabaseApiImpl;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
-import com.arangodb.next.entity.model.DatabaseEntity;
 import com.arangodb.next.entity.model.Engine;
 import com.arangodb.next.entity.model.ServerRole;
 import com.arangodb.next.entity.model.Version;
-import com.arangodb.next.entity.option.DBCreateOptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
+
+import static com.arangodb.next.api.util.ArangoResponseField.RESULT;
 
 /**
  * @author Michele Rastelli
  */
 public final class ArangoDatabaseImpl extends BaseClient implements ArangoDatabase {
 
-    private static final String PATH_API_DATABASE = "/_api/database";
     private static final String PATH_API_USER = "/_api/user";
     private static final String PATH_API_VERSION = "/_api/version";
     private static final String PATH_API_ENGINE = "/_api/engine";
     private static final String PATH_API_ROLE = "/_admin/server/role";
-    public static final String RESULT = "result";
 
     private final ArangoDB arango;
     private final String name;
@@ -66,54 +66,8 @@ public final class ArangoDatabaseImpl extends BaseClient implements ArangoDataba
     }
 
     @Override
-    public Mono<Void> createDatabase(final DBCreateOptions options) {
-        return getCommunication().execute(
-                ArangoRequest.builder()
-                        .database(name)
-                        .requestType(ArangoRequest.RequestType.POST)
-                        .path(PATH_API_DATABASE)
-                        .body(getSerde().serialize(options))
-                        .build()
-        )
-                .then();
-    }
-
-    @Override
-    public Mono<DatabaseEntity> getDatabase(final String dbName) {
-        return getCommunication().execute(
-                ArangoRequest.builder()
-                        .database(dbName)
-                        .requestType(ArangoRequest.RequestType.GET)
-                        .path(PATH_API_DATABASE + "/current")
-                        .build()
-        )
-                .map(ArangoResponse::getBody)
-                .map(bytes -> getSerde().deserializeField(RESULT, bytes, DatabaseEntity.class));
-    }
-
-    @Override
-    public Flux<String> getDatabases() {
-        return getDatabasesFromPath(PATH_API_DATABASE);
-    }
-
-    @Override
-    public Flux<String> getAccessibleDatabases() {
-        return getDatabasesFromPath(PATH_API_DATABASE + "/user");
-    }
-
-    @Override
-    public Flux<String> getAccessibleDatabasesFor(final String user) {
-        return getCommunication().execute(
-                ArangoRequest.builder()
-                        .database(name)
-                        .requestType(ArangoRequest.RequestType.GET)
-                        .path(PATH_API_USER + "/" + user + "/database")
-                        .build()
-        )
-                .map(ArangoResponse::getBody)
-                .map(bytes -> getSerde().<Map<String, String>>deserializeField(RESULT, bytes, DeserializationTypes.MAP_OF_STRING_STRING))
-                .map(Map::keySet)
-                .flatMapMany(Flux::fromIterable);
+    public DatabaseApi databaseApi() {
+        return new DatabaseApiImpl(this);
     }
 
     @Override
@@ -155,16 +109,18 @@ public final class ArangoDatabaseImpl extends BaseClient implements ArangoDataba
                 .map(bytes -> getSerde().deserializeField("role", bytes, ServerRole.class));
     }
 
-    private Flux<String> getDatabasesFromPath(final String path) {
+    @Override
+    public Flux<String> getAccessibleDatabasesFor(final String user) {
         return getCommunication().execute(
                 ArangoRequest.builder()
-                        .database(name)
+                        .database(name())
                         .requestType(ArangoRequest.RequestType.GET)
-                        .path(path)
+                        .path(PATH_API_USER + "/" + user + "/database")
                         .build()
         )
                 .map(ArangoResponse::getBody)
-                .map(bytes -> getSerde().<Iterable<String>>deserializeField(RESULT, bytes, DeserializationTypes.ITERABLE_OF_STRING))
+                .map(bytes -> getSerde().<Map<String, String>>deserializeField(RESULT, bytes, DeserializationTypes.MAP_OF_STRING_STRING))
+                .map(Map::keySet)
                 .flatMapMany(Flux::fromIterable);
     }
 

@@ -18,25 +18,26 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.api.sync;
+
+package com.arangodb.next.api.sync.database.impl;
 
 
-import com.arangodb.next.api.reactive.ArangoDatabase;
+import com.arangodb.next.api.reactive.database.DatabaseApi;
 import com.arangodb.next.api.sync.database.DatabaseApiSync;
 
 /**
  * @author Michele Rastelli
  */
-public interface ArangoDatabaseSync {
+public final class DatabaseApiSyncImpl implements DatabaseApiSync {
 
-    /**
-     * @return the reactive version of this object
-     */
-    ArangoDatabase reactive();
+    private final DatabaseApi delegate;
 
-    /**
-     * @return DatabaseApi for the current database
-     */
-    DatabaseApiSync databaseApi();
+    public DatabaseApiSyncImpl(final DatabaseApi databaseApi) {
+        delegate = databaseApi;
+    }
 
+    @Override
+    public DatabaseApi reactive() {
+        return delegate;
+    }
 }
