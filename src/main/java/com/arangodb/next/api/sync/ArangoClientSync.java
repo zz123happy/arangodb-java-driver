@@ -18,27 +18,23 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
+package com.arangodb.next.api.sync;
 
-package com.arangodb.next.api.sync.impl;
 
-import com.arangodb.next.api.reactive.ArangoDB;
-import com.arangodb.next.api.reactive.impl.ArangoDatabaseImpl;
-import com.arangodb.next.api.sync.ArangoDBSync;
-import com.arangodb.next.api.sync.ArangoDatabaseSync;
+import com.arangodb.next.api.reactive.ArangoClient;
 
 /**
  * @author Michele Rastelli
  */
-public final class ArangoDBSyncImpl extends ClientSyncImpl<ArangoDB> implements ArangoDBSync {
+public interface ArangoClientSync<T extends ArangoClient> {
 
+    /**
+     * @return the reactive version of this object
+     */
+    T reactive();
 
-    public ArangoDBSyncImpl(final ArangoDB arangoDB) {
-        super(arangoDB);
-    }
-
-    @Override
-    public ArangoDatabaseSync db(final String name) {
-        return new ArangoDatabaseSyncImpl(new ArangoDatabaseImpl(reactive(), name));
-    }
-
+    /**
+     * @return synchronous conversation manager
+     */
+    ConversationManagerSync getConversationManager();
 }

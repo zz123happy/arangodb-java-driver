@@ -30,22 +30,15 @@ import com.arangodb.next.api.sync.database.impl.DatabaseApiSyncImpl;
 /**
  * @author Michele Rastelli
  */
-public final class ArangoDatabaseSyncImpl implements ArangoDatabaseSync {
-
-    private final ArangoDatabase delegate;
+public final class ArangoDatabaseSyncImpl extends ClientSyncImpl<ArangoDatabase> implements ArangoDatabaseSync {
 
     public ArangoDatabaseSyncImpl(final ArangoDatabase arangoDatabase) {
-        this.delegate = arangoDatabase;
-    }
-
-    @Override
-    public ArangoDatabase reactive() {
-        return delegate;
+        super(arangoDatabase);
     }
 
     @Override
     public DatabaseApiSync databaseApi() {
-        return new DatabaseApiSyncImpl(new DatabaseApiImpl(delegate));
+        return new DatabaseApiSyncImpl(new DatabaseApiImpl(reactive()));
     }
 
 }

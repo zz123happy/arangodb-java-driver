@@ -27,7 +27,7 @@ import reactor.core.publisher.Mono;
  * @author Michele Rastelli
  * @author Mark Vollmary
  */
-public interface ArangoDB {
+public interface ArangoDB extends ArangoClient {
 
     /**
      * @return the synchronous blocking version of this object
@@ -50,11 +50,6 @@ public interface ArangoDB {
      * @return database handler
      */
     ArangoDatabase db(String name);
-
-    /**
-     * @return {@link ConversationManager}
-     */
-    ConversationManager getConversationManager();
 
     /**
      * Closes all connections and releases all the related resources.

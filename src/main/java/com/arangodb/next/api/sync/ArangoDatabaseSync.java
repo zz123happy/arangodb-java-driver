@@ -27,12 +27,7 @@ import com.arangodb.next.api.sync.database.DatabaseApiSync;
 /**
  * @author Michele Rastelli
  */
-public interface ArangoDatabaseSync {
-
-    /**
-     * @return the reactive version of this object
-     */
-    ArangoDatabase reactive();
+public interface ArangoDatabaseSync extends ArangoClientSync<ArangoDatabase> {
 
     /**
      * @return DatabaseApi for the current database

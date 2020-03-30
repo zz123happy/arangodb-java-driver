@@ -24,20 +24,15 @@ package com.arangodb.next.api.sync.database.impl;
 
 import com.arangodb.next.api.reactive.database.DatabaseApi;
 import com.arangodb.next.api.sync.database.DatabaseApiSync;
+import com.arangodb.next.api.sync.impl.ClientSyncImpl;
 
 /**
  * @author Michele Rastelli
  */
-public final class DatabaseApiSyncImpl implements DatabaseApiSync {
-
-    private final DatabaseApi delegate;
+public final class DatabaseApiSyncImpl extends ClientSyncImpl<DatabaseApi> implements DatabaseApiSync {
 
     public DatabaseApiSyncImpl(final DatabaseApi databaseApi) {
-        delegate = databaseApi;
+        super(databaseApi);
     }
 
-    @Override
-    public DatabaseApi reactive() {
-        return delegate;
-    }
 }

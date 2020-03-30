@@ -31,7 +31,7 @@ import reactor.core.publisher.Mono;
 /**
  * @author Michele Rastelli
  */
-public final class ArangoDBImpl extends BaseClient implements ArangoDB {
+public final class ArangoDBImpl extends ClientImpl implements ArangoDB {
 
     public ArangoDBImpl(final CommunicationConfig config) {
         super(config);

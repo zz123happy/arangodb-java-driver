@@ -32,7 +32,7 @@ import reactor.core.publisher.Mono;
  * @author Michele Rastelli
  * @author Mark Vollmary
  */
-public interface ArangoDatabase {
+public interface ArangoDatabase extends ArangoClient {
 
     /**
      * @return main entry point for the ArangoDB driver

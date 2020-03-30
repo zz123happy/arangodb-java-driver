@@ -21,6 +21,7 @@
 package com.arangodb.next.api.reactive.impl;
 
 
+import com.arangodb.next.api.reactive.ArangoClient;
 import com.arangodb.next.api.reactive.ConversationManager;
 import com.arangodb.next.communication.ArangoCommunication;
 import com.arangodb.next.communication.CommunicationConfig;
@@ -29,24 +30,25 @@ import com.arangodb.next.entity.serde.ArangoSerde;
 /**
  * @author Michele Rastelli
  */
-public abstract class BaseClient {
+public abstract class ClientImpl implements ArangoClient {
 
     private final ArangoCommunication communication;
     private final ArangoSerde serde;
     private final ConversationManager conversationManager;
 
-    protected BaseClient(final BaseClient other) {
+    protected ClientImpl(final ClientImpl other) {
         communication = other.communication;
         serde = other.serde;
         conversationManager = other.conversationManager;
     }
 
-    protected BaseClient(final CommunicationConfig config) {
+    protected ClientImpl(final CommunicationConfig config) {
         communication = ArangoCommunication.create(config).block();
         serde = ArangoSerde.of(config.getContentType());
         conversationManager = new ConversationManagerImpl(communication);
     }
 
+    @Override
     public final ConversationManager getConversationManager() {
         return conversationManager;
     }

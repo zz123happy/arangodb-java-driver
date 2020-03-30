@@ -22,18 +22,14 @@ package com.arangodb.next.api.sync.database;
 
 
 import com.arangodb.next.api.reactive.database.DatabaseApi;
+import com.arangodb.next.api.sync.ArangoClientSync;
 import com.arangodb.next.entity.model.DatabaseEntity;
 import com.arangodb.next.entity.option.DBCreateOptions;
 
 /**
  * @author Michele Rastelli
  */
-public interface DatabaseApiSync {
-
-    /**
-     * @return the reactive version of this object
-     */
-    DatabaseApi reactive();
+public interface DatabaseApiSync extends ArangoClientSync<DatabaseApi> {
 
     /**
      * Creates a new database with the given name.

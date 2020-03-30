@@ -22,12 +22,7 @@ package com.arangodb.next.api.sync;
 
 import com.arangodb.next.api.reactive.ArangoDB;
 
-public interface ArangoDBSync {
-
-    /**
-     * @return the reactive version of this object
-     */
-    ArangoDB reactive();
+public interface ArangoDBSync extends ArangoClientSync<ArangoDB> {
 
     /**
      * Returns a {@link ArangoDatabaseSync} instance for the {@code _system} database.
@@ -45,11 +40,6 @@ public interface ArangoDBSync {
      * @return database handler
      */
     ArangoDatabaseSync db(String name);
-
-    /**
-     * @return {@link ConversationManagerSync}
-     */
-    ConversationManagerSync getConversationManager();
 
     /**
      * Closes all connections and releases all the related resources.

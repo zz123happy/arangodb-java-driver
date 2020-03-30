@@ -21,6 +21,7 @@
 package com.arangodb.next.api.reactive.database;
 
 
+import com.arangodb.next.api.reactive.ArangoClient;
 import com.arangodb.next.entity.model.DatabaseEntity;
 import com.arangodb.next.entity.option.DBCreateOptions;
 import reactor.core.publisher.Flux;
@@ -29,7 +30,7 @@ import reactor.core.publisher.Mono;
 /**
  * @author Michele Rastelli
  */
-public interface DatabaseApi {
+public interface DatabaseApi extends ArangoClient {
 
     /**
      * Creates a new database with the given name.
