@@ -64,5 +64,15 @@ public interface DatabaseApiSync extends ArangoClientSync<DatabaseApi> {
         return reactive().getDatabase(name).block();
     }
 
+    /**
+     * Deletes the database from the server.
+     *
+     * @return true if the database was dropped successfully
+     * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#drop-database">API
+     * Documentation</a>
+     */
+    default Void dropDatabase(String name) {
+        return reactive().dropDatabase(name).block();
+    }
 
 }

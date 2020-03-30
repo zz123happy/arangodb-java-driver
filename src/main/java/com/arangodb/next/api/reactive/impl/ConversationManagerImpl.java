@@ -45,29 +45,31 @@ public final class ConversationManagerImpl implements ConversationManager {
 
     @Override
     public <T> Mono<T> requireConversation(final Mono<T> publisher) {
-        return wrapInConversation(publisher, createConversation(Conversation.Level.REQUIRED));
+        return useConversation(createConversation(Conversation.Level.REQUIRED), publisher);
     }
 
     @Override
     public <T> Flux<T> requireConversation(final Flux<T> publisher) {
-        return wrapInConversation(publisher, createConversation(Conversation.Level.REQUIRED));
+        return useConversation(createConversation(Conversation.Level.REQUIRED), publisher);
     }
 
     @Override
     public <T> Mono<T> preferConversation(final Mono<T> publisher) {
-        return wrapInConversation(publisher, createConversation(Conversation.Level.PREFERRED));
+        return useConversation(createConversation(Conversation.Level.PREFERRED), publisher);
     }
 
     @Override
     public <T> Flux<T> preferConversation(final Flux<T> publisher) {
-        return wrapInConversation(publisher, createConversation(Conversation.Level.PREFERRED));
+        return useConversation(createConversation(Conversation.Level.PREFERRED), publisher);
     }
 
-    private <T> Mono<T> wrapInConversation(final Mono<T> publisher, final Conversation conversation) {
+    @Override
+    public <T> Mono<T> useConversation(final Conversation conversation, final Mono<T> publisher) {
         return publisher.subscriberContext(sCtx -> sCtx.put(ArangoCommunication.CONVERSATION_CTX, conversation));
     }
 
-    private <T> Flux<T> wrapInConversation(final Flux<T> publisher, final Conversation conversation) {
+    @Override
+    public <T> Flux<T> useConversation(final Conversation conversation, final Flux<T> publisher) {
         return publisher.subscriberContext(sCtx -> sCtx.put(ArangoCommunication.CONVERSATION_CTX, conversation));
     }
 

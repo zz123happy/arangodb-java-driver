@@ -117,4 +117,22 @@ public interface ConversationManager {
      */
     <T> Flux<T> preferConversation(Flux<T> publisher);
 
+    /**
+     * Executes {@param publisher} within {@param conversation}
+     *
+     * @param conversation to use
+     * @param publisher    to be executed
+     * @return a contextualized {@link org.reactivestreams.Publisher} with configured context conversation
+     */
+    <T> Mono<T> useConversation(Conversation conversation, Mono<T> publisher);
+
+    /**
+     * Executes {@param publisher} within {@param conversation}
+     *
+     * @param conversation to use
+     * @param publisher    to be executed
+     * @return a contextualized {@link org.reactivestreams.Publisher} with configured context conversation
+     */
+    <T> Flux<T> useConversation(Conversation conversation, Flux<T> publisher);
+
 }

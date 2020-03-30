@@ -83,4 +83,12 @@ public interface DatabaseApi extends ArangoClient {
      */
     Flux<String> getAccessibleDatabases();
 
+    /**
+     * Deletes the database from the server.
+     *
+     * @return true if the database was dropped successfully
+     * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#drop-database">API
+     * Documentation</a>
+     */
+    Mono<Void> dropDatabase(String name);
 }

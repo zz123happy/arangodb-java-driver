@@ -42,11 +42,11 @@ import static com.arangodb.next.api.util.ArangoResponseField.RESULT;
 public final class DatabaseApiImpl extends ClientImpl implements DatabaseApi {
 
     private static final String PATH_API = "/_api/database";
-    private final ArangoDatabase db;
+    private final String dbName;
 
     public DatabaseApiImpl(final ArangoDatabase arangoDatabase) {
         super((ClientImpl) arangoDatabase);
-        db = arangoDatabase;
+        dbName = arangoDatabase.name();
     }
 
     @Override
@@ -58,15 +58,14 @@ public final class DatabaseApiImpl extends ClientImpl implements DatabaseApi {
                         .path(PATH_API)
                         .body(getSerde().serialize(options))
                         .build()
-        )
-                .then();
+        ).then();
     }
 
     @Override
-    public Mono<DatabaseEntity> getDatabase(final String dbName) {
+    public Mono<DatabaseEntity> getDatabase(final String name) {
         return getCommunication().execute(
                 ArangoRequest.builder()
-                        .database(dbName)
+                        .database(name)
                         .requestType(ArangoRequest.RequestType.GET)
                         .path(PATH_API + "/current")
                         .build()
@@ -93,7 +92,7 @@ public final class DatabaseApiImpl extends ClientImpl implements DatabaseApi {
     public Flux<String> getAccessibleDatabases() {
         return getCommunication().execute(
                 ArangoRequest.builder()
-                        .database(db.name())
+                        .database(dbName)
                         .requestType(ArangoRequest.RequestType.GET)
                         .path(PATH_API + "/user")
                         .build()
@@ -101,6 +100,17 @@ public final class DatabaseApiImpl extends ClientImpl implements DatabaseApi {
                 .map(ArangoResponse::getBody)
                 .map(bytes -> getSerde().<Iterable<String>>deserializeField(RESULT, bytes, DeserializationTypes.ITERABLE_OF_STRING))
                 .flatMapMany(Flux::fromIterable);
+    }
+
+    @Override
+    public Mono<Void> dropDatabase(final String name) {
+        return getCommunication().execute(
+                ArangoRequest.builder()
+                        .database(SYSTEM)
+                        .requestType(ArangoRequest.RequestType.DELETE)
+                        .path(PATH_API + "/" + name)
+                        .build()
+        ).then();
     }
 
 }
