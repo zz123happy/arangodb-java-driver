@@ -21,9 +21,9 @@
 package com.arangodb.next.api.database;
 
 
-import com.arangodb.next.api.reactive.ArangoClient;
-import com.arangodb.next.api.database.entity.DatabaseEntity;
 import com.arangodb.next.api.database.entity.DatabaseCreateOptions;
+import com.arangodb.next.api.database.entity.DatabaseEntity;
+import com.arangodb.next.api.reactive.ArangoClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -36,7 +36,7 @@ public interface DatabaseApi extends ArangoClient {
      * Creates a new database with the given name.
      *
      * @param name Name of the database to create
-     * @return a Mono completing when the db has been created successfully
+     * @return a Mono completing on operation completion
      * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#create-database">API
      * Documentation</a>
      */
@@ -48,7 +48,7 @@ public interface DatabaseApi extends ArangoClient {
      * Creates a new database with the given name.
      *
      * @param options Creation options
-     * @return a Mono completing when the db has been created successfully
+     * @return a Mono completing on operation completion
      * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#create-database">API
      * Documentation</a>
      * @since ArangoDB 3.6.0
@@ -86,7 +86,7 @@ public interface DatabaseApi extends ArangoClient {
     /**
      * Deletes the database from the server.
      *
-     * @return true if the database was dropped successfully
+     * @return a Mono completing on operation completion
      * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#drop-database">API
      * Documentation</a>
      */

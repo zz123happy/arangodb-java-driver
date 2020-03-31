@@ -20,9 +20,8 @@
 
 package com.arangodb.next.api.utils;
 
-import com.arangodb.next.api.reactive.impl.ArangoDBImpl;
+import com.arangodb.next.api.sync.ArangoDBSync;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 
 import java.util.stream.Stream;
@@ -34,9 +33,10 @@ import java.util.stream.Stream;
 public class ArangoDBSyncProvider implements ArgumentsProvider {
 
     @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-        return TestContextProvider.INSTANCE.get().stream()
-                .map(ctx -> Arguments.of(ctx, new ArangoDBImpl(ctx.getConfig()).sync()));
+    public Stream<TypedArguments<ArangoDBSync>> provideArguments(ExtensionContext context) {
+        return new ArangoDBProvider().provideArguments(context).map(
+                it -> TypedArguments.of(it.getTestContext(), it.getTestClient().sync())
+        );
     }
 
 }

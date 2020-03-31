@@ -23,7 +23,7 @@ package com.arangodb.next.api.database.impl;
 
 import com.arangodb.next.api.reactive.ArangoDatabase;
 import com.arangodb.next.api.database.DatabaseApi;
-import com.arangodb.next.api.reactive.impl.ClientImpl;
+import com.arangodb.next.api.reactive.impl.ArangoClientImpl;
 import com.arangodb.next.entity.serde.DeserializationTypes;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
@@ -39,13 +39,13 @@ import static com.arangodb.next.api.util.ArangoResponseField.RESULT;
 /**
  * @author Michele Rastelli
  */
-public final class DatabaseApiImpl extends ClientImpl implements DatabaseApi {
+public final class DatabaseApiImpl extends ArangoClientImpl implements DatabaseApi {
 
     private static final String PATH_API = "/_api/database";
     private final String dbName;
 
     public DatabaseApiImpl(final ArangoDatabase arangoDatabase) {
-        super((ClientImpl) arangoDatabase);
+        super((ArangoClientImpl) arangoDatabase);
         dbName = arangoDatabase.name();
     }
 

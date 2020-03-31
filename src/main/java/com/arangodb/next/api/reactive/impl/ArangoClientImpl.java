@@ -30,19 +30,19 @@ import com.arangodb.next.entity.serde.ArangoSerde;
 /**
  * @author Michele Rastelli
  */
-public abstract class ClientImpl implements ArangoClient {
+public abstract class ArangoClientImpl implements ArangoClient {
 
     private final ArangoCommunication communication;
     private final ArangoSerde serde;
     private final ConversationManager conversationManager;
 
-    protected ClientImpl(final ClientImpl other) {
+    protected ArangoClientImpl(final ArangoClientImpl other) {
         communication = other.communication;
         serde = other.serde;
         conversationManager = other.conversationManager;
     }
 
-    protected ClientImpl(final CommunicationConfig config) {
+    protected ArangoClientImpl(final CommunicationConfig config) {
         communication = ArangoCommunication.create(config).block();
         serde = ArangoSerde.of(config.getContentType());
         conversationManager = new ConversationManagerImpl(communication);

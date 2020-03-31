@@ -20,23 +20,31 @@
 
 package com.arangodb.next.api.utils;
 
-import com.arangodb.next.api.reactive.ArangoDB;
-import com.arangodb.next.api.reactive.impl.ArangoDBImpl;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.params.provider.ArgumentsProvider;
-
-import java.util.stream.Stream;
-
+import org.immutables.value.Value;
+import org.junit.jupiter.params.provider.Arguments;
 
 /**
  * @author Michele Rastelli
  */
-public class ArangoDBProvider implements ArgumentsProvider {
+@Value.Immutable(builder = false)
+public interface TypedArguments<T> extends Arguments {
+
+    static <T> TypedArguments<T> of(TestContext testContext, T testClient) {
+        return ImmutableTypedArguments.of(testContext, testClient);
+    }
+
+    @Value.Parameter(order = 1)
+    TestContext getTestContext();
+
+    @Value.Parameter(order = 2)
+    T getTestClient();
 
     @Override
-    public Stream<TypedArguments<ArangoDB>> provideArguments(ExtensionContext context) {
-        return TestContextProvider.INSTANCE.get().stream()
-                .map(ctx -> TypedArguments.of(ctx, new ArangoDBImpl(ctx.getConfig())));
+    default Object[] get() {
+        return new Object[]{
+                getTestContext(),
+                getTestClient()
+        };
     }
 
 }

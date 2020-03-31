@@ -40,7 +40,7 @@ import static com.arangodb.next.api.util.ArangoResponseField.RESULT;
 /**
  * @author Michele Rastelli
  */
-public final class ArangoDatabaseImpl extends ClientImpl implements ArangoDatabase {
+public final class ArangoDatabaseImpl extends ArangoClientImpl implements ArangoDatabase {
 
     private static final String PATH_API_USER = "/_api/user";
     private static final String PATH_API_VERSION = "/_api/version";
@@ -51,7 +51,7 @@ public final class ArangoDatabaseImpl extends ClientImpl implements ArangoDataba
     private final String name;
 
     public ArangoDatabaseImpl(final ArangoDB arangoDB, final String dbName) {
-        super((ClientImpl) arangoDB);
+        super((ArangoClientImpl) arangoDB);
         arango = arangoDB;
         name = dbName;
     }

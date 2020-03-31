@@ -20,23 +20,23 @@
 
 package com.arangodb.next.api.utils;
 
-import com.arangodb.next.api.reactive.ArangoDB;
-import com.arangodb.next.api.reactive.impl.ArangoDBImpl;
+
+import com.arangodb.next.api.database.DatabaseApi;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 
 import java.util.stream.Stream;
 
-
 /**
  * @author Michele Rastelli
  */
-public class ArangoDBProvider implements ArgumentsProvider {
+public class DatabaseApiProvider implements ArgumentsProvider {
 
     @Override
-    public Stream<TypedArguments<ArangoDB>> provideArguments(ExtensionContext context) {
-        return TestContextProvider.INSTANCE.get().stream()
-                .map(ctx -> TypedArguments.of(ctx, new ArangoDBImpl(ctx.getConfig())));
+    public Stream<TypedArguments<DatabaseApi>> provideArguments(ExtensionContext context) {
+        return new ArangoDBProvider().provideArguments(context).map(
+                it -> TypedArguments.of(it.getTestContext(), it.getTestClient().db().databaseApi())
+        );
     }
 
 }

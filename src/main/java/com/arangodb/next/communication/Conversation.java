@@ -29,7 +29,7 @@ import org.immutables.value.Value;
  *
  * @author Michele Rastelli
  */
-@Value.Immutable
+@Value.Immutable(builder = false)
 public interface Conversation {
 
     static Conversation of(HostDescription host, Level level) {

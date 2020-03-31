@@ -21,9 +21,9 @@
 package com.arangodb.next.api.database;
 
 
-import com.arangodb.next.api.sync.ArangoClientSync;
-import com.arangodb.next.api.database.entity.DatabaseEntity;
 import com.arangodb.next.api.database.entity.DatabaseCreateOptions;
+import com.arangodb.next.api.database.entity.DatabaseEntity;
+import com.arangodb.next.api.sync.ArangoClientSync;
 
 /**
  * @author Michele Rastelli
@@ -66,12 +66,11 @@ public interface DatabaseApiSync extends ArangoClientSync<DatabaseApi> {
     /**
      * Deletes the database from the server.
      *
-     * @return true if the database was dropped successfully
      * @see <a href="https://www.arangodb.com/docs/stable/http/database-database-management.html#drop-database">API
      * Documentation</a>
      */
-    default Void dropDatabase(String name) {
-        return reactive().dropDatabase(name).block();
+    default void dropDatabase(String name) {
+        reactive().dropDatabase(name).block();
     }
 
 }
