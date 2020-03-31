@@ -20,10 +20,12 @@
 
 package com.arangodb.next.api.reactive.impl;
 
-import com.arangodb.next.api.reactive.ArangoDB;
-import com.arangodb.next.api.reactive.ArangoDatabase;
+import com.arangodb.next.api.collection.CollectionApi;
+import com.arangodb.next.api.collection.impl.CollectionApiImpl;
 import com.arangodb.next.api.database.DatabaseApi;
 import com.arangodb.next.api.database.impl.DatabaseApiImpl;
+import com.arangodb.next.api.reactive.ArangoDB;
+import com.arangodb.next.api.reactive.ArangoDatabase;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
 import com.arangodb.next.entity.model.Engine;
@@ -69,6 +71,11 @@ public final class ArangoDatabaseImpl extends ArangoClientImpl implements Arango
     @Override
     public DatabaseApi databaseApi() {
         return new DatabaseApiImpl(this);
+    }
+
+    @Override
+    public CollectionApi collectionApi() {
+        return new CollectionApiImpl(this);
     }
 
     @Override

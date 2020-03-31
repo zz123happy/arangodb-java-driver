@@ -21,6 +21,7 @@
 
 package com.arangodb.next.api.reactive;
 
+import com.arangodb.next.api.collection.CollectionApi;
 import com.arangodb.next.api.database.DatabaseApi;
 import com.arangodb.next.entity.model.Engine;
 import com.arangodb.next.entity.model.ServerRole;
@@ -48,6 +49,11 @@ public interface ArangoDatabase extends ArangoClient {
      * @return DatabaseApi for the current database
      */
     DatabaseApi databaseApi();
+
+    /**
+     * @return CollectionApi for the current database
+     */
+    CollectionApi collectionApi();
 
     /**
      * @return server name and version number

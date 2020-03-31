@@ -20,10 +20,12 @@
 
 package com.arangodb.next.entity.serde;
 
-import com.arangodb.next.entity.model.Engine;
+import com.arangodb.next.api.collection.entity.CollectionStatus;
+import com.arangodb.next.api.collection.entity.CollectionType;
 import com.arangodb.next.api.entity.ReplicationFactor;
 import com.arangodb.next.api.entity.SatelliteReplicationFactor;
 import com.arangodb.next.api.entity.Sharding;
+import com.arangodb.next.entity.model.Engine;
 import com.arangodb.velocypack.VPackDeserializer;
 
 
@@ -50,5 +52,11 @@ public final class VPackDeserializers {
 
     public static final VPackDeserializer<Engine.StorageEngineName> STORAGE_ENGINE_NAME = (parent, vpack, context) ->
             Engine.StorageEngineName.of(vpack.getAsString());
+
+    public static final VPackDeserializer<CollectionType> COLLECTION_TYPE = (parent, vpack, context) ->
+            CollectionType.fromType(vpack.getAsInt());
+
+    public static final VPackDeserializer<CollectionStatus> COLLECTION_STATUS = (parent, vpack, context) ->
+            CollectionStatus.of(vpack.getAsInt());
 
 }

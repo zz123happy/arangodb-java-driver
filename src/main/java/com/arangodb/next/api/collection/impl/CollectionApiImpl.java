@@ -1,0 +1,68 @@
+/*
+ * DISCLAIMER
+ *
+ * Copyright 2016 ArangoDB GmbH, Cologne, Germany
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Copyright holder is ArangoDB GmbH, Cologne, Germany
+ */
+
+package com.arangodb.next.api.collection.impl;
+
+
+import com.arangodb.next.api.collection.CollectionApi;
+import com.arangodb.next.api.collection.entity.CollectionEntity;
+import com.arangodb.next.api.reactive.ArangoDatabase;
+import com.arangodb.next.api.reactive.impl.ArangoClientImpl;
+import com.arangodb.next.connection.ArangoRequest;
+import com.arangodb.next.connection.ArangoResponse;
+import reactor.core.publisher.Flux;
+
+import java.lang.reflect.Type;
+
+import static com.arangodb.next.api.util.ArangoResponseField.RESULT;
+
+/**
+ * @author Michele Rastelli
+ */
+public final class CollectionApiImpl extends ArangoClientImpl implements CollectionApi {
+
+    private static final String PATH_API = "/_api/collection";
+
+    public static final Type ITERABLE_OF_COLLECTION_ENTITY = new com.arangodb.velocypack.Type<Iterable<CollectionEntity>>() {
+    }.getType();
+
+    private final String dbName;
+
+    public CollectionApiImpl(final ArangoDatabase arangoDatabase) {
+        super((ArangoClientImpl) arangoDatabase);
+        dbName = arangoDatabase.name();
+    }
+
+    @Override
+    public Flux<CollectionEntity> getCollections(final boolean excludeSystem) {
+        return getCommunication().execute(
+                ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.GET)
+                        .path(PATH_API)
+                        .putQueryParam("excludeSystem", String.valueOf(excludeSystem))
+                        .build()
+        )
+                .map(ArangoResponse::getBody)
+                .map(bytes -> getSerde().<Iterable<CollectionEntity>>deserializeField(RESULT, bytes, ITERABLE_OF_COLLECTION_ENTITY))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+}
