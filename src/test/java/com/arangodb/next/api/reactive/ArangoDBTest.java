@@ -20,8 +20,32 @@
 
 package com.arangodb.next.api.reactive;
 
+import com.arangodb.next.api.utils.ArangoDBProvider;
+import com.arangodb.next.api.utils.TestContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
+import reactor.core.publisher.Mono;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+
 /**
  * @author Michele Rastelli
  */
 class ArangoDBTest {
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ArangoDBProvider.class)
+    void alreadyExistingConversation(TestContext ctx, ArangoDB arango) {
+        Throwable thrown = catchThrowable(() ->
+                arango.getConversationManager().requireConversation(
+                        arango.getConversationManager().requireConversation(
+                                Mono.just("hello")
+                        )
+                ).block()
+        );
+
+        assertThat(thrown).isInstanceOf(IllegalStateException.class);
+    }
+
 }
