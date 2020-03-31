@@ -20,7 +20,18 @@
 
 package com.arangodb.next.api.sync;
 
+import com.arangodb.next.api.utils.ArangoDBSyncProvider;
+import com.arangodb.next.api.utils.TestContext;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
+
+import java.util.ConcurrentModificationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 
 /**
@@ -28,10 +39,27 @@ import org.junit.jupiter.api.Test;
  */
 class ArangoDBSyncTest {
 
-
     @Test
     void shutdown() {
     }
 
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ArangoDBSyncProvider.class)
+    void alreadyExistingThreadConversation(TestContext ctx, ArangoDBSync arango) {
+        try (ThreadConversation tc = arango.getConversationManager().requireConversation()) {
+            Throwable thrown = catchThrowable(() -> arango.getConversationManager().requireConversation());
+            assertThat(thrown).isInstanceOf(IllegalStateException.class);
+        }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ArangoDBSyncProvider.class)
+    void wrongThreadClosingThreadConversation(TestContext ctx, ArangoDBSync arango) {
+        try (ThreadConversation tc = arango.getConversationManager().requireConversation()) {
+            Throwable thrown = catchThrowable(() -> CompletableFuture.runAsync(tc::close).join());
+            assertThat(thrown).isInstanceOf(CompletionException.class);
+            assertThat(thrown.getCause()).isInstanceOf(ConcurrentModificationException.class);
+        }
+    }
 
 }

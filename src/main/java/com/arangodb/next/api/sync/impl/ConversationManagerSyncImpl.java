@@ -40,12 +40,12 @@ public final class ConversationManagerSyncImpl implements ConversationManagerSyn
 
     @Override
     public ThreadConversation requireConversation() {
-        return new ThreadConversation(cm.createConversation(Conversation.Level.REQUIRED));
+        return ThreadConversation.create(cm.createConversation(Conversation.Level.REQUIRED));
     }
 
     @Override
     public ThreadConversation preferConversation() {
-        return new ThreadConversation(cm.createConversation(Conversation.Level.PREFERRED));
+        return ThreadConversation.create(cm.createConversation(Conversation.Level.PREFERRED));
     }
 
 }

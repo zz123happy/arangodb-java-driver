@@ -24,24 +24,50 @@ package com.arangodb.next.api.sync;
 
 import com.arangodb.next.communication.Conversation;
 
+import java.util.ConcurrentModificationException;
 import java.util.Optional;
 
 /**
+ * Binds the current thread to the provided conversation. All the requests sent from this thread will happen within the
+ * conversation. In case this is not possible it will behave according to the specified {@link Conversation.Level}.
+ *
  * @author Michele Rastelli
  */
 public final class ThreadConversation implements AutoCloseable {
+
     private static final ThreadLocal<Conversation> THREAD_LOCAL_CONVERSATION = new ThreadLocal<>();
+
+    private final Conversation threadConversation;
+    private final long threadId;
 
     public static Optional<Conversation> getThreadLocalConversation() {
         return Optional.ofNullable(THREAD_LOCAL_CONVERSATION.get());
     }
 
-    public ThreadConversation(final Conversation conversation) {
+    public static ThreadConversation create(final Conversation conversation) {
+        if (getThreadLocalConversation().isPresent()) {
+            throw new IllegalStateException("Already existing ThreadConversation for thread " + Thread.currentThread().getName());
+        }
+        return new ThreadConversation(conversation);
+    }
+
+    private ThreadConversation(final Conversation conversation) {
         THREAD_LOCAL_CONVERSATION.set(conversation);
+        threadConversation = conversation;
+        threadId = Thread.currentThread().getId();
+    }
+
+    public Conversation getThreadConversation() {
+        return threadConversation;
     }
 
     @Override
     public void close() {
+        if (threadId != Thread.currentThread().getId()) {
+            throw new ConcurrentModificationException("Thread " + Thread.currentThread().getId()
+                    + " cannot close thread conversation created from thread " + threadId);
+        }
         THREAD_LOCAL_CONVERSATION.remove();
     }
+
 }
