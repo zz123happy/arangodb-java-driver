@@ -21,12 +21,13 @@
 package com.arangodb.next.api.collection;
 
 import com.arangodb.next.api.collection.entity.CollectionEntity;
+import com.arangodb.next.api.collection.entity.CollectionType;
 import com.arangodb.next.api.utils.CollectionApiProvider;
 import com.arangodb.next.api.utils.TestContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Michele Rastelli
@@ -36,9 +37,19 @@ class CollectionApiTest {
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(CollectionApiProvider.class)
     void getCollections(TestContext ctx, CollectionApi collectionApi) {
-        List<CollectionEntity> collections = collectionApi.getCollections().collectList().block();
-        collections.forEach(System.out::println);
-        // TODO
+        CollectionEntity graphs = collectionApi.getCollections()
+                .filter(c -> c.getName().equals("_graphs"))
+                .blockFirst();
+
+        assertThat(graphs).isNotNull();
+        assertThat(graphs.getIsSystem()).isTrue();
+        assertThat(graphs.getType()).isEqualTo(CollectionType.DOCUMENT);
+
+        CollectionEntity collection = collectionApi.getCollections(true)
+                .filter(c -> c.getName().equals("_graphs"))
+                .blockFirst();
+
+        assertThat(collection).isNull();
     }
 
 }
