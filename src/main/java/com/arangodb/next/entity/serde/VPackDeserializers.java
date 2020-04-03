@@ -20,11 +20,10 @@
 
 package com.arangodb.next.entity.serde;
 
-import com.arangodb.next.api.collection.entity.CollectionStatus;
-import com.arangodb.next.api.collection.entity.CollectionType;
+import com.arangodb.next.api.collection.entity.*;
+import com.arangodb.next.api.database.entity.Sharding;
 import com.arangodb.next.api.entity.ReplicationFactor;
 import com.arangodb.next.api.entity.SatelliteReplicationFactor;
-import com.arangodb.next.api.entity.Sharding;
 import com.arangodb.next.entity.model.Engine;
 import com.arangodb.velocypack.VPackDeserializer;
 
@@ -47,16 +46,32 @@ public final class VPackDeserializers {
         }
     };
 
+    //region DatabaseApi
     public static final VPackDeserializer<Sharding> SHARDING = (parent, vpack, context) ->
             Sharding.of(vpack.getAsString());
+    //endregion
 
     public static final VPackDeserializer<Engine.StorageEngineName> STORAGE_ENGINE_NAME = (parent, vpack, context) ->
             Engine.StorageEngineName.of(vpack.getAsString());
 
+    //region CollectionApi
     public static final VPackDeserializer<CollectionType> COLLECTION_TYPE = (parent, vpack, context) ->
-            CollectionType.fromType(vpack.getAsInt());
+            CollectionType.of(vpack.getAsInt());
 
     public static final VPackDeserializer<CollectionStatus> COLLECTION_STATUS = (parent, vpack, context) ->
             CollectionStatus.of(vpack.getAsInt());
+
+    public static final VPackDeserializer<ShardingStrategy> SHARDING_STRATEGY = (parent, vpack, context) ->
+            ShardingStrategy.of(vpack.getAsString());
+
+    public static final VPackDeserializer<WaitForSyncReplication> WAIT_FOR_SYNC_REPLICATION = (parent, vpack, context) ->
+            WaitForSyncReplication.of(vpack.getAsInt());
+
+    public static final VPackDeserializer<KeyType> KEY_TYPE = (parent, vpack, context) ->
+            KeyType.of(vpack.getAsString());
+
+    public static final VPackDeserializer<EnforceReplicationFactor> ENFORCE_REPLICATION_FACTOR = (parent, vpack, context) ->
+            EnforceReplicationFactor.of(vpack.getAsInt());
+    //endregion
 
 }

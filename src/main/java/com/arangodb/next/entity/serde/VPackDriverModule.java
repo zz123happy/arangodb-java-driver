@@ -20,12 +20,11 @@
 
 package com.arangodb.next.entity.serde;
 
-import com.arangodb.next.api.collection.entity.CollectionStatus;
-import com.arangodb.next.api.collection.entity.CollectionType;
+import com.arangodb.next.api.collection.entity.*;
+import com.arangodb.next.api.database.entity.Sharding;
 import com.arangodb.next.api.entity.ImmutableNumericReplicationFactor;
 import com.arangodb.next.api.entity.ImmutableSatelliteReplicationFactor;
 import com.arangodb.next.api.entity.ReplicationFactor;
-import com.arangodb.next.api.entity.Sharding;
 import com.arangodb.next.entity.model.Engine;
 import com.arangodb.velocypack.VPackModule;
 import com.arangodb.velocypack.VPackParserModule;
@@ -39,15 +38,45 @@ public final class VPackDriverModule implements VPackModule, VPackParserModule {
 
     @Override
     public <C extends VPackSetupContext<C>> void setup(final C context) {
+        // --- --- --- --- ---
+        // --- SERIALIZERS ---
+        // --- --- --- --- ---
+
         context.registerSerializer(ImmutableSatelliteReplicationFactor.class, VPackSerializers.SATELLITE_REPLICATION_FACTOR);
         context.registerSerializer(ImmutableNumericReplicationFactor.class, VPackSerializers.NUMERIC_REPLICATION_FACTOR);
+
+        //region DatabaseApi
         context.registerSerializer(Sharding.class, VPackSerializers.SHARDING);
+        //endregion
+
+        //region CollectionApi
+        context.registerSerializer(ShardingStrategy.class, VPackSerializers.SHARDING_STRATEGY);
+        context.registerSerializer(WaitForSyncReplication.class, VPackSerializers.WAIT_FOR_SYNC_REPLICATION);
+        context.registerSerializer(KeyType.class, VPackSerializers.KEY_TYPE);
+        context.registerSerializer(EnforceReplicationFactor.class, VPackSerializers.ENFORCE_REPLICATION_FACTOR);
+        context.registerSerializer(CollectionType.class, VPackSerializers.COLLECTION_TYPE);
+        //endregion
+
+
+        // --- --- --- --- --- -
+        // --- DESERIALIZERS ---
+        // --- --- --- --- --- -
 
         context.registerDeserializer(ReplicationFactor.class, VPackDeserializers.REPLICATION_FACTOR);
-        context.registerDeserializer(Sharding.class, VPackDeserializers.SHARDING);
         context.registerDeserializer(Engine.StorageEngineName.class, VPackDeserializers.STORAGE_ENGINE_NAME);
+
+        //region DatabaseApi
+        context.registerDeserializer(Sharding.class, VPackDeserializers.SHARDING);
+        //endregion
+
+        //region CollectionApi
         context.registerDeserializer(CollectionType.class, VPackDeserializers.COLLECTION_TYPE);
         context.registerDeserializer(CollectionStatus.class, VPackDeserializers.COLLECTION_STATUS);
+        context.registerDeserializer(ShardingStrategy.class, VPackDeserializers.SHARDING_STRATEGY);
+        context.registerDeserializer(WaitForSyncReplication.class, VPackDeserializers.WAIT_FOR_SYNC_REPLICATION);
+        context.registerDeserializer(KeyType.class, VPackDeserializers.KEY_TYPE);
+        context.registerDeserializer(EnforceReplicationFactor.class, VPackDeserializers.ENFORCE_REPLICATION_FACTOR);
+        //endregion
     }
 
     @Override

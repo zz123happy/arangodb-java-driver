@@ -21,7 +21,6 @@
 package com.arangodb.next.api.database.entity;
 
 import com.arangodb.next.api.entity.ReplicationFactor;
-import com.arangodb.next.api.entity.Sharding;
 import org.immutables.value.Value;
 
 import javax.annotation.Nullable;

@@ -20,39 +20,40 @@
 
 package com.arangodb.next.api.collection.entity;
 
+
 /**
- * @author Mark Vollmary
  * @author Michele Rastelli
  */
-public enum CollectionType {
+public enum EnforceReplicationFactor {
 
     /**
-     * document collection
+     * disable this extra check
      */
-    DOCUMENT(2),
+    FALSE(0),
 
     /**
-     * edge collection
+     * the server will check if there are enough replicas available at creation time and bail out otherwise
+     * (default)
      */
-    EDGES(3);
+    TRUE(1);
 
     private final int value;
 
-    CollectionType(final int typeValue) {
-        value = typeValue;
+    EnforceReplicationFactor(int waitForSyncReplicationValue) {
+        value = waitForSyncReplicationValue;
     }
 
     public int getValue() {
         return value;
     }
 
-    public static CollectionType of(final int value) {
-        for (CollectionType cType : CollectionType.values()) {
-            if (cType.value == value) {
-                return cType;
+    public static EnforceReplicationFactor of(int value) {
+        for (EnforceReplicationFactor keyType : EnforceReplicationFactor.values()) {
+            if (keyType.value == value) {
+                return keyType;
             }
         }
-        throw new IllegalArgumentException("Unknown value for collection type: " + value);
+        throw new IllegalArgumentException("Unknown WaitForSyncReplication value: " + value);
     }
 
 }

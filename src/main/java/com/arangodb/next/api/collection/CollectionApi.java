@@ -21,9 +21,13 @@
 package com.arangodb.next.api.collection;
 
 
+import com.arangodb.next.api.collection.entity.CollectionCreateOptions;
+import com.arangodb.next.api.collection.entity.CollectionCreateParams;
 import com.arangodb.next.api.collection.entity.CollectionEntity;
+import com.arangodb.next.api.collection.entity.CollectionsReadParams;
 import com.arangodb.next.api.reactive.ArangoClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * @author Michele Rastelli
@@ -31,20 +35,34 @@ import reactor.core.publisher.Flux;
 public interface CollectionApi extends ArangoClient {
 
     /**
+     * @param options request options
      * @return all collections description
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-getting.html#reads-all-collections">API
      * Documentation</a>
      */
-    default Flux<CollectionEntity> getCollections() {
-        return getCollections(false);
+    Flux<CollectionEntity> getCollections(CollectionsReadParams options);
+
+    /**
+     * Creates a collection for the given collection name and returns related information from the server.
+     *
+     * @param options request options
+     * @return information about the collection
+     * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#create-collection">API
+     * Documentation</a>
+     */
+    default Mono<CollectionEntity> createCollection(CollectionCreateOptions options) {
+        return createCollection(options, CollectionCreateParams.builder().build());
     }
 
     /**
-     * @param excludeSystem Whether or not system collections should be excluded from the result
-     * @return all collections description
-     * @see <a href="https://www.arangodb.com/docs/stable/http/collection-getting.html#reads-all-collections">API
+     * Creates a collection for the given collection name and returns related information from the server.
+     *
+     * @param options request options
+     * @param params  request params
+     * @return information about the collection
+     * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#create-collection">API
      * Documentation</a>
      */
-    Flux<CollectionEntity> getCollections(boolean excludeSystem);
+    Mono<CollectionEntity> createCollection(CollectionCreateOptions options, CollectionCreateParams params);
 
 }

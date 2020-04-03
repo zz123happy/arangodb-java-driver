@@ -24,7 +24,7 @@ package com.arangodb.next.api.database;
 import com.arangodb.next.api.database.entity.DatabaseCreateOptions;
 import com.arangodb.next.api.database.entity.DatabaseEntity;
 import com.arangodb.next.api.entity.ReplicationFactor;
-import com.arangodb.next.api.entity.Sharding;
+import com.arangodb.next.api.database.entity.Sharding;
 import com.arangodb.next.api.utils.DatabaseApiProvider;
 import com.arangodb.next.api.utils.TestContext;
 import com.arangodb.next.communication.Conversation;

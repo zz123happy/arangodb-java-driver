@@ -22,12 +22,17 @@ package com.arangodb.next.api.collection.impl;
 
 
 import com.arangodb.next.api.collection.CollectionApi;
+import com.arangodb.next.api.collection.entity.CollectionCreateOptions;
+import com.arangodb.next.api.collection.entity.CollectionCreateParams;
 import com.arangodb.next.api.collection.entity.CollectionEntity;
+import com.arangodb.next.api.collection.entity.CollectionsReadParams;
 import com.arangodb.next.api.reactive.ArangoDatabase;
 import com.arangodb.next.api.reactive.impl.ArangoClientImpl;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
+import com.arangodb.next.connection.ImmutableArangoRequest;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.lang.reflect.Type;
 
@@ -51,18 +56,48 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Flux<CollectionEntity> getCollections(final boolean excludeSystem) {
+    public Flux<CollectionEntity> getCollections(final CollectionsReadParams options) {
         return getCommunication().execute(
                 ArangoRequest.builder()
                         .database(dbName)
                         .requestType(ArangoRequest.RequestType.GET)
                         .path(PATH_API)
-                        .putQueryParam("excludeSystem", String.valueOf(excludeSystem))
+                        .putQueryParam(CollectionsReadParams.EXCLUDE_SYSTEM_PARAM, String.valueOf(options.getExcludeSystem()))
                         .build()
         )
                 .map(ArangoResponse::getBody)
                 .map(bytes -> getSerde().<Iterable<CollectionEntity>>deserializeField(RESULT, bytes, ITERABLE_OF_COLLECTION_ENTITY))
                 .flatMapMany(Flux::fromIterable);
+    }
+
+    @Override
+    public Mono<CollectionEntity> createCollection(CollectionCreateOptions options, CollectionCreateParams params) {
+        ImmutableArangoRequest.Builder requestBuilder = ArangoRequest.builder()
+                .database(dbName)
+                .requestType(ArangoRequest.RequestType.POST)
+                .body(getSerde().serialize(options))
+                .path(PATH_API);
+
+        params.getEnforceReplicationFactor()
+                .ifPresent(enforceReplicationFactor ->
+                        requestBuilder.putQueryParam(
+                                CollectionCreateParams.ENFORCE_REPLICATION_FACTOR_PARAM,
+                                String.valueOf(enforceReplicationFactor.getValue())
+                        )
+                );
+
+        params.getWaitForSyncReplication()
+                .ifPresent(waitForSyncReplication ->
+                        requestBuilder.putQueryParam(
+                                CollectionCreateParams.WAIT_FOR_SYNC_REPLICATION_PARAM,
+                                String.valueOf(waitForSyncReplication.getValue())
+                        )
+                );
+
+        return getCommunication()
+                .execute(requestBuilder.build())
+                .map(ArangoResponse::getBody)
+                .map(bytes -> getSerde().deserialize(bytes, CollectionEntity.class));
     }
 
 }

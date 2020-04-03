@@ -20,39 +20,27 @@
 
 package com.arangodb.next.api.collection.entity;
 
+
+import org.immutables.value.Value;
+
 /**
  * @author Mark Vollmary
  * @author Michele Rastelli
+ * @see <a href="https://www.arangodb.com/docs/stable/http/collection-getting.html#reads-all-collections">API
+ * Documentation</a>
  */
-public enum CollectionType {
+
+@Value.Immutable
+public interface CollectionsReadParams {
+
+    String EXCLUDE_SYSTEM_PARAM = "excludeSystem";
+
+    static ImmutableCollectionsReadParams.Builder builder() {
+        return ImmutableCollectionsReadParams.builder();
+    }
 
     /**
-     * document collection
+     * @return whether or not system collections should be excluded from the result.
      */
-    DOCUMENT(2),
-
-    /**
-     * edge collection
-     */
-    EDGES(3);
-
-    private final int value;
-
-    CollectionType(final int typeValue) {
-        value = typeValue;
-    }
-
-    public int getValue() {
-        return value;
-    }
-
-    public static CollectionType of(final int value) {
-        for (CollectionType cType : CollectionType.values()) {
-            if (cType.value == value) {
-                return cType;
-            }
-        }
-        throw new IllegalArgumentException("Unknown value for collection type: " + value);
-    }
-
+    boolean getExcludeSystem();
 }

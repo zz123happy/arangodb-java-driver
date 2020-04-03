@@ -20,12 +20,14 @@
 
 package com.arangodb.next.api.collection;
 
-import com.arangodb.next.api.collection.entity.CollectionEntity;
-import com.arangodb.next.api.collection.entity.CollectionType;
+import com.arangodb.next.api.collection.entity.*;
+import com.arangodb.next.api.entity.ReplicationFactor;
 import com.arangodb.next.api.utils.CollectionApiProvider;
 import com.arangodb.next.api.utils.TestContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,19 +39,58 @@ class CollectionApiTest {
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(CollectionApiProvider.class)
     void getCollections(TestContext ctx, CollectionApi collectionApi) {
-        CollectionEntity graphs = collectionApi.getCollections()
+        CollectionEntity graphs = collectionApi
+                .getCollections(CollectionsReadParams.builder().excludeSystem(false).build())
                 .filter(c -> c.getName().equals("_graphs"))
                 .blockFirst();
 
         assertThat(graphs).isNotNull();
+        assertThat(graphs.getId()).isNotNull();
+        assertThat(graphs.getName()).isNotNull();
         assertThat(graphs.getIsSystem()).isTrue();
+        assertThat(graphs.getStatus()).isNotNull();
         assertThat(graphs.getType()).isEqualTo(CollectionType.DOCUMENT);
+        assertThat(graphs.getGloballyUniqueId()).isNotNull();
 
-        CollectionEntity collection = collectionApi.getCollections(true)
+        CollectionEntity collection = collectionApi
+                .getCollections(CollectionsReadParams.builder().excludeSystem(true).build())
                 .filter(c -> c.getName().equals("_graphs"))
                 .blockFirst();
 
         assertThat(collection).isNull();
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void createCollection(TestContext ctx, CollectionApi collectionApi) {
+        String name = "myCollection-" + UUID.randomUUID().toString();
+        CollectionEntity collection = collectionApi.createCollection(
+                CollectionCreateOptions.builder()
+                        .name(name)
+                        .replicationFactor(ReplicationFactor.ofSatellite())
+                        .minReplicationFactor(1)
+                        .keyOptions(KeyOptions.builder()
+                                .allowUserKeys(false)
+                                .type(KeyType.UUID)
+                                .build()
+                        )
+                        .waitForSync(true)
+                        .addShardKeys("a", "b")
+                        .numberOfShards(3)
+                        .isSystem(false)
+                        .type(CollectionType.DOCUMENT)
+                        .indexBuckets(32)
+                        .distributeShardsLike("c")
+                        .shardingStrategy(ShardingStrategy.HASH)
+                        .build(),
+                CollectionCreateParams.builder()
+                        .enforceReplicationFactor(EnforceReplicationFactor.TRUE)
+                        .waitForSyncReplication(WaitForSyncReplication.TRUE)
+                        .build()
+        ).block();
+
+        assertThat(collection).isNotNull();
+        assertThat(collection.getName()).isEqualTo(name);
     }
 
 }

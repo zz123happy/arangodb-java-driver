@@ -20,39 +20,26 @@
 
 package com.arangodb.next.api.collection.entity;
 
+
+import org.immutables.value.Value;
+
+import java.util.Optional;
+
 /**
- * @author Mark Vollmary
  * @author Michele Rastelli
  */
-public enum CollectionType {
+@Value.Immutable
+public interface CollectionCreateParams {
 
-    /**
-     * document collection
-     */
-    DOCUMENT(2),
+    String WAIT_FOR_SYNC_REPLICATION_PARAM = "waitForSyncReplication";
+    String ENFORCE_REPLICATION_FACTOR_PARAM = "enforceReplicationFactor";
 
-    /**
-     * edge collection
-     */
-    EDGES(3);
-
-    private final int value;
-
-    CollectionType(final int typeValue) {
-        value = typeValue;
+    static ImmutableCollectionCreateParams.Builder builder() {
+        return ImmutableCollectionCreateParams.builder();
     }
 
-    public int getValue() {
-        return value;
-    }
+    Optional<WaitForSyncReplication> getWaitForSyncReplication();
 
-    public static CollectionType of(final int value) {
-        for (CollectionType cType : CollectionType.values()) {
-            if (cType.value == value) {
-                return cType;
-            }
-        }
-        throw new IllegalArgumentException("Unknown value for collection type: " + value);
-    }
+    Optional<EnforceReplicationFactor> getEnforceReplicationFactor();
 
 }

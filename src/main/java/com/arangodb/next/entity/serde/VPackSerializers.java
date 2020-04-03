@@ -20,9 +20,10 @@
 
 package com.arangodb.next.entity.serde;
 
+import com.arangodb.next.api.collection.entity.*;
+import com.arangodb.next.api.database.entity.Sharding;
 import com.arangodb.next.api.entity.NumericReplicationFactor;
 import com.arangodb.next.api.entity.SatelliteReplicationFactor;
-import com.arangodb.next.api.entity.Sharding;
 import com.arangodb.velocypack.VPackSerializer;
 
 /**
@@ -39,7 +40,26 @@ public final class VPackSerializers {
     public static final VPackSerializer<NumericReplicationFactor> NUMERIC_REPLICATION_FACTOR =
             (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
 
+    //region DatabaseApi
     public static final VPackSerializer<Sharding> SHARDING =
             (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
+    //endregion
+
+    //region CollectionApi
+    public static final VPackSerializer<ShardingStrategy> SHARDING_STRATEGY =
+            (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
+
+    public static final VPackSerializer<WaitForSyncReplication> WAIT_FOR_SYNC_REPLICATION =
+            (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
+
+    public static final VPackSerializer<KeyType> KEY_TYPE =
+            (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
+
+    public static final VPackSerializer<EnforceReplicationFactor> ENFORCE_REPLICATION_FACTOR =
+            (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
+
+    public static final VPackSerializer<CollectionType> COLLECTION_TYPE =
+            (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
+    //endregion
 
 }
