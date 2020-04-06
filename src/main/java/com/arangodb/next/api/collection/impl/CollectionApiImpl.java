@@ -22,10 +22,7 @@ package com.arangodb.next.api.collection.impl;
 
 
 import com.arangodb.next.api.collection.CollectionApi;
-import com.arangodb.next.api.collection.entity.CollectionCreateOptions;
-import com.arangodb.next.api.collection.entity.CollectionCreateParams;
-import com.arangodb.next.api.collection.entity.CollectionEntity;
-import com.arangodb.next.api.collection.entity.CollectionsReadParams;
+import com.arangodb.next.api.collection.entity.*;
 import com.arangodb.next.api.reactive.ArangoDatabase;
 import com.arangodb.next.api.reactive.impl.ArangoClientImpl;
 import com.arangodb.next.connection.ArangoRequest;
@@ -71,7 +68,10 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<CollectionEntity> createCollection(CollectionCreateOptions options, CollectionCreateParams params) {
+    public Mono<CollectionEntityDetailed> createCollection(
+            final CollectionCreateOptions options,
+            final CollectionCreateParams params
+    ) {
         ImmutableArangoRequest.Builder requestBuilder = ArangoRequest.builder()
                 .database(dbName)
                 .requestType(ArangoRequest.RequestType.POST)
@@ -97,7 +97,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
         return getCommunication()
                 .execute(requestBuilder.build())
                 .map(ArangoResponse::getBody)
-                .map(bytes -> getSerde().deserialize(bytes, CollectionEntity.class));
+                .map(bytes -> getSerde().deserialize(bytes, CollectionEntityDetailed.class));
     }
 
 }

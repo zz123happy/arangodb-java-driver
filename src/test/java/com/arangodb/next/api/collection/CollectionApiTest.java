@@ -63,26 +63,27 @@ class CollectionApiTest {
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(CollectionApiProvider.class)
     void createCollection(TestContext ctx, CollectionApi collectionApi) {
-        String name = "myCollection-" + UUID.randomUUID().toString();
-        CollectionEntity collection = collectionApi.createCollection(
-                CollectionCreateOptions.builder()
-                        .name(name)
-                        .replicationFactor(ReplicationFactor.ofSatellite())
-                        .minReplicationFactor(1)
-                        .keyOptions(KeyOptions.builder()
-                                .allowUserKeys(false)
-                                .type(KeyType.UUID)
-                                .build()
-                        )
-                        .waitForSync(true)
-                        .addShardKeys("a", "b")
-                        .numberOfShards(3)
-                        .isSystem(false)
-                        .type(CollectionType.DOCUMENT)
-                        .indexBuckets(32)
-                        .distributeShardsLike("c")
-                        .shardingStrategy(ShardingStrategy.HASH)
-                        .build(),
+        CollectionCreateOptions options = CollectionCreateOptions.builder()
+                .name("myCollection-" + UUID.randomUUID().toString())
+                .replicationFactor(ReplicationFactor.of(2))
+                .minReplicationFactor(1)
+                .keyOptions(KeyOptions.builder()
+                        .allowUserKeys(false)
+                        .type(KeyType.UUID)
+                        .build()
+                )
+                .waitForSync(true)
+                .addShardKeys("a:")
+                .numberOfShards(3)
+                .isSystem(false)
+                .type(CollectionType.DOCUMENT)
+                .shardingStrategy(ShardingStrategy.HASH)
+                .smartJoinAttribute("d")
+                .cacheEnabled(true)
+                .build();
+
+        CollectionEntityDetailed collection = collectionApi.createCollection(
+                options,
                 CollectionCreateParams.builder()
                         .enforceReplicationFactor(EnforceReplicationFactor.TRUE)
                         .waitForSyncReplication(WaitForSyncReplication.TRUE)
@@ -90,7 +91,34 @@ class CollectionApiTest {
         ).block();
 
         assertThat(collection).isNotNull();
-        assertThat(collection.getName()).isEqualTo(name);
+        assertThat(collection.getName()).isEqualTo(options.getName());
+        assertThat(collection.getKeyOptions()).isEqualTo(options.getKeyOptions());
+        assertThat(collection.getWaitForSync()).isEqualTo(options.getWaitForSync());
+        assertThat(collection.getIsSystem()).isEqualTo(options.getIsSystem());
+        assertThat(collection.getType()).isEqualTo(options.getType());
+        assertThat(collection.getId()).isNotNull();
+        assertThat(collection.getGloballyUniqueId()).isNotNull();
+        assertThat(collection.getCacheEnabled()).isEqualTo(options.getCacheEnabled());
+
+        if (ctx.isCluster()) {
+            assertThat(collection.getReplicationFactor()).isEqualTo(options.getReplicationFactor());
+            assertThat(collection.getMinReplicationFactor()).isEqualTo(options.getMinReplicationFactor());
+            assertThat(collection.getShardKeys()).isEqualTo(options.getShardKeys());
+            assertThat(collection.getNumberOfShards()).isEqualTo(options.getNumberOfShards());
+            assertThat(collection.getShardingStrategy()).isEqualTo(options.getShardingStrategy());
+
+            if (ctx.isEnterprise()) {
+                assertThat(collection.getSmartJoinAttribute()).isNotNull();
+                CollectionCreateOptions anotherOptions = CollectionCreateOptions.builder()
+                        .name("anotherCollection-" + UUID.randomUUID().toString())
+                        .distributeShardsLike(options.getName())
+                        .shardKeys(options.getShardKeys())
+                        .build();
+                CollectionEntityDetailed anotherCollection = collectionApi.createCollection(anotherOptions).block();
+                assertThat(anotherCollection).isNotNull();
+                assertThat(anotherCollection.getDistributeShardsLike()).isEqualTo(collection.getName());
+            }
+        }
     }
 
 }

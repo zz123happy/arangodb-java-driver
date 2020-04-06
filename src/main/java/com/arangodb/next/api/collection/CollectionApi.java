@@ -21,10 +21,7 @@
 package com.arangodb.next.api.collection;
 
 
-import com.arangodb.next.api.collection.entity.CollectionCreateOptions;
-import com.arangodb.next.api.collection.entity.CollectionCreateParams;
-import com.arangodb.next.api.collection.entity.CollectionEntity;
-import com.arangodb.next.api.collection.entity.CollectionsReadParams;
+import com.arangodb.next.api.collection.entity.*;
 import com.arangodb.next.api.reactive.ArangoClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -50,7 +47,7 @@ public interface CollectionApi extends ArangoClient {
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#create-collection">API
      * Documentation</a>
      */
-    default Mono<CollectionEntity> createCollection(CollectionCreateOptions options) {
+    default Mono<CollectionEntityDetailed> createCollection(CollectionCreateOptions options) {
         return createCollection(options, CollectionCreateParams.builder().build());
     }
 
@@ -63,6 +60,6 @@ public interface CollectionApi extends ArangoClient {
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#create-collection">API
      * Documentation</a>
      */
-    Mono<CollectionEntity> createCollection(CollectionCreateOptions options, CollectionCreateParams params);
+    Mono<CollectionEntityDetailed> createCollection(CollectionCreateOptions options, CollectionCreateParams params);
 
 }

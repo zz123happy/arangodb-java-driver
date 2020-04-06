@@ -39,7 +39,7 @@ public enum WaitForSyncReplication {
 
     private final int value;
 
-    WaitForSyncReplication(int waitForSyncReplicationValue) {
+    WaitForSyncReplication(final int waitForSyncReplicationValue) {
         value = waitForSyncReplicationValue;
     }
 
@@ -47,7 +47,7 @@ public enum WaitForSyncReplication {
         return value;
     }
 
-    public static WaitForSyncReplication of(int value) {
+    public static WaitForSyncReplication of(final int value) {
         for (WaitForSyncReplication keyType : WaitForSyncReplication.values()) {
             if (keyType.value == value) {
                 return keyType;

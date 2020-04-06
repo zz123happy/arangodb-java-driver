@@ -39,7 +39,7 @@ public enum EnforceReplicationFactor {
 
     private final int value;
 
-    EnforceReplicationFactor(int waitForSyncReplicationValue) {
+    EnforceReplicationFactor(final int waitForSyncReplicationValue) {
         value = waitForSyncReplicationValue;
     }
 
@@ -47,7 +47,7 @@ public enum EnforceReplicationFactor {
         return value;
     }
 
-    public static EnforceReplicationFactor of(int value) {
+    public static EnforceReplicationFactor of(final int value) {
         for (EnforceReplicationFactor keyType : EnforceReplicationFactor.values()) {
             if (keyType.value == value) {
                 return keyType;

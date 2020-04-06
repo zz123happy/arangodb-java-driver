@@ -46,11 +46,18 @@ public abstract class ArangoSerde {
         }
     }
 
-    public abstract VPackSlice createVPackSlice(byte[] buffer);
+    abstract VPackSlice createVPackSlice(byte[] buffer);
 
     public abstract byte[] serialize(Object value);
 
     public abstract <T> T deserialize(byte[] buffer, Type type);
+
+    public final String toJsonString(final byte[] buffer) {
+        if (buffer.length == 0) {
+            return "";
+        }
+        return createVPackSlice(buffer).toString();
+    }
 
     public final <T> T deserialize(final VPackSlice slice, final Type type) {
         return vPack.deserialize(slice, type);

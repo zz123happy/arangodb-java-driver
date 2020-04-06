@@ -138,7 +138,11 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
 
     @Override
     public Mono<ArangoResponse> execute(final ArangoRequest request) {
-        LOGGER.debug("execute({})", request);
+        LOGGER.atDebug()
+                .addArgument(request)
+                .addArgument(() -> serde.toJsonString(request.getBody()))
+                .log("execute(): {}, {}");
+
         return Mono.subscriberContext()
                 .flatMap(ctx -> ctx
                         .<Conversation>getOrEmpty(ArangoCommunication.CONVERSATION_CTX)
@@ -146,6 +150,10 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
                         .orElseGet(ThreadConversation::getThreadLocalConversation)
                         .map(conversation -> execute(request, conversation))
                         .orElseGet(() -> execute(request, connectionPool)))
+                .doOnNext(response -> LOGGER.atDebug()
+                        .addArgument(response)
+                        .addArgument(() -> serde.toJsonString(response.getBody()))
+                        .log("received response: {}, {}"))
                 .doOnNext(this::checkError);
     }
 
