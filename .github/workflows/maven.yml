@@ -45,8 +45,6 @@ jobs:
           - 11
           - 14
         docker-img:
-          - docker.io/arangodb/arangodb:3.4.9
-          - docker.io/arangodb/enterprise:3.4.9
           - docker.io/arangodb/arangodb:3.5.4
           - docker.io/arangodb/enterprise:3.5.4
           - docker.io/arangodb/arangodb:3.6.2
