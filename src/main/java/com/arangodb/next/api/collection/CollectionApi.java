@@ -32,6 +32,15 @@ import reactor.core.publisher.Mono;
 public interface CollectionApi extends ArangoClient {
 
     /**
+     * @return all collections description
+     * @see <a href="https://www.arangodb.com/docs/stable/http/collection-getting.html#reads-all-collections">API
+     * Documentation</a>
+     */
+    default Flux<CollectionEntity> getCollections() {
+        return getCollections(CollectionsReadParams.builder().excludeSystem(true).build());
+    }
+
+    /**
      * @param options request options
      * @return all collections description
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-getting.html#reads-all-collections">API
@@ -62,4 +71,39 @@ public interface CollectionApi extends ArangoClient {
      */
     Mono<CollectionEntityDetailed> createCollection(CollectionCreateOptions options, CollectionCreateParams params);
 
+    /**
+     * Deletes the collection from the database.
+     *
+     * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#drops-collection">API
+     * Documentation</a>
+     */
+    default Mono<Void> dropCollection(String name) {
+        return dropCollection(name, CollectionDropParams.builder().build());
+    }
+
+    /**
+     * Deletes the collection from the database.
+     *
+     * @param params request params
+     * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#drops-collection">API
+     * Documentation</a>
+     */
+    Mono<Void> dropCollection(String name, CollectionDropParams params);
+
+    /**
+     * @param name collection name
+     * @return information about the collection
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/collection-getting.html#return-information-about-a-collection">API
+     * Documentation</a>
+     */
+    Mono<CollectionEntity> getCollectionInfo(String name);
+
+    /**
+     * @return properties of the collection
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/collection-getting.html#read-properties-of-a-collection">API
+     * Documentation</a>
+     */
+    Mono<CollectionEntityDetailed> getCollectionProperties(String name);
 }

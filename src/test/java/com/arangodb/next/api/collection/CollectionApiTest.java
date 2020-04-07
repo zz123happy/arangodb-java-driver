@@ -38,7 +38,7 @@ class CollectionApiTest {
 
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(CollectionApiProvider.class)
-    void getCollections(TestContext ctx, CollectionApi collectionApi) {
+    void getCollectionsAndGetCollectionInfo(TestContext ctx, CollectionApi collectionApi) {
         CollectionEntity graphs = collectionApi
                 .getCollections(CollectionsReadParams.builder().excludeSystem(false).build())
                 .filter(c -> c.getName().equals("_graphs"))
@@ -58,11 +58,14 @@ class CollectionApiTest {
                 .blockFirst();
 
         assertThat(collection).isNull();
+
+        CollectionEntity graphsInfo = collectionApi.getCollectionInfo("_graphs").block();
+        assertThat(graphsInfo).isEqualTo(graphs);
     }
 
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(CollectionApiProvider.class)
-    void createCollection(TestContext ctx, CollectionApi collectionApi) {
+    void createCollectionAndGetCollectionProperties(TestContext ctx, CollectionApi collectionApi) {
         CollectionCreateOptions options = CollectionCreateOptions.builder()
                 .name("myCollection-" + UUID.randomUUID().toString())
                 .replicationFactor(ReplicationFactor.of(2))
@@ -82,7 +85,7 @@ class CollectionApiTest {
                 .cacheEnabled(true)
                 .build();
 
-        CollectionEntityDetailed collection = collectionApi.createCollection(
+        CollectionEntityDetailed createdCollection = collectionApi.createCollection(
                 options,
                 CollectionCreateParams.builder()
                         .enforceReplicationFactor(EnforceReplicationFactor.TRUE)
@@ -90,35 +93,74 @@ class CollectionApiTest {
                         .build()
         ).block();
 
-        assertThat(collection).isNotNull();
-        assertThat(collection.getName()).isEqualTo(options.getName());
-        assertThat(collection.getKeyOptions()).isEqualTo(options.getKeyOptions());
-        assertThat(collection.getWaitForSync()).isEqualTo(options.getWaitForSync());
-        assertThat(collection.getIsSystem()).isEqualTo(options.getIsSystem());
-        assertThat(collection.getType()).isEqualTo(options.getType());
-        assertThat(collection.getId()).isNotNull();
-        assertThat(collection.getGloballyUniqueId()).isNotNull();
-        assertThat(collection.getCacheEnabled()).isEqualTo(options.getCacheEnabled());
+        assertThat(createdCollection).isNotNull();
+        assertThat(createdCollection.getName()).isEqualTo(options.getName());
+        assertThat(createdCollection.getKeyOptions()).isEqualTo(options.getKeyOptions());
+        assertThat(createdCollection.getWaitForSync()).isEqualTo(options.getWaitForSync());
+        assertThat(createdCollection.getIsSystem()).isEqualTo(options.getIsSystem());
+        assertThat(createdCollection.getType()).isEqualTo(options.getType());
+        assertThat(createdCollection.getId()).isNotNull();
+        assertThat(createdCollection.getGloballyUniqueId()).isNotNull();
+        assertThat(createdCollection.getCacheEnabled()).isEqualTo(options.getCacheEnabled());
 
         if (ctx.isCluster()) {
-            assertThat(collection.getReplicationFactor()).isEqualTo(options.getReplicationFactor());
-            assertThat(collection.getMinReplicationFactor()).isEqualTo(options.getMinReplicationFactor());
-            assertThat(collection.getShardKeys()).isEqualTo(options.getShardKeys());
-            assertThat(collection.getNumberOfShards()).isEqualTo(options.getNumberOfShards());
-            assertThat(collection.getShardingStrategy()).isEqualTo(options.getShardingStrategy());
+            assertThat(createdCollection.getReplicationFactor()).isEqualTo(options.getReplicationFactor());
+            assertThat(createdCollection.getMinReplicationFactor()).isEqualTo(options.getMinReplicationFactor());
+            assertThat(createdCollection.getShardKeys()).isEqualTo(options.getShardKeys());
+            assertThat(createdCollection.getNumberOfShards()).isEqualTo(options.getNumberOfShards());
+            assertThat(createdCollection.getShardingStrategy()).isEqualTo(options.getShardingStrategy());
 
             if (ctx.isEnterprise()) {
-                assertThat(collection.getSmartJoinAttribute()).isNotNull();
-                CollectionCreateOptions anotherOptions = CollectionCreateOptions.builder()
-                        .name("anotherCollection-" + UUID.randomUUID().toString())
+                assertThat(createdCollection.getSmartJoinAttribute()).isNotNull();
+                CollectionCreateOptions shardLikeOptions = CollectionCreateOptions.builder()
+                        .name("shardLikeCollection-" + UUID.randomUUID().toString())
                         .distributeShardsLike(options.getName())
                         .shardKeys(options.getShardKeys())
                         .build();
-                CollectionEntityDetailed anotherCollection = collectionApi.createCollection(anotherOptions).block();
-                assertThat(anotherCollection).isNotNull();
-                assertThat(anotherCollection.getDistributeShardsLike()).isEqualTo(collection.getName());
+                CollectionEntityDetailed shardLikeCollection = collectionApi.createCollection(shardLikeOptions).block();
+                assertThat(shardLikeCollection).isNotNull();
+                assertThat(shardLikeCollection.getDistributeShardsLike()).isEqualTo(createdCollection.getName());
             }
         }
+
+        CollectionEntityDetailed readCollectionProperties = collectionApi.getCollectionProperties(options.getName()).block();
+        assertThat(readCollectionProperties).isEqualTo(createdCollection);
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void dropCollection(TestContext ctx, CollectionApi collectionApi) {
+        String name = "collection-" + UUID.randomUUID().toString();
+        collectionApi.createCollection(
+                CollectionCreateOptions.builder().name(name).build(),
+                CollectionCreateParams.builder().waitForSyncReplication(WaitForSyncReplication.TRUE).build()
+        ).block();
+
+        // FIXME: replace with exists()
+        assertThat(collectionApi.getCollections().collectList().block().stream().anyMatch(it -> name.equals(it.getName()))).isTrue();
+
+        collectionApi.dropCollection(name).block();
+
+        // FIXME: replace with !exists()
+        assertThat(collectionApi.getCollections().collectList().block().stream().anyMatch(it -> name.equals(it.getName()))).isFalse();
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void createAndDropSystemCollection(TestContext ctx, CollectionApi collectionApi) {
+        String name = "collection-" + UUID.randomUUID().toString();
+        collectionApi.createCollection(
+                CollectionCreateOptions.builder().name(name).isSystem(true).build(),
+                CollectionCreateParams.builder().waitForSyncReplication(WaitForSyncReplication.TRUE).build()
+        ).block();
+
+        // FIXME: replace with exists()
+        assertThat(collectionApi.getCollections().collectList().block().stream().anyMatch(it -> name.equals(it.getName()))).isTrue();
+
+        collectionApi.dropCollection(name, CollectionDropParams.builder().isSystem(true).build()).block();
+
+        // FIXME: replace with !exists()
+        assertThat(collectionApi.getCollections().collectList().block().stream().anyMatch(it -> name.equals(it.getName()))).isFalse();
     }
 
 }

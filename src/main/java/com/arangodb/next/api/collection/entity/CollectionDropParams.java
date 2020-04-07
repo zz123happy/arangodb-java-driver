@@ -29,19 +29,14 @@ import java.util.Optional;
  * @author Michele Rastelli
  */
 @Value.Immutable
-public interface CollectionCreateParams {
+public interface CollectionDropParams {
 
-    String WAIT_FOR_SYNC_REPLICATION_PARAM = "waitForSyncReplication";
-    String ENFORCE_REPLICATION_FACTOR_PARAM = "enforceReplicationFactor";
+    String IS_SYSTEM_PARAM = "isSystem";
 
-    static ImmutableCollectionCreateParams.Builder builder() {
-        return ImmutableCollectionCreateParams.builder();
+    static ImmutableCollectionDropParams.Builder builder() {
+        return ImmutableCollectionDropParams.builder();
     }
 
-    // TODO: refactor to Optional<Boolean>
-    Optional<WaitForSyncReplication> getWaitForSyncReplication();
-
-    // TODO: refactor to Optional<Boolean>
-    Optional<EnforceReplicationFactor> getEnforceReplicationFactor();
+    Optional<Boolean> getIsSystem();
 
 }

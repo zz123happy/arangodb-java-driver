@@ -23,6 +23,8 @@ package com.arangodb.next.api.collection.entity;
 
 import org.immutables.value.Value;
 
+import java.util.Optional;
+
 /**
  * @author Mark Vollmary
  * @author Michele Rastelli
@@ -42,5 +44,5 @@ public interface CollectionsReadParams {
     /**
      * @return whether or not system collections should be excluded from the result.
      */
-    boolean getExcludeSystem();
+    Optional<Boolean> getExcludeSystem();
 }

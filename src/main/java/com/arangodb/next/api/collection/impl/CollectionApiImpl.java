@@ -53,15 +53,22 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Flux<CollectionEntity> getCollections(final CollectionsReadParams options) {
-        return getCommunication().execute(
-                ArangoRequest.builder()
-                        .database(dbName)
-                        .requestType(ArangoRequest.RequestType.GET)
-                        .path(PATH_API)
-                        .putQueryParam(CollectionsReadParams.EXCLUDE_SYSTEM_PARAM, String.valueOf(options.getExcludeSystem()))
-                        .build()
-        )
+    public Flux<CollectionEntity> getCollections(final CollectionsReadParams params) {
+        ImmutableArangoRequest.Builder requestBuilder = ArangoRequest.builder()
+                .database(dbName)
+                .requestType(ArangoRequest.RequestType.GET)
+                .path(PATH_API);
+
+        params.getExcludeSystem()
+                .ifPresent(excludeSystem ->
+                        requestBuilder.putQueryParam(
+                                CollectionsReadParams.EXCLUDE_SYSTEM_PARAM,
+                                String.valueOf(excludeSystem)
+                        )
+                );
+
+        return getCommunication()
+                .execute(requestBuilder.build())
                 .map(ArangoResponse::getBody)
                 .map(bytes -> getSerde().<Iterable<CollectionEntity>>deserializeField(RESULT, bytes, ITERABLE_OF_COLLECTION_ENTITY))
                 .flatMapMany(Flux::fromIterable);
@@ -96,6 +103,50 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
 
         return getCommunication()
                 .execute(requestBuilder.build())
+                .map(ArangoResponse::getBody)
+                .map(bytes -> getSerde().deserialize(bytes, CollectionEntityDetailed.class));
+    }
+
+    @Override
+    public Mono<Void> dropCollection(final String name, final CollectionDropParams params) {
+        ImmutableArangoRequest.Builder requestBuilder = ArangoRequest.builder()
+                .database(dbName)
+                .requestType(ArangoRequest.RequestType.DELETE)
+                .path(PATH_API + "/" + name);
+
+        params.getIsSystem()
+                .ifPresent(isSystem ->
+                        requestBuilder.putQueryParam(
+                                CollectionDropParams.IS_SYSTEM_PARAM,
+                                String.valueOf(isSystem)
+                        )
+                );
+
+        return getCommunication()
+                .execute(requestBuilder.build())
+                .then();
+    }
+
+    @Override
+    public Mono<CollectionEntity> getCollectionInfo(final String name) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.GET)
+                        .path(PATH_API + "/" + name)
+                        .build())
+                .map(ArangoResponse::getBody)
+                .map(bytes -> getSerde().deserialize(bytes, CollectionEntity.class));
+    }
+
+    @Override
+    public Mono<CollectionEntityDetailed> getCollectionProperties(final String name) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.GET)
+                        .path(PATH_API + "/" + name + "/properties")
+                        .build())
                 .map(ArangoResponse::getBody)
                 .map(bytes -> getSerde().deserialize(bytes, CollectionEntityDetailed.class));
     }
