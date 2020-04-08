@@ -156,12 +156,6 @@ public interface CollectionEntityDetailed {
 
     /**
      * @return unique identifier of the collection
-     * @deprecated use {@link #getName()}
-     */
-    String getId();
-
-    /**
-     * @return unique identifier of the collection
      */
     String getGloballyUniqueId();
 

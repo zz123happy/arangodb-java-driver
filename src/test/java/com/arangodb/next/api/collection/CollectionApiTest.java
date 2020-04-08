@@ -45,7 +45,6 @@ class CollectionApiTest {
                 .blockFirst();
 
         assertThat(graphs).isNotNull();
-        assertThat(graphs.getId()).isNotNull();
         assertThat(graphs.getName()).isNotNull();
         assertThat(graphs.getIsSystem()).isTrue();
         assertThat(graphs.getStatus()).isNotNull();
@@ -99,7 +98,6 @@ class CollectionApiTest {
         assertThat(createdCollection.getWaitForSync()).isEqualTo(options.getWaitForSync());
         assertThat(createdCollection.getIsSystem()).isEqualTo(options.getIsSystem());
         assertThat(createdCollection.getType()).isEqualTo(options.getType());
-        assertThat(createdCollection.getId()).isNotNull();
         assertThat(createdCollection.getGloballyUniqueId()).isNotNull();
         assertThat(createdCollection.getCacheEnabled()).isEqualTo(options.getCacheEnabled());
 
@@ -123,8 +121,17 @@ class CollectionApiTest {
             }
         }
 
+        // readCollectionProperties
         CollectionEntityDetailed readCollectionProperties = collectionApi.getCollectionProperties(options.getName()).block();
         assertThat(readCollectionProperties).isEqualTo(createdCollection);
+
+        // changeCollectionProperties
+        CollectionEntityDetailed changedCollectionProperties = collectionApi.changeCollectionProperties(
+                options.getName(),
+                CollectionChangePropertiesOptions.builder().waitForSync(!createdCollection.getWaitForSync()).build()
+        ).block();
+        assertThat(changedCollectionProperties).isNotNull();
+        assertThat(changedCollectionProperties.getWaitForSync()).isEqualTo(!createdCollection.getWaitForSync());
     }
 
     @ParameterizedTest(name = "{0}")
@@ -138,7 +145,7 @@ class CollectionApiTest {
 
         // FIXME: replace with exists()
         assertThat(collectionApi.getCollections().collectList().block().stream().anyMatch(it -> name.equals(it.getName()))).isTrue();
-        assertThat(collectionApi.count(name).block()).isEqualTo(0);
+        assertThat(collectionApi.getCollectionCount(name).block()).isEqualTo(0);
 
         collectionApi.dropCollection(name).block();
 

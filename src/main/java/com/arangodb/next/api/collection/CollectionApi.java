@@ -109,12 +109,24 @@ public interface CollectionApi extends ArangoClient {
     Mono<CollectionEntityDetailed> getCollectionProperties(String name);
 
     /**
+     * Changes the properties of the collection
+     *
+     * @param name    collection name
+     * @param options request options
+     * @return information about the collection
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/collection-modifying.html#change-properties-of-a-collection">API
+     * Documentation</a>
+     */
+    Mono<CollectionEntityDetailed> changeCollectionProperties(String name, CollectionChangePropertiesOptions options);
+
+    /**
      * @param name collection name
      * @return the count of documents in the collection
      * @see <a href=
      * "https://www.arangodb.com/docs/stable/http/collection-getting.html#return-number-of-documents-in-a-collection">API
      * Documentation</a>
      */
-    Mono<Long> count(String name);
+    Mono<Long> getCollectionCount(String name);
 
 }

@@ -152,7 +152,20 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<Long> count(final String name) {
+    public Mono<CollectionEntityDetailed> changeCollectionProperties(final String name, final CollectionChangePropertiesOptions options) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.PUT)
+                        .path(PATH_API + "/" + name + "/properties")
+                        .body(getSerde().serialize(options))
+                        .build())
+                .map(ArangoResponse::getBody)
+                .map(bytes -> getSerde().deserialize(bytes, CollectionEntityDetailed.class));
+    }
+
+    @Override
+    public Mono<Long> getCollectionCount(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)

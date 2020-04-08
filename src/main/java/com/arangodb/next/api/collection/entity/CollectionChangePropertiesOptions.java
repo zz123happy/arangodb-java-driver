@@ -20,48 +20,37 @@
 
 package com.arangodb.next.api.collection.entity;
 
-import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
+
 import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
 
 /**
- * @author Michele Rastelli
- * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html">API Documentation</a>
+ * @author Mark Vollmary
+ * @see <a href="https://www.arangodb.com/docs/stable/http/collection-modifying.html#change-properties-of-a-collection">API
+ * Documentation</a>
  */
 @Value.Immutable
-public interface CollectionEntity {
+public interface CollectionChangePropertiesOptions {
 
-    @VPackPOJOBuilder
-    static ImmutableCollectionEntity.Builder builder() {
-        return ImmutableCollectionEntity.builder();
+    static ImmutableCollectionChangePropertiesOptions.Builder builder() {
+        return ImmutableCollectionChangePropertiesOptions.builder();
     }
 
     /**
-     * @see CollectionCreateOptions#getName()
+     * @return whether the data is synchronized to disk before returning from a document create, update, replace or
+     * removal operation.
+     * Default: <code>false</code>
      */
-    String getName();
+    @Nullable
+    Boolean getWaitForSync();
 
     /**
-     * @see CollectionCreateOptions#getIsSystem()
-     */
-    Boolean getIsSystem();
-
-    /**
-     * @see CollectionCreateOptions#getType()
-     */
-    CollectionType getType();
-
-    /**
-     * @return collection status
+     * @return The maximal size of a journal or datafile in bytes. The value must be at least 1048576 (1 MiB).
+     * Default: value from configuration parameter
      * @apiNote MMFiles storage engine only
      */
     @Nullable
-    CollectionStatus getStatus();
-
-    /**
-     * @return unique identifier of the collection
-     */
-    String getGloballyUniqueId();
+    Long getJournalSize();
 
 }
