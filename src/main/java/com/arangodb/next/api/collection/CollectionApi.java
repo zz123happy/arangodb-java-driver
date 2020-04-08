@@ -140,4 +140,14 @@ public interface CollectionApi extends ArangoClient {
      */
     Mono<Long> getCollectionCount(String name);
 
+    /**
+     * Removes all documents from the collection, but leaves the indexes intact
+     *
+     * @param name collection name
+     * @return information about the collection
+     * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#truncate-collection">API
+     * Documentation</a>
+     */
+    Mono<CollectionEntity> truncate(String name);
+
 }

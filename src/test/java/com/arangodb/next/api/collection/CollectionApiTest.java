@@ -179,7 +179,7 @@ class CollectionApiTest {
 
         String name = "collection-" + UUID.randomUUID().toString();
 
-        CollectionEntityDetailed created = collectionApi.createCollection(CollectionCreateOptions.builder().name(name).isSystem(true).build()).block();
+        CollectionEntityDetailed created = collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
         assertThat(created).isNotNull();
         assertThat(created.getName()).isEqualTo(name);
 
@@ -187,6 +187,20 @@ class CollectionApiTest {
         CollectionEntity renamed = collectionApi.rename(name, CollectionRenameOptions.builder().name(newName).build()).block();
         assertThat(renamed).isNotNull();
         assertThat(renamed.getName()).isEqualTo(newName);
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void truncateCollection(TestContext ctx, CollectionApi collectionApi) {
+
+        // FIXME: add some docs to the collection
+
+        String name = "collection-" + UUID.randomUUID().toString();
+        collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
+        CollectionEntity truncated = collectionApi.truncate(name).block();
+        assertThat(truncated).isNotNull();
+        Long count = collectionApi.getCollectionCount(name).block();
+        assertThat(count).isEqualTo(0L);
     }
 
 
