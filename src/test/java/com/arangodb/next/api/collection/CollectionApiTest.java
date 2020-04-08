@@ -22,8 +22,10 @@ package com.arangodb.next.api.collection;
 
 import com.arangodb.next.api.collection.entity.*;
 import com.arangodb.next.api.entity.ReplicationFactor;
+import com.arangodb.next.api.reactive.ConversationManager;
 import com.arangodb.next.api.utils.CollectionApiProvider;
 import com.arangodb.next.api.utils.TestContext;
+import com.arangodb.next.communication.Conversation;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -144,14 +146,14 @@ class CollectionApiTest {
                 CollectionCreateParams.builder().waitForSyncReplication(WaitForSyncReplication.TRUE).build()
         ).block();
 
-        // FIXME: replace with exists()
-        assertThat(collectionApi.getCollections().collectList().block().stream().anyMatch(it -> name.equals(it.getName()))).isTrue();
+        assertThat(collectionApi.existsCollection(name).block()).isTrue();
         assertThat(collectionApi.getCollectionCount(name).block()).isEqualTo(0);
 
-        collectionApi.dropCollection(name).block();
+        ConversationManager cm = collectionApi.getConversationManager();
+        Conversation conversation = cm.createConversation(Conversation.Level.REQUIRED);
+        cm.useConversation(conversation, collectionApi.dropCollection(name)).block();
 
-        // FIXME: replace with !exists()
-        assertThat(collectionApi.getCollections().collectList().block().stream().anyMatch(it -> name.equals(it.getName()))).isFalse();
+        assertThat(cm.useConversation(conversation, collectionApi.existsCollection(name)).block()).isFalse();
     }
 
     @ParameterizedTest(name = "{0}")
@@ -163,13 +165,13 @@ class CollectionApiTest {
                 CollectionCreateParams.builder().waitForSyncReplication(WaitForSyncReplication.TRUE).build()
         ).block();
 
-        // FIXME: replace with exists()
-        assertThat(collectionApi.getCollections().collectList().block().stream().anyMatch(it -> name.equals(it.getName()))).isTrue();
+        assertThat(collectionApi.existsCollection(name).block()).isTrue();
 
-        collectionApi.dropCollection(name, CollectionDropParams.builder().isSystem(true).build()).block();
+        ConversationManager cm = collectionApi.getConversationManager();
+        Conversation conversation = cm.createConversation(Conversation.Level.REQUIRED);
+        cm.useConversation(conversation, collectionApi.dropCollection(name, CollectionDropParams.builder().isSystem(true).build())).block();
 
-        // FIXME: replace with !exists()
-        assertThat(collectionApi.getCollections().collectList().block().stream().anyMatch(it -> name.equals(it.getName()))).isFalse();
+        assertThat(cm.useConversation(conversation, collectionApi.existsCollection(name)).block()).isFalse();
     }
 
     @ParameterizedTest(name = "{0}")

@@ -101,6 +101,12 @@ public interface CollectionApi extends ArangoClient {
 
     /**
      * @param name collection name
+     * @return <code>true</code> if the collection exists, otherwise <code>false</code>
+     */
+    Mono<Boolean> existsCollection(String name);
+
+    /**
+     * @param name collection name
      * @return properties of the collection
      * @see <a href=
      * "https://www.arangodb.com/docs/stable/http/collection-getting.html#read-properties-of-a-collection">API
