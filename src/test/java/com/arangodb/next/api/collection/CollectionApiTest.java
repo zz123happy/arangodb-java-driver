@@ -129,7 +129,7 @@ class CollectionApiTest {
 
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(CollectionApiProvider.class)
-    void dropCollection(TestContext ctx, CollectionApi collectionApi) {
+    void countAndDropCollection(TestContext ctx, CollectionApi collectionApi) {
         String name = "collection-" + UUID.randomUUID().toString();
         collectionApi.createCollection(
                 CollectionCreateOptions.builder().name(name).build(),
@@ -138,6 +138,7 @@ class CollectionApiTest {
 
         // FIXME: replace with exists()
         assertThat(collectionApi.getCollections().collectList().block().stream().anyMatch(it -> name.equals(it.getName()))).isTrue();
+        assertThat(collectionApi.count(name).block()).isEqualTo(0);
 
         collectionApi.dropCollection(name).block();
 

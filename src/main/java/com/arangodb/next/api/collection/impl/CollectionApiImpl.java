@@ -151,4 +151,16 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
                 .map(bytes -> getSerde().deserialize(bytes, CollectionEntityDetailed.class));
     }
 
+    @Override
+    public Mono<Long> count(final String name) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.GET)
+                        .path(PATH_API + "/" + name + "/count")
+                        .build())
+                .map(ArangoResponse::getBody)
+                .map(bytes -> getSerde().deserializeField("count", bytes, Long.class));
+    }
+
 }

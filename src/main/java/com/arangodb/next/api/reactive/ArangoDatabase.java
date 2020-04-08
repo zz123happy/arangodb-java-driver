@@ -60,6 +60,7 @@ public interface ArangoDatabase extends ArangoClient {
      * @see <a href="https://www.arangodb.com/docs/stable/http/miscellaneous-functions.html#return-server-version">API
      * Documentation</a>
      */
+    // FIXME: move inside admin API
     Mono<Version> getVersion();
 
     /**
@@ -70,12 +71,14 @@ public interface ArangoDatabase extends ArangoClient {
      * "https://www.arangodb.com/docs/stable/http/miscellaneous-functions.html#return-server-database-engine-type">API
      * Documentation</a>
      */
+    // FIXME: move inside admin API
     Mono<Engine> getEngine();
 
     /**
      * @return the server role
      * @see <a href="https://www.arangodb.com/docs/stable/http/cluster-server-role.html">API Documentation</a>
      */
+    // FIXME: move inside admin API
     Mono<ServerRole> getRole();
 
     /**
@@ -85,5 +88,6 @@ public interface ArangoDatabase extends ArangoClient {
      * "https://www.arangodb.com/docs/stable/http/user-management.html#list-the-accessible-databases-for-a-user">API
      * Documentation</a>
      */
+    // FIXME: move inside user API
     Flux<String> getAccessibleDatabasesFor(String user);
 }
