@@ -30,6 +30,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * @author Michele Rastelli
@@ -170,5 +171,23 @@ class CollectionApiTest {
         // FIXME: replace with !exists()
         assertThat(collectionApi.getCollections().collectList().block().stream().anyMatch(it -> name.equals(it.getName()))).isFalse();
     }
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void renameCollection(TestContext ctx, CollectionApi collectionApi) {
+        assumeTrue(!ctx.isCluster());
+
+        String name = "collection-" + UUID.randomUUID().toString();
+
+        CollectionEntityDetailed created = collectionApi.createCollection(CollectionCreateOptions.builder().name(name).isSystem(true).build()).block();
+        assertThat(created).isNotNull();
+        assertThat(created.getName()).isEqualTo(name);
+
+        String newName = "collection-" + UUID.randomUUID().toString();
+        CollectionEntity renamed = collectionApi.rename(name, CollectionRenameOptions.builder().name(newName).build()).block();
+        assertThat(renamed).isNotNull();
+        assertThat(renamed.getName()).isEqualTo(newName);
+    }
+
 
 }

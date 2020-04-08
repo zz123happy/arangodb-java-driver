@@ -165,6 +165,20 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
+    public Mono<CollectionEntity> rename(final String name, final CollectionRenameOptions options) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.PUT)
+                        .path(PATH_API + "/" + name + "/rename")
+                        .body(getSerde().serialize(options))
+                        .build())
+                .map(ArangoResponse::getBody)
+                .map(bytes -> getSerde().deserialize(bytes, CollectionEntity.class));
+    }
+
+
+    @Override
     public Mono<Long> getCollectionCount(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()

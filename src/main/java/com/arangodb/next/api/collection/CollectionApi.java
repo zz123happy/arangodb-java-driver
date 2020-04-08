@@ -121,6 +121,17 @@ public interface CollectionApi extends ArangoClient {
     Mono<CollectionEntityDetailed> changeCollectionProperties(String name, CollectionChangePropertiesOptions options);
 
     /**
+     * Renames the collection
+     *
+     * @param name    collection name
+     * @param options request options
+     * @return information about the collection
+     * @see <a href="https://www.arangodb.com/docs/stable/http/collection-modifying.html#rename-collection">API
+     * Documentation</a>
+     */
+    Mono<CollectionEntity> rename(String name, CollectionRenameOptions options);
+
+    /**
      * @param name collection name
      * @return the count of documents in the collection
      * @see <a href=
