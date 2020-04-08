@@ -68,7 +68,7 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
             return super.execute(
                     ArangoRequest.builder()
                             .from(request)
-                            .putHeaderParam("X-Arango-Allow-Dirty-Read", "true")
+                            .putHeaderParams("X-Arango-Allow-Dirty-Read", "true")
                             .build()
             );
         } else {

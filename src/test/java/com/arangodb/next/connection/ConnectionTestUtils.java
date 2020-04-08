@@ -29,6 +29,7 @@ import com.arangodb.velocypack.ValueType;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +44,7 @@ public class ConnectionTestUtils {
             .database("_system")
             .path("/_api/version")
             .requestType(ArangoRequest.RequestType.GET)
-            .putQueryParam("details", "true")
+            .putQueryParams("details", Optional.of("true"))
             .build();
 
     /**

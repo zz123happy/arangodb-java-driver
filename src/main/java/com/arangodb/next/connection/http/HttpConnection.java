@@ -79,18 +79,20 @@ public final class HttpConnection extends ArangoConnection {
         sb.append("/_db/").append(request.getDatabase());
         sb.append(request.getPath());
 
-        if (!request.getQueryParam().isEmpty()) {
+        final String paramString = request.getQueryParams().entrySet().stream()
+                .filter(it -> it.getValue().isPresent())
+                .map(it -> it.getKey() + "=" + it.getValue().get())
+                .collect(Collectors.joining("&"));
+
+        if (!paramString.isEmpty()) {
             sb.append("?");
-            final String paramString = request.getQueryParam().entrySet().stream()
-                    .map(it -> it.getKey() + "=" + it.getValue())
-                    .collect(Collectors.joining("&"));
             sb.append(paramString);
         }
         return sb.toString();
     }
 
     private static void addHeaders(final ArangoRequest request, final HttpHeaders headers) {
-        for (final Entry<String, String> header : request.getHeaderParam().entrySet()) {
+        for (final Entry<String, String> header : request.getHeaderParams().entrySet()) {
             headers.add(header.getKey(), header.getValue());
         }
     }

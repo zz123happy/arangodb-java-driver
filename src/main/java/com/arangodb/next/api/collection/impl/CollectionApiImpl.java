@@ -27,7 +27,6 @@ import com.arangodb.next.api.reactive.ArangoDatabase;
 import com.arangodb.next.api.reactive.impl.ArangoClientImpl;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
-import com.arangodb.next.connection.ImmutableArangoRequest;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -54,21 +53,18 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
 
     @Override
     public Flux<CollectionEntity> getCollections(final CollectionsReadParams params) {
-        ImmutableArangoRequest.Builder requestBuilder = ArangoRequest.builder()
-                .database(dbName)
-                .requestType(ArangoRequest.RequestType.GET)
-                .path(PATH_API);
-
-        params.getExcludeSystem()
-                .ifPresent(excludeSystem ->
-                        requestBuilder.putQueryParam(
-                                CollectionsReadParams.EXCLUDE_SYSTEM_PARAM,
-                                String.valueOf(excludeSystem)
-                        )
-                );
-
         return getCommunication()
-                .execute(requestBuilder.build())
+                .execute(
+                        ArangoRequest.builder()
+                                .database(dbName)
+                                .requestType(ArangoRequest.RequestType.GET)
+                                .path(PATH_API)
+                                .putQueryParams(
+                                        CollectionsReadParams.EXCLUDE_SYSTEM_PARAM,
+                                        params.getExcludeSystem().map(String::valueOf)
+                                )
+                                .build()
+                )
                 .map(ArangoResponse::getBody)
                 .map(bytes -> getSerde().<Iterable<CollectionEntity>>deserializeField(RESULT, bytes, ITERABLE_OF_COLLECTION_ENTITY))
                 .flatMapMany(Flux::fromIterable);
@@ -79,51 +75,41 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
             final CollectionCreateOptions options,
             final CollectionCreateParams params
     ) {
-        ImmutableArangoRequest.Builder requestBuilder = ArangoRequest.builder()
-                .database(dbName)
-                .requestType(ArangoRequest.RequestType.POST)
-                .body(getSerde().serialize(options))
-                .path(PATH_API);
-
-        params.getEnforceReplicationFactor()
-                .ifPresent(enforceReplicationFactor ->
-                        requestBuilder.putQueryParam(
-                                CollectionCreateParams.ENFORCE_REPLICATION_FACTOR_PARAM,
-                                String.valueOf(enforceReplicationFactor.getValue())
-                        )
-                );
-
-        params.getWaitForSyncReplication()
-                .ifPresent(waitForSyncReplication ->
-                        requestBuilder.putQueryParam(
-                                CollectionCreateParams.WAIT_FOR_SYNC_REPLICATION_PARAM,
-                                String.valueOf(waitForSyncReplication.getValue())
-                        )
-                );
-
         return getCommunication()
-                .execute(requestBuilder.build())
+                .execute(
+                        ArangoRequest.builder()
+                                .database(dbName)
+                                .requestType(ArangoRequest.RequestType.POST)
+                                .body(getSerde().serialize(options))
+                                .path(PATH_API)
+                                .putQueryParams(
+                                        CollectionCreateParams.ENFORCE_REPLICATION_FACTOR_PARAM,
+                                        params.getEnforceReplicationFactor().map(String::valueOf)
+                                )
+                                .putQueryParams(
+                                        CollectionCreateParams.WAIT_FOR_SYNC_REPLICATION_PARAM,
+                                        params.getWaitForSyncReplication().map(String::valueOf)
+                                )
+                                .build()
+                )
                 .map(ArangoResponse::getBody)
                 .map(bytes -> getSerde().deserialize(bytes, CollectionEntityDetailed.class));
     }
 
     @Override
     public Mono<Void> dropCollection(final String name, final CollectionDropParams params) {
-        ImmutableArangoRequest.Builder requestBuilder = ArangoRequest.builder()
-                .database(dbName)
-                .requestType(ArangoRequest.RequestType.DELETE)
-                .path(PATH_API + "/" + name);
-
-        params.getIsSystem()
-                .ifPresent(isSystem ->
-                        requestBuilder.putQueryParam(
-                                CollectionDropParams.IS_SYSTEM_PARAM,
-                                String.valueOf(isSystem)
-                        )
-                );
-
         return getCommunication()
-                .execute(requestBuilder.build())
+                .execute(
+                        ArangoRequest.builder()
+                                .database(dbName)
+                                .requestType(ArangoRequest.RequestType.DELETE)
+                                .path(PATH_API + "/" + name)
+                                .putQueryParams(
+                                        CollectionDropParams.IS_SYSTEM_PARAM,
+                                        params.getIsSystem().map(String::valueOf)
+                                )
+                                .build()
+                )
                 .then();
     }
 

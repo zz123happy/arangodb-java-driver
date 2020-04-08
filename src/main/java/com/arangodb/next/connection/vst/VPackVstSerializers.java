@@ -43,10 +43,12 @@ final class VPackVstSerializers {
         builder.add(request.getRequestType().getType());
         builder.add(request.getPath());
         builder.add(ValueType.OBJECT);
-        request.getQueryParam().forEach(builder::add);
+        request.getQueryParams().entrySet().stream()
+                .filter(it -> it.getValue().isPresent())
+                .forEach(it -> builder.add(it.getKey(), it.getValue().get()));
         builder.close();
         builder.add(ValueType.OBJECT);
-        request.getHeaderParam().forEach(builder::add);
+        request.getHeaderParams().forEach(builder::add);
         builder.close();
         builder.close();
         return builder.slice();

@@ -30,6 +30,8 @@ import org.junit.jupiter.api.Test;
 import reactor.netty.DisposableServer;
 import utils.EchoHttpServer;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -50,8 +52,8 @@ class HttpConnectionEchoTest {
     private final ArangoRequest request = ArangoRequest.builder()
             .database("database")
             .path("/path")
-            .putHeaderParam("headerParamKey", "headerParamValue")
-            .putQueryParam("queryParamKey", "queryParamValue")
+            .putHeaderParams("headerParamKey", "headerParamValue")
+            .putQueryParams("queryParamKey", Optional.of("queryParamValue"))
             .requestType(ArangoRequest.RequestType.POST)
             .body(body.getBytes())
             .build();

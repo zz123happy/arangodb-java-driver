@@ -23,6 +23,7 @@ package com.arangodb.next.connection;
 import org.immutables.value.Value;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Mark Vollmary
@@ -51,9 +52,9 @@ public interface ArangoRequest {
 
     String getPath();
 
-    Map<String, String> getQueryParam();
+    Map<String, Optional<String>> getQueryParams();
 
-    Map<String, String> getHeaderParam();
+    Map<String, String> getHeaderParams();
 
     @Value.Default
     @Value.Auxiliary

@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -75,8 +76,8 @@ class InternalSerdeTest {
                 .database("database")
                 .requestType(ArangoRequest.RequestType.GET)
                 .path("path")
-                .putHeaderParam("headerParamKey", "headerParamValue")
-                .putQueryParam("queryParamKey", "queryParamValue")
+                .putHeaderParams("headerParamKey", "headerParamValue")
+                .putQueryParams("queryParamKey", Optional.of("queryParamValue"))
                 .build();
 
         final VPackBuilder builder = new VPackBuilder();
@@ -87,10 +88,10 @@ class InternalSerdeTest {
         builder.add(request.getRequestType().getType());
         builder.add(request.getPath());
         builder.add(ValueType.OBJECT);
-        request.getQueryParam().forEach(builder::add);
+        request.getQueryParams().forEach((k, v) -> builder.add(k, v.get()));
         builder.close();
         builder.add(ValueType.OBJECT);
-        request.getHeaderParam().forEach(builder::add);
+        request.getHeaderParams().forEach(builder::add);
         builder.close();
         builder.close();
 
@@ -103,12 +104,12 @@ class InternalSerdeTest {
         assertThat(iterator.next().getAsString()).isEqualTo(request.getPath());
 
         Map.Entry<String, VPackSlice> firstQueryParamSliceEntry = iterator.next().objectIterator().next();
-        Map.Entry<String, String> firstQueryParamEntry = request.getQueryParam().entrySet().iterator().next();
+        Map.Entry<String, Optional<String>> firstQueryParamEntry = request.getQueryParams().entrySet().iterator().next();
         assertThat(firstQueryParamSliceEntry.getKey()).isEqualTo(firstQueryParamEntry.getKey());
-        assertThat(firstQueryParamSliceEntry.getValue().getAsString()).isEqualTo(firstQueryParamEntry.getValue());
+        assertThat(firstQueryParamSliceEntry.getValue().getAsString()).isEqualTo(firstQueryParamEntry.getValue().get());
 
         Map.Entry<String, VPackSlice> firstHeaderParamSliceEntry = iterator.next().objectIterator().next();
-        Map.Entry<String, String> firstHeaderParamEntry = request.getHeaderParam().entrySet().iterator().next();
+        Map.Entry<String, String> firstHeaderParamEntry = request.getHeaderParams().entrySet().iterator().next();
         assertThat(firstHeaderParamSliceEntry.getKey()).isEqualTo(firstHeaderParamEntry.getKey());
         assertThat(firstHeaderParamSliceEntry.getValue().getAsString()).isEqualTo(firstHeaderParamEntry.getValue());
     }
