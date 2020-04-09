@@ -18,23 +18,25 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.exceptions;
+package com.arangodb.next.exceptions.server;
 
-import com.arangodb.next.entity.model.ErrorEntity;
+
 import org.immutables.value.Value;
 
 /**
+ * ArangoServerException having:
+ * <code>
+ * {
+ *      "code":404,
+ *      "error":true,
+ *      "errorMessage":"collection or view not found",
+ *      "errorNum":1203
+ * }
+ * </code>
+ *
  * @author Michele Rastelli
  */
-@Value.Immutable
-public abstract class ArangoServerException extends ArangoException {
-
-    public static ImmutableArangoServerException.Builder builder() {
-        return ImmutableArangoServerException.builder();
-    }
-
-    public abstract ErrorEntity getEntity();
-
-    public abstract int getResponseCode();
-
+@Value.Immutable(builder = false)
+public abstract class CollectionOrViewNotFoundException extends ArangoServerException {
+    static final int ERROR_NUM = 1203;
 }

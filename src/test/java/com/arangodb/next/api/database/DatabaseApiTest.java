@@ -28,7 +28,7 @@ import com.arangodb.next.api.database.entity.Sharding;
 import com.arangodb.next.api.utils.DatabaseApiProvider;
 import com.arangodb.next.api.utils.TestContext;
 import com.arangodb.next.communication.Conversation;
-import com.arangodb.next.exceptions.ArangoServerException;
+import com.arangodb.next.exceptions.server.ArangoServerException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 

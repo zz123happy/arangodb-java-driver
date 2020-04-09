@@ -26,7 +26,7 @@ import com.arangodb.next.entity.model.ClusterEndpointsEntry;
 import com.arangodb.next.entity.model.ImmutableClusterEndpoints;
 import com.arangodb.next.entity.model.ImmutableErrorEntity;
 import com.arangodb.next.entity.serde.ArangoSerde;
-import com.arangodb.next.exceptions.ArangoServerException;
+import com.arangodb.next.exceptions.server.ArangoServerException;
 import com.arangodb.next.exceptions.NoHostsAvailableException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;

@@ -25,7 +25,7 @@ import com.arangodb.next.connection.*;
 import com.arangodb.next.entity.model.ErrorEntity;
 import com.arangodb.next.entity.model.ImmutableErrorEntity;
 import com.arangodb.next.entity.serde.ArangoSerde;
-import com.arangodb.next.exceptions.ArangoServerException;
+import com.arangodb.next.exceptions.server.ArangoServerException;
 import com.arangodb.next.exceptions.LeaderNotAvailableException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;

@@ -27,7 +27,7 @@ import com.arangodb.next.api.reactive.ArangoDatabase;
 import com.arangodb.next.api.reactive.impl.ArangoClientImpl;
 import com.arangodb.next.connection.ArangoRequest;
 import com.arangodb.next.connection.ArangoResponse;
-import com.arangodb.next.exceptions.ArangoServerException;
+import com.arangodb.next.exceptions.server.CollectionOrViewNotFoundException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -128,12 +128,9 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
 
     @Override
     public Mono<Boolean> existsCollection(final String name) {
-        // FIXME: map errors to subclasses of ArangoServerException
-        // FIXME: check     errorNum == ERROR_ARANGO_DATA_SOURCE_NOT_FOUND = 1203;
         return getCollectionInfo(name)
                 .thenReturn(true)
-                .onErrorReturn(e -> e instanceof ArangoServerException
-                        && ((ArangoServerException) e).getResponseCode() == 404, false);
+                .onErrorReturn(CollectionOrViewNotFoundException.class, false);
     }
 
     @Override

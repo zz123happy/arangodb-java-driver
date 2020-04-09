@@ -25,8 +25,8 @@ import com.arangodb.next.connection.*;
 import com.arangodb.next.entity.model.ClusterEndpoints;
 import com.arangodb.next.entity.model.ErrorEntity;
 import com.arangodb.next.entity.serde.ArangoSerde;
-import com.arangodb.next.exceptions.ArangoServerException;
 import com.arangodb.next.exceptions.HostNotAvailableException;
+import com.arangodb.next.exceptions.server.ArangoServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
@@ -124,10 +124,10 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
     }
 
     private ArangoServerException buildError(final ArangoResponse response) {
-        return ArangoServerException.builder()
-                .responseCode(response.getResponseCode())
-                .entity(serde.deserialize(response.getBody(), ErrorEntity.class))
-                .build();
+        return ArangoServerException.of(
+                response.getResponseCode(),
+                serde.deserialize(response.getBody(), ErrorEntity.class)
+        );
     }
 
     private void checkError(final ArangoResponse response) {
