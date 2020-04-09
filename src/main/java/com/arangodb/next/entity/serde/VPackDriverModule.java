@@ -51,9 +51,7 @@ public final class VPackDriverModule implements VPackModule, VPackParserModule {
 
         //region CollectionApi
         context.registerSerializer(ShardingStrategy.class, VPackSerializers.SHARDING_STRATEGY);
-        context.registerSerializer(WaitForSyncReplication.class, VPackSerializers.WAIT_FOR_SYNC_REPLICATION);
         context.registerSerializer(KeyType.class, VPackSerializers.KEY_TYPE);
-        context.registerSerializer(EnforceReplicationFactor.class, VPackSerializers.ENFORCE_REPLICATION_FACTOR);
         context.registerSerializer(CollectionType.class, VPackSerializers.COLLECTION_TYPE);
         //endregion
 
@@ -73,9 +71,7 @@ public final class VPackDriverModule implements VPackModule, VPackParserModule {
         context.registerDeserializer(CollectionType.class, VPackDeserializers.COLLECTION_TYPE);
         context.registerDeserializer(CollectionStatus.class, VPackDeserializers.COLLECTION_STATUS);
         context.registerDeserializer(ShardingStrategy.class, VPackDeserializers.SHARDING_STRATEGY);
-        context.registerDeserializer(WaitForSyncReplication.class, VPackDeserializers.WAIT_FOR_SYNC_REPLICATION);
         context.registerDeserializer(KeyType.class, VPackDeserializers.KEY_TYPE);
-        context.registerDeserializer(EnforceReplicationFactor.class, VPackDeserializers.ENFORCE_REPLICATION_FACTOR);
         //endregion
     }
 

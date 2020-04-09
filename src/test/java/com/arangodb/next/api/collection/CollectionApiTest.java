@@ -90,8 +90,8 @@ class CollectionApiTest {
         CollectionEntityDetailed createdCollection = collectionApi.createCollection(
                 options,
                 CollectionCreateParams.builder()
-                        .enforceReplicationFactor(EnforceReplicationFactor.TRUE)
-                        .waitForSyncReplication(WaitForSyncReplication.TRUE)
+                        .enforceReplicationFactor(true)
+                        .waitForSyncReplication(true)
                         .build()
         ).block();
 
@@ -143,7 +143,7 @@ class CollectionApiTest {
         String name = "collection-" + UUID.randomUUID().toString();
         collectionApi.createCollection(
                 CollectionCreateOptions.builder().name(name).build(),
-                CollectionCreateParams.builder().waitForSyncReplication(WaitForSyncReplication.TRUE).build()
+                CollectionCreateParams.builder().waitForSyncReplication(true).build()
         ).block();
 
         assertThat(collectionApi.existsCollection(name).block()).isTrue();
@@ -162,7 +162,7 @@ class CollectionApiTest {
         String name = "collection-" + UUID.randomUUID().toString();
         collectionApi.createCollection(
                 CollectionCreateOptions.builder().name(name).isSystem(true).build(),
-                CollectionCreateParams.builder().waitForSyncReplication(WaitForSyncReplication.TRUE).build()
+                CollectionCreateParams.builder().waitForSyncReplication(true).build()
         ).block();
 
         assertThat(collectionApi.existsCollection(name).block()).isTrue();

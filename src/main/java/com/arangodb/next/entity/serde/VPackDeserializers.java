@@ -64,14 +64,8 @@ public final class VPackDeserializers {
     public static final VPackDeserializer<ShardingStrategy> SHARDING_STRATEGY = (parent, vpack, context) ->
             ShardingStrategy.of(vpack.getAsString());
 
-    public static final VPackDeserializer<WaitForSyncReplication> WAIT_FOR_SYNC_REPLICATION = (parent, vpack, context) ->
-            WaitForSyncReplication.of(vpack.getAsInt());
-
     public static final VPackDeserializer<KeyType> KEY_TYPE = (parent, vpack, context) ->
             KeyType.of(vpack.getAsString());
-
-    public static final VPackDeserializer<EnforceReplicationFactor> ENFORCE_REPLICATION_FACTOR = (parent, vpack, context) ->
-            EnforceReplicationFactor.of(vpack.getAsInt());
     //endregion
 
 }

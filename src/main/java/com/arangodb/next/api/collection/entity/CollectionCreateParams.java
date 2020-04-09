@@ -31,17 +31,12 @@ import java.util.Optional;
 @Value.Immutable
 public interface CollectionCreateParams {
 
-    String WAIT_FOR_SYNC_REPLICATION_PARAM = "waitForSyncReplication";
-    String ENFORCE_REPLICATION_FACTOR_PARAM = "enforceReplicationFactor";
-
     static ImmutableCollectionCreateParams.Builder builder() {
         return ImmutableCollectionCreateParams.builder();
     }
 
-    // TODO: refactor to Optional<Boolean>
-    Optional<WaitForSyncReplication> getWaitForSyncReplication();
+    Optional<Boolean> getWaitForSyncReplication();
 
-    // TODO: refactor to Optional<Boolean>
-    Optional<EnforceReplicationFactor> getEnforceReplicationFactor();
+    Optional<Boolean> getEnforceReplicationFactor();
 
 }

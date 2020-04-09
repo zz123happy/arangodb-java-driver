@@ -84,12 +84,12 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
                                 .body(getSerde().serialize(options))
                                 .path(PATH_API)
                                 .putQueryParams(
-                                        CollectionCreateParams.ENFORCE_REPLICATION_FACTOR_PARAM,
-                                        params.getEnforceReplicationFactor().map(String::valueOf)
+                                        "enforceReplicationFactor",
+                                        params.getEnforceReplicationFactor().map(it -> it ? "1" : "0")
                                 )
                                 .putQueryParams(
-                                        CollectionCreateParams.WAIT_FOR_SYNC_REPLICATION_PARAM,
-                                        params.getWaitForSyncReplication().map(String::valueOf)
+                                        "waitForSyncReplication",
+                                        params.getWaitForSyncReplication().map(it -> it ? "1" : "0")
                                 )
                                 .build()
                 )
