@@ -37,12 +37,9 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import java.io.IOException;
-import java.util.AbstractMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Michele Rastelli
@@ -51,33 +48,19 @@ public abstract class ContainerDeployment implements Startable {
 
     private static final Logger log = LoggerFactory.getLogger(ContainerDeployment.class);
     private static final ContainerDeployment REUSABLE_SINGLE_SERVER_DEPLOYMENT = new SingleServerDeployment();
-    private static final ConcurrentMap<AbstractMap.SimpleImmutableEntry<Integer, Integer>, ContainerDeployment> REUSABLE_CLUSTER = new ConcurrentHashMap<>();
-    private static final ConcurrentMap<Integer, ContainerDeployment> REUSABLE_ACTIVE_FAILOVER = new ConcurrentHashMap<>();
+    private static final ContainerDeployment REUSABLE_CLUSTER_DEPLOYMENT = new ClusterDeployment(2, 2);
+    private static final ContainerDeployment REUSABLE_ACTIVE_FAILOVER_DEPLOYMENT = new ActiveFailoverDeployment(3);
 
-    public synchronized static ContainerDeployment ofReusableSingleServer() {
+    public static ContainerDeployment ofReusableSingleServer() {
         return REUSABLE_SINGLE_SERVER_DEPLOYMENT;
     }
 
-    public synchronized static ContainerDeployment ofReusableCluster(int dbServers, int coordinators) {
-        AbstractMap.SimpleImmutableEntry<Integer, Integer> key = new AbstractMap.SimpleImmutableEntry<>(dbServers, coordinators);
-        if (REUSABLE_CLUSTER.containsKey(key)) {
-            return REUSABLE_CLUSTER.get(key);
-        }
-        ClusterDeployment deployment = new ClusterDeployment(dbServers, coordinators);
-        REUSABLE_CLUSTER.put(key, deployment);
-        return deployment;
+    public static ContainerDeployment ofReusableCluster() {
+        return REUSABLE_CLUSTER_DEPLOYMENT;
     }
 
-    public synchronized static ContainerDeployment ofReusableActiveFailover(int servers) {
-        if (servers < 3) {
-            throw new IllegalArgumentException("servers must be >= 3");
-        }
-        if (REUSABLE_ACTIVE_FAILOVER.containsKey(servers)) {
-            return REUSABLE_ACTIVE_FAILOVER.get(servers);
-        }
-        ActiveFailoverDeployment deployment = new ActiveFailoverDeployment(servers);
-        REUSABLE_ACTIVE_FAILOVER.put(servers, deployment);
-        return deployment;
+    public static ContainerDeployment ofReusableActiveFailover() {
+        return REUSABLE_ACTIVE_FAILOVER_DEPLOYMENT;
     }
 
     public static ContainerDeployment ofSingleServerWithSsl() {

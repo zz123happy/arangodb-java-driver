@@ -20,7 +20,7 @@ public class SingleServerNoAuthDeployment extends ContainerDeployment {
 
     private final GenericContainer<?> container;
 
-    public SingleServerNoAuthDeployment() {
+    SingleServerNoAuthDeployment() {
         container = new GenericContainer<>(getImage())
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
                 .withEnv("ARANGO_NO_AUTH", "1")
@@ -29,7 +29,7 @@ public class SingleServerNoAuthDeployment extends ContainerDeployment {
                 .waitingFor(Wait.forLogMessage(".*ready for business.*", 1));
     }
 
-    public SingleServerNoAuthDeployment(String vstMaxSize) {
+    SingleServerNoAuthDeployment(String vstMaxSize) {
         this();
         container.withCommand("arangod --log.level communication=trace --log.level requests=trace --log.foreground-tty --vst.maxsize " + vstMaxSize);
     }

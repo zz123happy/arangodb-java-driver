@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class SingleServerSslDeployment extends ContainerDeployment {
+class SingleServerSslDeployment extends ContainerDeployment {
 
     private static final Logger log = LoggerFactory.getLogger(SingleServerSslDeployment.class);
     private static final String command = "arangod --ssl.keyfile /server.pem --server.endpoint ssl://0.0.0.0:8529 ";
@@ -23,7 +23,7 @@ public class SingleServerSslDeployment extends ContainerDeployment {
     private final GenericContainer<?> container;
     private String sslProtocol;
 
-    public SingleServerSslDeployment() {
+    SingleServerSslDeployment() {
         String SSL_CERT_PATH = Paths.get("docker/server.pem").toAbsolutePath().toString();
         container = new GenericContainer<>(getImage())
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
@@ -38,7 +38,7 @@ public class SingleServerSslDeployment extends ContainerDeployment {
     /**
      * @param sslProtocol value from https://www.arangodb.com/docs/stable/programs-arangod-ssl.html#ssl-protocol
      */
-    public SingleServerSslDeployment(String sslProtocol) {
+    SingleServerSslDeployment(String sslProtocol) {
         this();
         this.sslProtocol = sslProtocol;
         container.withCommand(command + "--ssl.protocol " + sslProtocol);

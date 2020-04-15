@@ -25,7 +25,7 @@ public class ProxiedSingleServerDeployment extends ProxiedContainerDeployment {
     private volatile Network network;
     private ToxiproxyContainer.ContainerProxy proxy;
 
-    public ProxiedSingleServerDeployment() {
+    ProxiedSingleServerDeployment() {
         toxiproxy = new ToxiproxyContainer();
         container = new GenericContainer<>(getImage())
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())

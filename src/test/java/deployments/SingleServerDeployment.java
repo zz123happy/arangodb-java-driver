@@ -19,7 +19,7 @@ public class SingleServerDeployment extends ContainerDeployment {
 
     private final GenericContainer<?> container;
 
-    public SingleServerDeployment() {
+    SingleServerDeployment() {
         container = new GenericContainer<>(getImage())
                 .withReuse(isReuse())
                 .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())

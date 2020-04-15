@@ -46,8 +46,8 @@ public enum TestContextProvider implements Supplier<List<TestContext>> {
 
         List<ContainerDeployment> deployments = Arrays.asList(
                 ContainerDeployment.ofReusableSingleServer(),
-                ContainerDeployment.ofReusableActiveFailover(3),
-                ContainerDeployment.ofReusableCluster(2, 2)
+                ContainerDeployment.ofReusableActiveFailover(),
+                ContainerDeployment.ofReusableCluster()
         );
 
         List<Thread> startingTasks = deployments.stream()
