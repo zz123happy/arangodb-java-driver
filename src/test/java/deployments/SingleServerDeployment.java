@@ -46,7 +46,7 @@ public class SingleServerDeployment extends ContainerDeployment {
 
     @Override
     CompletableFuture<ContainerDeployment> asyncStop() {
-        if (isReuse()) {
+        if (isReuse() && isStarted()) {
             return CompletableFuture.completedFuture(this);
         }
 

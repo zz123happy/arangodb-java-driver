@@ -89,10 +89,9 @@ public abstract class ContainerDeployment implements Startable {
     @Override
     public synchronized void start() {
         if (started) return;
-        started = true;
-
         try {
             asyncStart().join();
+            started = true;
         } catch (CompletionException e) {
             e.printStackTrace();
             if (e.getCause() instanceof ContainerLaunchException) {
@@ -176,4 +175,7 @@ public abstract class ContainerDeployment implements Startable {
         return reuse;
     }
 
+    protected boolean isStarted() {
+        return started;
+    }
 }
