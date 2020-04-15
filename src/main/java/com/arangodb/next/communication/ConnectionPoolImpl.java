@@ -204,7 +204,13 @@ class ConnectionPoolImpl implements ConnectionPool {
                         .retry(config.getRetries())
                         .doOnNext(it -> LOGGER.debug("created connection to host: {}", host))
                         .checkpoint("[ConnectionPoolImpl.createHostConnections()]: cannot connect to host: " + host)
-                        .doOnError(e -> LOGGER.warn("Error creating connection:", e))
+                        .doOnError(e -> {
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.error("Error creating connection:", e);
+                            } else {
+                                LOGGER.error("Error creating connection: {}: {}", e.getClass().getName(), e.getMessage());
+                            }
+                        })
                         .onErrorResume(e -> Mono.empty()) // skips the failing connections
                 )
                 .collect(Collectors.toList());

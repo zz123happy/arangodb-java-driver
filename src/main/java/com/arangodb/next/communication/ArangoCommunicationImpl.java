@@ -241,10 +241,22 @@ final class ArangoCommunicationImpl implements ArangoCommunication {
         return execute(ENDPOINTS_REQUEST, contactConnectionPool)
                 .map(this::parseAcquireHostListResponse)
                 .checkpoint("[ArangoCommunicationImpl.updateHostList()]")
-                .doOnError(e -> LOGGER.warn("Error acquiring hostList, retrying...", e))
+                .doOnError(e -> {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.error("Error acquiring hostList, retrying...", e);
+                    } else {
+                        LOGGER.error("Error acquiring hostList, retrying... {}: {}", e.getClass().getName(), e.getMessage());
+                    }
+                })
                 .retry(config.getRetries())
                 .doOnNext(acquiredHostList -> LOGGER.debug("Acquired hosts: {}", acquiredHostList))
-                .doOnError(e -> LOGGER.warn("Error acquiring hostList:", e))
+                .doOnError(e -> {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.error("Error acquiring hostList:", e);
+                    } else {
+                        LOGGER.error("Error acquiring hostList: {}: {}", e.getClass().getName(), e.getMessage());
+                    }
+                })
                 .flatMap(this::updateConnections)
                 .timeout(config.getTimeout())
                 .doFinally(s -> updatingHostListSemaphore.release());

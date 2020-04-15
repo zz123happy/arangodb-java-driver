@@ -187,6 +187,7 @@ class CommunicationActiveFailoverTest {
         Throwable thrown = catchThrowable(() -> ArangoCommunication.create(config
                 .protocol(protocol)
                 .hosts(Collections.singleton(HostDescription.of("wrongHost", 8529)))
+                .retries(0)
                 .build()).block());
         assertThat(Exceptions.unwrap(thrown)).isInstanceOf(NoHostsAvailableException.class);
     }

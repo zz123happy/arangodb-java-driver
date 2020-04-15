@@ -112,10 +112,23 @@ final class ActiveFailoverConnectionPool extends ConnectionPoolImpl {
                             }
                         })
                 )
-                .onErrorContinue((throwable, o) -> LOGGER.warn("findLeader(): error contacting {}", o, throwable))
+                .onErrorContinue((throwable, o) -> {
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.error("findLeader(): error contacting {}", o, throwable);
+                            } else {
+                                LOGGER.error("findLeader(): error contacting {}", o);
+                            }
+                        }
+                )
                 .switchIfEmpty(Mono.error(LeaderNotAvailableException.builder().build()))
                 .checkpoint("[ActiveFailoverConnectionPool.findLeader()]: no leader found")
-                .doOnError(err -> LOGGER.warn("findLeader(): ", err))
+                .doOnError(err -> {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.error("findLeader(): ", err);
+                    } else {
+                        LOGGER.error("findLeader(): {}: {}", err.getClass().getName(), err.getMessage());
+                    }
+                })
                 .doFinally(type -> findLeaderSemaphore.release())
                 .then();
     }
