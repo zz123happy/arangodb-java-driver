@@ -30,8 +30,8 @@
         <javadoc.opts/>
 
         <!-- sonarcloud-->
-        <sonar.projectKey>ArangoDB-Community_mirror-arangodb-java-driver</sonar.projectKey>
-        <sonar.organization>arangodb-community</sonar.organization>
+        <sonar.projectKey>arangodb_arangodb-java-driver</sonar.projectKey>
+        <sonar.organization>arangodb-1</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <!--suppress UnresolvedMavenProperty -->
         <sonar.login>${env.SONAR_LOGIN}</sonar.login>
