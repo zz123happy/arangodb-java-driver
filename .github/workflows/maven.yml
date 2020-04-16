@@ -82,7 +82,7 @@ jobs:
       - name: Info
         run: mvn -version
       - name: Analyze
-        run: mvn -e --no-transfer-progress clean verify sonar:sonar -Dgpg.skip -Dtest.docker.image="docker.io/arangodb/enterprise:3.6.2" -Darango.license.key="$ARANGO_LICENSE_KEY"
+        run: mvn -e --no-transfer-progress clean verify sonar:sonar -Dgpg.skip -Dtest.docker.image="docker.io/arangodb/enterprise:3.6.2" -Darango.license.key="$ARANGO_LICENSE_KEY" -Dtestcontainers.reuse.enable=true
         env:
           ARANGO_LICENSE_KEY: ${{secrets.ARANGO_LICENSE_KEY}}
           SONAR_LOGIN: ${{secrets.SONAR_LOGIN}}
