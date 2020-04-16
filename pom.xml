@@ -52,8 +52,8 @@
     <distributionManagement>
         <snapshotRepository>
             <id>github</id>
-            <name>GitHub ArangoDB-Community/mirror-arangodb-java-driver Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/ArangoDB-Community/mirror-arangodb-java-driver</url>
+            <name>GitHub arangodb/arangodb-java-driver Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/arangodb/arangodb-java-driver</url>
         </snapshotRepository>
         <repository>
             <id>ossrh</id>
