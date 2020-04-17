@@ -262,4 +262,13 @@ class CollectionApiTest {
         assertThat(responsibleShard).isNotNull();
     }
 
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void getCollectionRevision(TestContext ctx, CollectionApi collectionApi) {
+        String name = "collection-" + UUID.randomUUID().toString();
+        collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
+        String revision = collectionApi.getCollectionRevision(name).block();
+        assertThat(revision).isNotNull();
+    }
+
 }

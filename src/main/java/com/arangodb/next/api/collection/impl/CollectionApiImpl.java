@@ -273,4 +273,16 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
                 .map(bytes -> getSerde().deserializeField("shardId", bytes, String.class));
     }
 
+    @Override
+    public Mono<String> getCollectionRevision(String name) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.GET)
+                        .path(PATH_API + "/" + name + "/revision")
+                        .build())
+                .map(ArangoResponse::getBody)
+                .map(bytes -> getSerde().deserializeField("revision", bytes, String.class));
+    }
+
 }

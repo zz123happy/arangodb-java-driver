@@ -234,4 +234,14 @@ public interface CollectionApi extends ArangoClient {
      */
     Mono<String> getResponsibleShard(String name, Object document);
 
+    /**
+     * @param name collection name
+     * @return The revision id is a server-generated string that clients can use to check whether data in a collection
+     * has changed since the last revision check.
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/collection-getting.html#return-collection-revision-id">API
+     * Documentation</a>
+     */
+    Mono<String> getCollectionRevision(String name);
+
 }
