@@ -186,7 +186,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<CollectionChecksumEntity> getCollectionChecksum(String name, CollectionChecksumParams params) {
+    public Mono<CollectionChecksumEntity> getCollectionChecksum(final String name, final CollectionChecksumParams params) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -206,7 +206,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<Object> getCollectionStatistics(String name) {
+    public Mono<Object> getCollectionStatistics(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -218,7 +218,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<Void> loadCollection(String name) {
+    public Mono<Void> loadCollection(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -229,7 +229,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<Void> loadCollectionIndexes(String name) {
+    public Mono<Void> loadCollectionIndexes(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -240,7 +240,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<Void> recalculateCollectionCount(String name) {
+    public Mono<Void> recalculateCollectionCount(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -262,7 +262,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<String> getResponsibleShard(String name, Object document) {
+    public Mono<String> getResponsibleShard(final String name, final Object document) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -275,7 +275,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<String> getCollectionRevision(String name) {
+    public Mono<String> getCollectionRevision(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -287,7 +287,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Flux<String> getCollectionShards(String name) {
+    public Flux<String> getCollectionShards(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -300,7 +300,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<Void> unloadCollection(String name) {
+    public Mono<Void> unloadCollection(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
