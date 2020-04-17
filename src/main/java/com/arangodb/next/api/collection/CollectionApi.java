@@ -36,7 +36,7 @@ public interface CollectionApi extends ArangoClient {
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-getting.html#reads-all-collections">API
      * Documentation</a>
      */
-    default Flux<CollectionEntity> getCollections() {
+    default Flux<SimpleCollectionEntity> getCollections() {
         return getCollections(CollectionsReadParams.builder().excludeSystem(true).build());
     }
 
@@ -46,7 +46,7 @@ public interface CollectionApi extends ArangoClient {
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-getting.html#reads-all-collections">API
      * Documentation</a>
      */
-    Flux<CollectionEntity> getCollections(CollectionsReadParams options);
+    Flux<SimpleCollectionEntity> getCollections(CollectionsReadParams options);
 
     /**
      * Creates a collection for the given collection name and returns related information from the server.
@@ -56,7 +56,7 @@ public interface CollectionApi extends ArangoClient {
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#create-collection">API
      * Documentation</a>
      */
-    default Mono<CollectionEntityDetailed> createCollection(CollectionCreateOptions options) {
+    default Mono<DetailedCollectionEntity> createCollection(CollectionCreateOptions options) {
         return createCollection(options, CollectionCreateParams.builder().build());
     }
 
@@ -69,7 +69,7 @@ public interface CollectionApi extends ArangoClient {
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#create-collection">API
      * Documentation</a>
      */
-    Mono<CollectionEntityDetailed> createCollection(CollectionCreateOptions options, CollectionCreateParams params);
+    Mono<DetailedCollectionEntity> createCollection(CollectionCreateOptions options, CollectionCreateParams params);
 
     /**
      * Deletes the collection from the database.
@@ -97,7 +97,7 @@ public interface CollectionApi extends ArangoClient {
      * "https://www.arangodb.com/docs/stable/http/collection-getting.html#return-information-about-a-collection">API
      * Documentation</a>
      */
-    Mono<CollectionEntity> getCollectionInfo(String name);
+    Mono<SimpleCollectionEntity> getCollectionInfo(String name);
 
     /**
      * @param name collection name
@@ -112,7 +112,7 @@ public interface CollectionApi extends ArangoClient {
      * "https://www.arangodb.com/docs/stable/http/collection-getting.html#read-properties-of-a-collection">API
      * Documentation</a>
      */
-    Mono<CollectionEntityDetailed> getCollectionProperties(String name);
+    Mono<DetailedCollectionEntity> getCollectionProperties(String name);
 
     /**
      * Changes the properties of the collection
@@ -124,7 +124,7 @@ public interface CollectionApi extends ArangoClient {
      * "https://www.arangodb.com/docs/stable/http/collection-modifying.html#change-properties-of-a-collection">API
      * Documentation</a>
      */
-    Mono<CollectionEntityDetailed> changeCollectionProperties(String name, CollectionChangePropertiesOptions options);
+    Mono<DetailedCollectionEntity> changeCollectionProperties(String name, CollectionChangePropertiesOptions options);
 
     /**
      * Renames the collection
@@ -135,7 +135,7 @@ public interface CollectionApi extends ArangoClient {
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-modifying.html#rename-collection">API
      * Documentation</a>
      */
-    Mono<CollectionEntity> rename(String name, CollectionRenameOptions options);
+    Mono<SimpleCollectionEntity> rename(String name, CollectionRenameOptions options);
 
     /**
      * @param name collection name
@@ -154,6 +154,6 @@ public interface CollectionApi extends ArangoClient {
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#truncate-collection">API
      * Documentation</a>
      */
-    Mono<CollectionEntity> truncate(String name);
+    Mono<SimpleCollectionEntity> truncate(String name);
 
 }

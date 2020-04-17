@@ -32,17 +32,12 @@ import java.util.List;
  * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html">API Documentation</a>
  */
 @Value.Immutable
-public interface CollectionEntityDetailed {
+public interface DetailedCollectionEntity extends CollectionEntity {
 
     @VPackPOJOBuilder
-    static ImmutableCollectionEntityDetailed.Builder builder() {
-        return ImmutableCollectionEntityDetailed.builder();
+    static ImmutableDetailedCollectionEntity.Builder builder() {
+        return ImmutableDetailedCollectionEntity.builder();
     }
-
-    /**
-     * @see CollectionCreateOptions#getName()
-     */
-    String getName();
 
     /**
      * @apiNote MMFiles storage engine only
@@ -104,16 +99,6 @@ public interface CollectionEntityDetailed {
     Integer getNumberOfShards();
 
     /**
-     * @see CollectionCreateOptions#getIsSystem()
-     */
-    Boolean getIsSystem();
-
-    /**
-     * @see CollectionCreateOptions#getType()
-     */
-    CollectionType getType();
-
-    /**
      * @apiNote MMFiles storage engine only
      * @see CollectionCreateOptions#getIndexBuckets()
      */
@@ -146,17 +131,5 @@ public interface CollectionEntityDetailed {
      */
     @Nullable
     Boolean getCacheEnabled();
-
-    /**
-     * @return collection status
-     * @apiNote MMFiles storage engine only
-     */
-    @Nullable
-    CollectionStatus getStatus();
-
-    /**
-     * @return unique identifier of the collection
-     */
-    String getGloballyUniqueId();
 
 }

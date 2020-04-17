@@ -42,7 +42,7 @@ class CollectionApiTest {
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(CollectionApiProvider.class)
     void getCollectionsAndGetCollectionInfo(TestContext ctx, CollectionApi collectionApi) {
-        CollectionEntity graphs = collectionApi
+        SimpleCollectionEntity graphs = collectionApi
                 .getCollections(CollectionsReadParams.builder().excludeSystem(false).build())
                 .filter(c -> c.getName().equals("_graphs"))
                 .blockFirst();
@@ -54,14 +54,14 @@ class CollectionApiTest {
         assertThat(graphs.getType()).isEqualTo(CollectionType.DOCUMENT);
         assertThat(graphs.getGloballyUniqueId()).isNotNull();
 
-        CollectionEntity collection = collectionApi
+        SimpleCollectionEntity collection = collectionApi
                 .getCollections(CollectionsReadParams.builder().excludeSystem(true).build())
                 .filter(c -> c.getName().equals("_graphs"))
                 .blockFirst();
 
         assertThat(collection).isNull();
 
-        CollectionEntity graphsInfo = collectionApi.getCollectionInfo("_graphs").block();
+        SimpleCollectionEntity graphsInfo = collectionApi.getCollectionInfo("_graphs").block();
         assertThat(graphsInfo).isEqualTo(graphs);
     }
 
@@ -87,7 +87,7 @@ class CollectionApiTest {
                 .cacheEnabled(true)
                 .build();
 
-        CollectionEntityDetailed createdCollection = collectionApi.createCollection(
+        DetailedCollectionEntity createdCollection = collectionApi.createCollection(
                 options,
                 CollectionCreateParams.builder()
                         .enforceReplicationFactor(true)
@@ -118,18 +118,18 @@ class CollectionApiTest {
                         .distributeShardsLike(options.getName())
                         .shardKeys(options.getShardKeys())
                         .build();
-                CollectionEntityDetailed shardLikeCollection = collectionApi.createCollection(shardLikeOptions).block();
+                DetailedCollectionEntity shardLikeCollection = collectionApi.createCollection(shardLikeOptions).block();
                 assertThat(shardLikeCollection).isNotNull();
                 assertThat(shardLikeCollection.getDistributeShardsLike()).isEqualTo(createdCollection.getName());
             }
         }
 
         // readCollectionProperties
-        CollectionEntityDetailed readCollectionProperties = collectionApi.getCollectionProperties(options.getName()).block();
+        DetailedCollectionEntity readCollectionProperties = collectionApi.getCollectionProperties(options.getName()).block();
         assertThat(readCollectionProperties).isEqualTo(createdCollection);
 
         // changeCollectionProperties
-        CollectionEntityDetailed changedCollectionProperties = collectionApi.changeCollectionProperties(
+        DetailedCollectionEntity changedCollectionProperties = collectionApi.changeCollectionProperties(
                 options.getName(),
                 CollectionChangePropertiesOptions.builder().waitForSync(!createdCollection.getWaitForSync()).build()
         ).block();
@@ -181,12 +181,12 @@ class CollectionApiTest {
 
         String name = "collection-" + UUID.randomUUID().toString();
 
-        CollectionEntityDetailed created = collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
+        DetailedCollectionEntity created = collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
         assertThat(created).isNotNull();
         assertThat(created.getName()).isEqualTo(name);
 
         String newName = "collection-" + UUID.randomUUID().toString();
-        CollectionEntity renamed = collectionApi.rename(name, CollectionRenameOptions.builder().name(newName).build()).block();
+        SimpleCollectionEntity renamed = collectionApi.rename(name, CollectionRenameOptions.builder().name(newName).build()).block();
         assertThat(renamed).isNotNull();
         assertThat(renamed.getName()).isEqualTo(newName);
     }
@@ -199,7 +199,7 @@ class CollectionApiTest {
 
         String name = "collection-" + UUID.randomUUID().toString();
         collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
-        CollectionEntity truncated = collectionApi.truncate(name).block();
+        SimpleCollectionEntity truncated = collectionApi.truncate(name).block();
         assertThat(truncated).isNotNull();
         Long count = collectionApi.getCollectionCount(name).block();
         assertThat(count).isEqualTo(0L);

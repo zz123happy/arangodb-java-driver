@@ -21,18 +21,27 @@
 package com.arangodb.next.api.collection.entity;
 
 
-import org.immutables.value.Value;
+import javax.annotation.Nullable;
 
 /**
- * @author Mark Vollmary
- * @see <a href="https://www.arangodb.com/docs/stable/http/collection-modifying.html#change-properties-of-a-collection">API
- * Documentation</a>
+ * @author Michele Rastelli
  */
-@Value.Immutable
-public interface CollectionChangePropertiesOptions extends CollectionPropertiesOptions {
+public interface CollectionPropertiesOptions {
 
-    static ImmutableCollectionChangePropertiesOptions.Builder builder() {
-        return ImmutableCollectionChangePropertiesOptions.builder();
-    }
+    /**
+     * @return whether the data is synchronized to disk before returning from a document create, update, replace or
+     * removal operation.
+     * Default: <code>false</code>
+     */
+    @Nullable
+    Boolean getWaitForSync();
+
+    /**
+     * @return The maximal size of a journal or datafile in bytes. The value must be at least 1048576 (1 MiB).
+     * Default: value from configuration parameter
+     * @apiNote MMFiles storage engine only
+     */
+    @Nullable
+    Long getJournalSize();
 
 }

@@ -42,7 +42,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
 
     private static final String PATH_API = "/_api/collection";
 
-    public static final Type ITERABLE_OF_COLLECTION_ENTITY = new com.arangodb.velocypack.Type<Iterable<CollectionEntity>>() {
+    public static final Type ITERABLE_OF_COLLECTION_ENTITY = new com.arangodb.velocypack.Type<Iterable<SimpleCollectionEntity>>() {
     }.getType();
 
     private final String dbName;
@@ -53,7 +53,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Flux<CollectionEntity> getCollections(final CollectionsReadParams params) {
+    public Flux<SimpleCollectionEntity> getCollections(final CollectionsReadParams params) {
         return getCommunication()
                 .execute(
                         ArangoRequest.builder()
@@ -67,12 +67,12 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
                                 .build()
                 )
                 .map(ArangoResponse::getBody)
-                .map(bytes -> getSerde().<Iterable<CollectionEntity>>deserializeField(RESULT, bytes, ITERABLE_OF_COLLECTION_ENTITY))
+                .map(bytes -> getSerde().<Iterable<SimpleCollectionEntity>>deserializeField(RESULT, bytes, ITERABLE_OF_COLLECTION_ENTITY))
                 .flatMapMany(Flux::fromIterable);
     }
 
     @Override
-    public Mono<CollectionEntityDetailed> createCollection(
+    public Mono<DetailedCollectionEntity> createCollection(
             final CollectionCreateOptions options,
             final CollectionCreateParams params
     ) {
@@ -94,7 +94,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
                                 .build()
                 )
                 .map(ArangoResponse::getBody)
-                .map(bytes -> getSerde().deserialize(bytes, CollectionEntityDetailed.class));
+                .map(bytes -> getSerde().deserialize(bytes, DetailedCollectionEntity.class));
     }
 
     @Override
@@ -115,7 +115,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<CollectionEntity> getCollectionInfo(final String name) {
+    public Mono<SimpleCollectionEntity> getCollectionInfo(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -123,7 +123,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
                         .path(PATH_API + "/" + name)
                         .build())
                 .map(ArangoResponse::getBody)
-                .map(bytes -> getSerde().deserialize(bytes, CollectionEntity.class));
+                .map(bytes -> getSerde().deserialize(bytes, SimpleCollectionEntity.class));
     }
 
     @Override
@@ -134,7 +134,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<CollectionEntityDetailed> getCollectionProperties(final String name) {
+    public Mono<DetailedCollectionEntity> getCollectionProperties(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -142,11 +142,11 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
                         .path(PATH_API + "/" + name + "/properties")
                         .build())
                 .map(ArangoResponse::getBody)
-                .map(bytes -> getSerde().deserialize(bytes, CollectionEntityDetailed.class));
+                .map(bytes -> getSerde().deserialize(bytes, DetailedCollectionEntity.class));
     }
 
     @Override
-    public Mono<CollectionEntityDetailed> changeCollectionProperties(final String name, final CollectionChangePropertiesOptions options) {
+    public Mono<DetailedCollectionEntity> changeCollectionProperties(final String name, final CollectionChangePropertiesOptions options) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -155,11 +155,11 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
                         .body(getSerde().serialize(options))
                         .build())
                 .map(ArangoResponse::getBody)
-                .map(bytes -> getSerde().deserialize(bytes, CollectionEntityDetailed.class));
+                .map(bytes -> getSerde().deserialize(bytes, DetailedCollectionEntity.class));
     }
 
     @Override
-    public Mono<CollectionEntity> rename(final String name, final CollectionRenameOptions options) {
+    public Mono<SimpleCollectionEntity> rename(final String name, final CollectionRenameOptions options) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -168,7 +168,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
                         .body(getSerde().serialize(options))
                         .build())
                 .map(ArangoResponse::getBody)
-                .map(bytes -> getSerde().deserialize(bytes, CollectionEntity.class));
+                .map(bytes -> getSerde().deserialize(bytes, SimpleCollectionEntity.class));
     }
 
 
@@ -185,7 +185,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<CollectionEntity> truncate(final String name) {
+    public Mono<SimpleCollectionEntity> truncate(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -193,7 +193,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
                         .path(PATH_API + "/" + name + "/truncate")
                         .build())
                 .map(ArangoResponse::getBody)
-                .map(bytes -> getSerde().deserialize(bytes, CollectionEntity.class));
+                .map(bytes -> getSerde().deserialize(bytes, SimpleCollectionEntity.class));
     }
 
 }

@@ -20,22 +20,12 @@
 
 package com.arangodb.next.api.collection.entity;
 
-import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
-import org.immutables.value.Value;
-
 import javax.annotation.Nullable;
 
 /**
  * @author Michele Rastelli
- * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html">API Documentation</a>
  */
-@Value.Immutable
 public interface CollectionEntity {
-
-    @VPackPOJOBuilder
-    static ImmutableCollectionEntity.Builder builder() {
-        return ImmutableCollectionEntity.builder();
-    }
 
     /**
      * @see CollectionCreateOptions#getName()
@@ -45,7 +35,7 @@ public interface CollectionEntity {
     /**
      * @see CollectionCreateOptions#getIsSystem()
      */
-    Boolean getIsSystem();
+    boolean getIsSystem();
 
     /**
      * @see CollectionCreateOptions#getType()

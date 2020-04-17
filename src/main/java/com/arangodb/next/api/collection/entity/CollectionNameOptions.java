@@ -20,19 +20,14 @@
 
 package com.arangodb.next.api.collection.entity;
 
-
-import org.immutables.value.Value;
-
 /**
- * @author Mark Vollmary
- * @see <a href="https://www.arangodb.com/docs/stable/http/collection-modifying.html#change-properties-of-a-collection">API
- * Documentation</a>
+ * @author Michele Rastelli
  */
-@Value.Immutable
-public interface CollectionChangePropertiesOptions extends CollectionPropertiesOptions {
+public interface CollectionNameOptions {
 
-    static ImmutableCollectionChangePropertiesOptions.Builder builder() {
-        return ImmutableCollectionChangePropertiesOptions.builder();
-    }
+    /**
+     * @return The name of the collection
+     */
+    String getName();
 
 }

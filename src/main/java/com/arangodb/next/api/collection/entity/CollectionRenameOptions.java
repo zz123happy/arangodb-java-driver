@@ -29,15 +29,10 @@ import org.immutables.value.Value;
  * Documentation</a>
  */
 @Value.Immutable
-public interface CollectionRenameOptions {
+public interface CollectionRenameOptions extends CollectionNameOptions {
 
     static ImmutableCollectionRenameOptions.Builder builder() {
         return ImmutableCollectionRenameOptions.builder();
     }
-
-    /**
-     * @return The name of the collection
-     */
-    String getName();
 
 }

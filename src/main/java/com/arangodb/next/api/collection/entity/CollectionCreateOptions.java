@@ -33,24 +33,11 @@ import java.util.List;
  * Documentation</a>
  */
 @Value.Immutable
-public interface CollectionCreateOptions {
+public interface CollectionCreateOptions extends CollectionPropertiesOptions, CollectionNameOptions {
 
     static ImmutableCollectionCreateOptions.Builder builder() {
         return ImmutableCollectionCreateOptions.builder();
     }
-
-    /**
-     * @return The name of the collection
-     */
-    String getName();
-
-    /**
-     * @return The maximal size of a journal or datafile in bytes. The value must be at least 1048576 (1 MiB).
-     * Default: value from configuration parameter
-     * @apiNote MMFiles storage engine only
-     */
-    @Nullable
-    Long getJournalSize();
 
     /**
      * @return this attribute determines how many copies of each shard are kept on different DBServers.
@@ -80,14 +67,6 @@ public interface CollectionCreateOptions {
      */
     @Nullable
     KeyOptions getKeyOptions();
-
-    /**
-     * @return whether the data is synchronized to disk before returning from a document create, update, replace or
-     * removal operation.
-     * Default: <code>false</code>
-     */
-    @Nullable
-    Boolean getWaitForSync();
 
     /**
      * @return whether the collection will be compacted

@@ -20,19 +20,19 @@
 
 package com.arangodb.next.api.collection.entity;
 
-
+import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
 import org.immutables.value.Value;
 
 /**
- * @author Mark Vollmary
- * @see <a href="https://www.arangodb.com/docs/stable/http/collection-modifying.html#change-properties-of-a-collection">API
- * Documentation</a>
+ * @author Michele Rastelli
+ * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html">API Documentation</a>
  */
 @Value.Immutable
-public interface CollectionChangePropertiesOptions extends CollectionPropertiesOptions {
+public interface SimpleCollectionEntity extends CollectionEntity {
 
-    static ImmutableCollectionChangePropertiesOptions.Builder builder() {
-        return ImmutableCollectionChangePropertiesOptions.builder();
+    @VPackPOJOBuilder
+    static ImmutableSimpleCollectionEntity.Builder builder() {
+        return ImmutableSimpleCollectionEntity.builder();
     }
 
 }
