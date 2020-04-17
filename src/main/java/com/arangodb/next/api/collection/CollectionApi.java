@@ -244,4 +244,13 @@ public interface CollectionApi extends ArangoClient {
      */
     Mono<String> getCollectionRevision(String name);
 
+    /**
+     * @param name collection name
+     * @return shard IDs of the collection
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/collection-getting.html#return-the-shard-ids-of-a-collection">API
+     * Documentation</a>
+     */
+    Flux<String> getCollectionShards(String name);
+
 }

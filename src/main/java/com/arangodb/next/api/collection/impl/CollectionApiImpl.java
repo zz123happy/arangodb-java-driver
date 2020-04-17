@@ -34,6 +34,7 @@ import reactor.core.publisher.Mono;
 import java.lang.reflect.Type;
 
 import static com.arangodb.next.api.util.ArangoResponseField.RESULT;
+import static com.arangodb.next.entity.serde.DeserializationTypes.ITERABLE_OF_STRING;
 
 /**
  * @author Michele Rastelli
@@ -42,7 +43,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
 
     private static final String PATH_API = "/_api/collection";
 
-    public static final Type ITERABLE_OF_COLLECTION_ENTITY = new com.arangodb.velocypack.Type<Iterable<SimpleCollectionEntity>>() {
+    private static final Type ITERABLE_OF_COLLECTION_ENTITY = new com.arangodb.velocypack.Type<Iterable<SimpleCollectionEntity>>() {
     }.getType();
 
     private final String dbName;
@@ -283,6 +284,19 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
                         .build())
                 .map(ArangoResponse::getBody)
                 .map(bytes -> getSerde().deserializeField("revision", bytes, String.class));
+    }
+
+    @Override
+    public Flux<String> getCollectionShards(String name) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.GET)
+                        .path(PATH_API + "/" + name + "/shards")
+                        .build())
+                .map(ArangoResponse::getBody)
+                .map(bytes -> getSerde().<Iterable<String>>deserializeField("shards", bytes, ITERABLE_OF_STRING))
+                .flatMapMany(Flux::fromIterable);
     }
 
 }

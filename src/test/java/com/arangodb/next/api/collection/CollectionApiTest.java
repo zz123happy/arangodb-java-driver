@@ -30,6 +30,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -269,6 +270,18 @@ class CollectionApiTest {
         collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
         String revision = collectionApi.getCollectionRevision(name).block();
         assertThat(revision).isNotNull();
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void getCollectionShards(TestContext ctx, CollectionApi collectionApi) {
+        assumeTrue(ctx.isCluster());
+
+        String name = "collection-" + UUID.randomUUID().toString();
+        collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
+        List<String> shards = collectionApi.getCollectionShards(name).collectList().block();
+        assertThat(shards).isNotNull();
+        assertThat(shards).isNotEmpty();
     }
 
 }
