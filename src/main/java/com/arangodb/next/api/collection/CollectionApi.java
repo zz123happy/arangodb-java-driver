@@ -97,7 +97,7 @@ public interface CollectionApi extends ArangoClient {
      * "https://www.arangodb.com/docs/stable/http/collection-getting.html#return-information-about-a-collection">API
      * Documentation</a>
      */
-    Mono<SimpleCollectionEntity> getCollectionInfo(String name);
+    Mono<SimpleCollectionEntity> getCollection(String name);
 
     /**
      * @param name collection name

@@ -115,7 +115,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<SimpleCollectionEntity> getCollectionInfo(final String name) {
+    public Mono<SimpleCollectionEntity> getCollection(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -128,7 +128,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
 
     @Override
     public Mono<Boolean> existsCollection(final String name) {
-        return getCollectionInfo(name)
+        return getCollection(name)
                 .thenReturn(true)
                 .onErrorReturn(CollectionOrViewNotFoundException.class, false);
     }

@@ -60,7 +60,7 @@ class CollectionApiTest {
 
         assertThat(collection).isNull();
 
-        SimpleCollectionEntity graphsInfo = collectionApi.getCollectionInfo("_graphs").block();
+        SimpleCollectionEntity graphsInfo = collectionApi.getCollection("_graphs").block();
         assertThat(graphsInfo).isEqualTo(graphs);
     }
 
