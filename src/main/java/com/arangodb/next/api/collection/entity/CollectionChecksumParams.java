@@ -31,6 +31,9 @@ import java.util.Optional;
 @Value.Immutable
 public interface CollectionChecksumParams {
 
+    String WITH_REVISIONS = "withRevisions";
+    String WITH_DATA = "withData";
+
     static ImmutableCollectionChecksumParams.Builder builder() {
         return ImmutableCollectionChecksumParams.builder();
     }

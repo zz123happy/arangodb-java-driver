@@ -217,4 +217,14 @@ class CollectionApiTest {
         assertThat(collectionChecksumEntity.getRevision()).isNotNull();
     }
 
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void getCollectionStatistics(TestContext ctx, CollectionApi collectionApi) {
+        String name = "collection-" + UUID.randomUUID().toString();
+        collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
+        Object collectionStatistics = collectionApi.getCollectionStatistics(name).block();
+        System.out.println(collectionStatistics);
+        assertThat(collectionStatistics).isNotNull();
+    }
+
 }

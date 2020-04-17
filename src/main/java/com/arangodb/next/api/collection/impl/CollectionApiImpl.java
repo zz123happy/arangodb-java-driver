@@ -205,6 +205,18 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
+    public Mono<Object> getCollectionStatistics(String name) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.GET)
+                        .path(PATH_API + "/" + name + "/figures")
+                        .build())
+                .map(ArangoResponse::getBody)
+                .map(bytes -> getSerde().deserializeField("figures", bytes, Object.class));
+    }
+
+    @Override
     public Mono<SimpleCollectionEntity> truncateCollection(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
