@@ -40,13 +40,6 @@ public interface DetailedCollectionEntity extends CollectionEntity {
     }
 
     /**
-     * @apiNote MMFiles storage engine only
-     * @see CollectionCreateOptions#getJournalSize()
-     */
-    @Nullable
-    Long getJournalSize();
-
-    /**
      * @apiNote cluster only
      * @see CollectionCreateOptions#getReplicationFactor()
      */
@@ -71,20 +64,6 @@ public interface DetailedCollectionEntity extends CollectionEntity {
     Boolean getWaitForSync();
 
     /**
-     * @apiNote MMFiles storage engine only
-     * @see CollectionCreateOptions#getDoCompact()
-     */
-    @Nullable
-    Boolean getDoCompact();
-
-    /**
-     * @apiNote MMFiles storage engine only
-     * @see CollectionCreateOptions#getIsVolatile()
-     */
-    @Nullable
-    Boolean getIsVolatile();
-
-    /**
      * @apiNote cluster only
      * @see CollectionCreateOptions#getShardKeys()
      */
@@ -97,13 +76,6 @@ public interface DetailedCollectionEntity extends CollectionEntity {
      */
     @Nullable
     Integer getNumberOfShards();
-
-    /**
-     * @apiNote MMFiles storage engine only
-     * @see CollectionCreateOptions#getIndexBuckets()
-     */
-    @Nullable
-    Integer getIndexBuckets();
 
     /**
      * @apiNote enterprise cluster only

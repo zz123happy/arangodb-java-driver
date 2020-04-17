@@ -36,12 +36,4 @@ public interface CollectionPropertiesOptions {
     @Nullable
     Boolean getWaitForSync();
 
-    /**
-     * @return The maximal size of a journal or datafile in bytes. The value must be at least 1048576 (1 MiB).
-     * Default: value from configuration parameter
-     * @apiNote MMFiles storage engine only
-     */
-    @Nullable
-    Long getJournalSize();
-
 }

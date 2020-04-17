@@ -69,27 +69,6 @@ public interface CollectionCreateOptions extends CollectionPropertiesOptions, Co
     KeyOptions getKeyOptions();
 
     /**
-     * @return whether the collection will be compacted
-     * Default: <code>true</code>
-     * @apiNote MMFiles storage engine only
-     */
-    @Nullable
-    Boolean getDoCompact();
-
-    /**
-     * @return If true then the collection data is kept in-memory only and not made persistent. Unloading the collection
-     * will cause the collection data to be discarded. Stopping or re-starting the server will also cause full loss of
-     * data in the collection. Setting this option will make the resulting collection be slightly faster than regular
-     * collections because ArangoDB does not enforce any synchronization to disk and does not calculate any CRC
-     * checksums for datafiles (as there are no datafiles). This option should therefore be used for cache-type
-     * collections only, and not for data that cannot be re-created otherwise.
-     * Default: <code>false</code>
-     * @apiNote MMFiles storage engine only
-     */
-    @Nullable
-    Boolean getIsVolatile();
-
-    /**
      * @return this attribute determines which document attributes are used to determine the target shard
      * for documents. Documents are sent to shards based on the values of their shard key attributes. The values of all
      * shard key attributes in a document are hashed, and the hash value is used to determine the target shard.
@@ -123,15 +102,6 @@ public interface CollectionCreateOptions extends CollectionPropertiesOptions, Co
      */
     @Nullable
     CollectionType getType();
-
-    /**
-     * @return the number of buckets into which indexes using a hash table are split. This number
-     * has to be a power of 2 and less than or equal to 1024.
-     * Default: <code>16</code>
-     * @apiNote MMFiles storage engine only
-     */
-    @Nullable
-    Integer getIndexBuckets();
 
     /**
      * @return binds the specifics of sharding for the newly created

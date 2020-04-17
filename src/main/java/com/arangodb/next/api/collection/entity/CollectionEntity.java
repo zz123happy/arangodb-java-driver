@@ -43,13 +43,6 @@ public interface CollectionEntity {
     CollectionType getType();
 
     /**
-     * @return collection status
-     * @apiNote MMFiles storage engine only
-     */
-    @Nullable
-    CollectionStatus getStatus();
-
-    /**
      * @return unique identifier of the collection
      */
     String getGloballyUniqueId();

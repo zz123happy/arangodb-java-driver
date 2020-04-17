@@ -50,7 +50,6 @@ class CollectionApiTest {
         assertThat(graphs).isNotNull();
         assertThat(graphs.getName()).isNotNull();
         assertThat(graphs.getIsSystem()).isTrue();
-        assertThat(graphs.getStatus()).isNotNull();
         assertThat(graphs.getType()).isEqualTo(CollectionType.DOCUMENT);
         assertThat(graphs.getGloballyUniqueId()).isNotNull();
 
