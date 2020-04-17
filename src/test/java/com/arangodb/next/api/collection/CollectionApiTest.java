@@ -29,6 +29,7 @@ import com.arangodb.next.communication.Conversation;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -198,8 +199,7 @@ class CollectionApiTest {
 
         String name = "collection-" + UUID.randomUUID().toString();
         collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
-        SimpleCollectionEntity truncated = collectionApi.truncateCollection(name).block();
-        assertThat(truncated).isNotNull();
+        collectionApi.truncateCollection(name).block();
         Long count = collectionApi.getCollectionCount(name).block();
         assertThat(count).isEqualTo(0L);
     }
@@ -249,6 +249,17 @@ class CollectionApiTest {
         String name = "collection-" + UUID.randomUUID().toString();
         collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
         collectionApi.recalculateCollectionCount(name).block();
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void getResponsibleShard(TestContext ctx, CollectionApi collectionApi) {
+        assumeTrue(ctx.isCluster());
+
+        String name = "collection-" + UUID.randomUUID().toString();
+        collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
+        String responsibleShard = collectionApi.getResponsibleShard(name, Collections.singletonMap("_key", "aaa")).block();
+        assertThat(responsibleShard).isNotNull();
     }
 
 }

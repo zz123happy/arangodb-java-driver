@@ -217,10 +217,21 @@ public interface CollectionApi extends ArangoClient {
      * Removes all documents from the collection, but leaves the indexes intact
      *
      * @param name collection name
-     * @return information about the collection
+     * @return a Mono completing on operation completion
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#truncate-collection">API
      * Documentation</a>
      */
-    Mono<SimpleCollectionEntity> truncateCollection(String name);
+    Mono<Void> truncateCollection(String name);
+
+    /**
+     * @param name     collection name
+     * @param document A projection of the document containing at least the shard key (_key or a custom attribute) for
+     *                 which the responsible shard should be determined
+     * @return Returns the ID of the shard that is responsible for the given document (if the document exists) or that
+     * would be responsible if such document existed
+     * @see <a href="https://www.arangodb.com/docs/stable/http/collection-getting.html#return-responsible-shard-for-a-document">API
+     * Documentation</a>
+     */
+    Mono<String> getResponsibleShard(String name, Object document);
 
 }

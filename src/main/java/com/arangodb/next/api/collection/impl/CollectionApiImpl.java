@@ -250,15 +250,27 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<SimpleCollectionEntity> truncateCollection(final String name) {
+    public Mono<Void> truncateCollection(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
                         .requestType(ArangoRequest.RequestType.PUT)
                         .path(PATH_API + "/" + name + "/truncate")
                         .build())
+                .then();
+    }
+
+    @Override
+    public Mono<String> getResponsibleShard(String name, Object document) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.PUT)
+                        .path(PATH_API + "/" + name + "/responsibleShard")
+                        .body(getSerde().serialize(document))
+                        .build())
                 .map(ArangoResponse::getBody)
-                .map(bytes -> getSerde().deserialize(bytes, SimpleCollectionEntity.class));
+                .map(bytes -> getSerde().deserializeField("shardId", bytes, String.class));
     }
 
 }
