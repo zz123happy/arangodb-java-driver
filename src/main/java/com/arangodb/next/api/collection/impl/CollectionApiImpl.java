@@ -299,4 +299,15 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
                 .flatMapMany(Flux::fromIterable);
     }
 
+    @Override
+    public Mono<Void> unloadCollection(String name) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.PUT)
+                        .path(PATH_API + "/" + name + "/unload")
+                        .build())
+                .then();
+    }
+
 }

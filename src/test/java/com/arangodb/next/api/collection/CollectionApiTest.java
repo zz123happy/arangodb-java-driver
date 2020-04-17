@@ -284,4 +284,12 @@ class CollectionApiTest {
         assertThat(shards).isNotEmpty();
     }
 
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void unloadCollection(TestContext ctx, CollectionApi collectionApi) {
+        String name = "collection-" + UUID.randomUUID().toString();
+        collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
+        collectionApi.unloadCollection(name).block();
+    }
+
 }

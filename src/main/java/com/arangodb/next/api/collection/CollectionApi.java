@@ -253,4 +253,14 @@ public interface CollectionApi extends ArangoClient {
      */
     Flux<String> getCollectionShards(String name);
 
+    /**
+     * Removes a collection from memory. This operation does not delete any document.
+     *
+     * @param name collection name
+     * @return a Mono completing on operation completion
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/collection-modifying.html#unload-collection">API
+     * Documentation</a>
+     */
+    Mono<Void> unloadCollection(String name);
 }
