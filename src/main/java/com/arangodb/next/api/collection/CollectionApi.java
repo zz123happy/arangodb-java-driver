@@ -185,6 +185,9 @@ public interface CollectionApi extends ArangoClient {
      *
      * @param name collection name
      * @return a Mono completing on operation completion
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/collection-modifying.html#load-collection">API
+     * Documentation</a>
      */
     Mono<Void> loadCollection(String name);
 
@@ -193,8 +196,22 @@ public interface CollectionApi extends ArangoClient {
      *
      * @param name collection name
      * @return a Mono completing on operation completion
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/collection-modifying.html#load-indexes-into-memory">API
+     * Documentation</a>
      */
     Mono<Void> loadCollectionIndexes(String name);
+
+    /**
+     * Recalculates the document count of a collection
+     *
+     * @param name collection name
+     * @return a Mono completing on operation completion
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/collection-modifying.html#recalculate-count-of-a-collection">API
+     * Documentation</a>
+     */
+    Mono<Void> recalculateCollectionCount(String name);
 
     /**
      * Removes all documents from the collection, but leaves the indexes intact

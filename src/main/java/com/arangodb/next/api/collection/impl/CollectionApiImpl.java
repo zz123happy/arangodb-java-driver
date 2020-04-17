@@ -239,6 +239,17 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
+    public Mono<Void> recalculateCollectionCount(String name) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.PUT)
+                        .path(PATH_API + "/" + name + "/recalculateCount")
+                        .build())
+                .then();
+    }
+
+    @Override
     public Mono<SimpleCollectionEntity> truncateCollection(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
