@@ -185,7 +185,7 @@ class CollectionApiTest {
         assertThat(created.getName()).isEqualTo(name);
 
         String newName = "collection-" + UUID.randomUUID().toString();
-        SimpleCollectionEntity renamed = collectionApi.rename(name, CollectionRenameOptions.builder().name(newName).build()).block();
+        SimpleCollectionEntity renamed = collectionApi.renameCollection(name, CollectionRenameOptions.builder().name(newName).build()).block();
         assertThat(renamed).isNotNull();
         assertThat(renamed.getName()).isEqualTo(newName);
     }
@@ -198,11 +198,23 @@ class CollectionApiTest {
 
         String name = "collection-" + UUID.randomUUID().toString();
         collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
-        SimpleCollectionEntity truncated = collectionApi.truncate(name).block();
+        SimpleCollectionEntity truncated = collectionApi.truncateCollection(name).block();
         assertThat(truncated).isNotNull();
         Long count = collectionApi.getCollectionCount(name).block();
         assertThat(count).isEqualTo(0L);
     }
 
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void getCollectionChecksum(TestContext ctx, CollectionApi collectionApi) {
+        assumeTrue(!ctx.isCluster());
+
+        String name = "collection-" + UUID.randomUUID().toString();
+        collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
+        CollectionChecksumEntity collectionChecksumEntity = collectionApi.getCollectionChecksum(name).block();
+        assertThat(collectionChecksumEntity).isNotNull();
+        assertThat(collectionChecksumEntity.getChecksum()).isNotNull();
+        assertThat(collectionChecksumEntity.getRevision()).isNotNull();
+    }
 
 }

@@ -20,29 +20,29 @@
 
 package com.arangodb.next.api.collection.entity;
 
+
+import org.immutables.value.Value;
+
+import java.util.Optional;
+
 /**
  * @author Michele Rastelli
  */
-public interface CollectionEntity {
+@Value.Immutable
+public interface CollectionChecksumParams {
+
+    static ImmutableCollectionChecksumParams.Builder builder() {
+        return ImmutableCollectionChecksumParams.builder();
+    }
 
     /**
-     * @see CollectionCreateOptions#getName()
+     * @return Whether or not to include document revision ids in the checksum calculation.
      */
-    String getName();
+    Optional<Boolean> getWithRevisions();
 
     /**
-     * @see CollectionCreateOptions#getIsSystem()
+     * @return Whether or not to include document body data in the checksum calculation.
      */
-    boolean getIsSystem();
-
-    /**
-     * @see CollectionCreateOptions#getType()
-     */
-    CollectionType getType();
-
-    /**
-     * @return unique identifier of the collection
-     */
-    String getGloballyUniqueId();
+    Optional<Boolean> getWithData();
 
 }

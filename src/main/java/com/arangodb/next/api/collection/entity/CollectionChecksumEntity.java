@@ -20,29 +20,29 @@
 
 package com.arangodb.next.api.collection.entity;
 
+
+import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
+import org.immutables.value.Value;
+
 /**
  * @author Michele Rastelli
  */
-public interface CollectionEntity {
+@Value.Immutable
+public interface CollectionChecksumEntity {
+
+    @VPackPOJOBuilder
+    static ImmutableCollectionChecksumEntity.Builder builder() {
+        return ImmutableCollectionChecksumEntity.builder();
+    }
 
     /**
-     * @see CollectionCreateOptions#getName()
+     * @return The calculated checksum as a number.
      */
-    String getName();
+    String getChecksum();
 
     /**
-     * @see CollectionCreateOptions#getIsSystem()
+     * @return The collection revision id as a string.
      */
-    boolean getIsSystem();
-
-    /**
-     * @see CollectionCreateOptions#getType()
-     */
-    CollectionType getType();
-
-    /**
-     * @return unique identifier of the collection
-     */
-    String getGloballyUniqueId();
+    String getRevision();
 
 }

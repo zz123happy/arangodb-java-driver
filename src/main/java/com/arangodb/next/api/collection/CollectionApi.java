@@ -135,7 +135,7 @@ public interface CollectionApi extends ArangoClient {
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-modifying.html#rename-collection">API
      * Documentation</a>
      */
-    Mono<SimpleCollectionEntity> rename(String name, CollectionRenameOptions options);
+    Mono<SimpleCollectionEntity> renameCollection(String name, CollectionRenameOptions options);
 
     /**
      * @param name collection name
@@ -147,6 +147,29 @@ public interface CollectionApi extends ArangoClient {
     Mono<Long> getCollectionCount(String name);
 
     /**
+     * @param name collection name
+     * @return checksum for the specified collection
+     * @apiNote this method is not available in a cluster
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/collection-getting.html#return-checksum-for-the-collection">API
+     * Documentation</a>
+     */
+    default Mono<CollectionChecksumEntity> getCollectionChecksum(String name) {
+        return getCollectionChecksum(name, CollectionChecksumParams.builder().build());
+    }
+
+    /**
+     * @param name   collection name
+     * @param params request params
+     * @return checksum for the specified collection
+     * @apiNote this method is not available in a cluster
+     * @see <a href=
+     * "https://www.arangodb.com/docs/stable/http/collection-getting.html#return-checksum-for-the-collection">API
+     * Documentation</a>
+     */
+    Mono<CollectionChecksumEntity> getCollectionChecksum(String name, CollectionChecksumParams params);
+
+    /**
      * Removes all documents from the collection, but leaves the indexes intact
      *
      * @param name collection name
@@ -154,6 +177,6 @@ public interface CollectionApi extends ArangoClient {
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#truncate-collection">API
      * Documentation</a>
      */
-    Mono<SimpleCollectionEntity> truncate(String name);
+    Mono<SimpleCollectionEntity> truncateCollection(String name);
 
 }

@@ -159,7 +159,7 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<SimpleCollectionEntity> rename(final String name, final CollectionRenameOptions options) {
+    public Mono<SimpleCollectionEntity> renameCollection(final String name, final CollectionRenameOptions options) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
@@ -185,7 +185,27 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
-    public Mono<SimpleCollectionEntity> truncate(final String name) {
+    public Mono<CollectionChecksumEntity> getCollectionChecksum(String name, CollectionChecksumParams params) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.GET)
+                        .path(PATH_API + "/" + name + "/checksum")
+                        .putQueryParams(
+                                CollectionChecksumParams.WITH_REVISIONS,
+                                params.getWithRevisions().map(String::valueOf)
+                        )
+                        .putQueryParams(
+                                CollectionChecksumParams.WITH_DATA,
+                                params.getWithData().map(String::valueOf)
+                        )
+                        .build())
+                .map(ArangoResponse::getBody)
+                .map(bytes -> getSerde().deserialize(bytes, CollectionChecksumEntity.class));
+    }
+
+    @Override
+    public Mono<SimpleCollectionEntity> truncateCollection(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
                         .database(dbName)
