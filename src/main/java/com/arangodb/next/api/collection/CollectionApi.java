@@ -74,6 +74,7 @@ public interface CollectionApi extends ArangoClient {
     /**
      * Deletes the collection from the database.
      *
+     * @return a Mono completing on operation completion
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#drops-collection">API
      * Documentation</a>
      */
@@ -85,6 +86,7 @@ public interface CollectionApi extends ArangoClient {
      * Deletes the collection from the database.
      *
      * @param params request params
+     * @return a Mono completing on operation completion
      * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#drops-collection">API
      * Documentation</a>
      */
@@ -182,8 +184,17 @@ public interface CollectionApi extends ArangoClient {
      * Loads a collection into memory.
      *
      * @param name collection name
+     * @return a Mono completing on operation completion
      */
     Mono<Void> loadCollection(String name);
+
+    /**
+     * Loads a collection indexes into memory.
+     *
+     * @param name collection name
+     * @return a Mono completing on operation completion
+     */
+    Mono<Void> loadCollectionIndexes(String name);
 
     /**
      * Removes all documents from the collection, but leaves the indexes intact

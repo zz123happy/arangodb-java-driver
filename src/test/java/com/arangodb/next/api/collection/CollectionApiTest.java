@@ -235,4 +235,12 @@ class CollectionApiTest {
         collectionApi.loadCollection(name).block();
     }
 
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void loadCollectionIndexes(TestContext ctx, CollectionApi collectionApi) {
+        String name = "collection-" + UUID.randomUUID().toString();
+        collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
+        collectionApi.loadCollectionIndexes(name).block();
+    }
+
 }
