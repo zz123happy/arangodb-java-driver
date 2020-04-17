@@ -227,4 +227,12 @@ class CollectionApiTest {
         assertThat(collectionStatistics).isNotNull();
     }
 
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(CollectionApiProvider.class)
+    void loadCollection(TestContext ctx, CollectionApi collectionApi) {
+        String name = "collection-" + UUID.randomUUID().toString();
+        collectionApi.createCollection(CollectionCreateOptions.builder().name(name).build()).block();
+        collectionApi.loadCollection(name).block();
+    }
+
 }

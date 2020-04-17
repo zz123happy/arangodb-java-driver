@@ -170,13 +170,20 @@ public interface CollectionApi extends ArangoClient {
     Mono<CollectionChecksumEntity> getCollectionChecksum(String name, CollectionChecksumParams params);
 
     /**
-     * @param name   collection name
+     * @param name collection name
      * @return statistics for the specified collection
      * @see <a href=
      * "https://www.arangodb.com/docs/stable/http/collection-getting.html#return-statistics-for-a-collection">API
      * Documentation</a>
      */
     Mono<Object> getCollectionStatistics(String name);
+
+    /**
+     * Loads a collection into memory.
+     *
+     * @param name collection name
+     */
+    Mono<Void> loadCollection(String name);
 
     /**
      * Removes all documents from the collection, but leaves the indexes intact

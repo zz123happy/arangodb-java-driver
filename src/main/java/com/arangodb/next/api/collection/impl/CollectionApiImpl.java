@@ -217,6 +217,17 @@ public final class CollectionApiImpl extends ArangoClientImpl implements Collect
     }
 
     @Override
+    public Mono<Void> loadCollection(String name) {
+        return getCommunication()
+                .execute(ArangoRequest.builder()
+                        .database(dbName)
+                        .requestType(ArangoRequest.RequestType.PUT)
+                        .path(PATH_API + "/" + name + "/load")
+                        .build())
+                .then();
+    }
+
+    @Override
     public Mono<SimpleCollectionEntity> truncateCollection(final String name) {
         return getCommunication()
                 .execute(ArangoRequest.builder()
