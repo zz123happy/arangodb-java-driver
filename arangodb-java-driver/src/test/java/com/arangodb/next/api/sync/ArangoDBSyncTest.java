@@ -29,6 +29,8 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.util.ConcurrentModificationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -55,8 +57,9 @@ class ArangoDBSyncTest {
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ArangoDBSyncProvider.class)
     void wrongThreadClosingThreadConversation(TestContext ctx, ArangoDBSync arango) {
+        ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, (ThreadFactory) Thread::new);
         try (ThreadConversation tc = arango.getConversationManager().requireConversation()) {
-            Throwable thrown = catchThrowable(() -> CompletableFuture.runAsync(tc::close).join());
+            Throwable thrown = catchThrowable(() -> CompletableFuture.runAsync(tc::close, executor).join());
             assertThat(thrown).isInstanceOf(CompletionException.class);
             assertThat(thrown.getCause()).isInstanceOf(ConcurrentModificationException.class);
         }
