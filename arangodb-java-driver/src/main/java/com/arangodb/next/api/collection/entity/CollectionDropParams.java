@@ -21,20 +21,20 @@
 package com.arangodb.next.api.collection.entity;
 
 
-import org.immutables.value.Value;
+import com.arangodb.next.entity.ApiEntity;
 
 import java.util.Optional;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@ApiEntity
 public interface CollectionDropParams {
 
     String IS_SYSTEM_PARAM = "isSystem";
 
-    static ImmutableCollectionDropParams.Builder builder() {
-        return ImmutableCollectionDropParams.builder();
+    static CollectionDropParamsBuilder builder() {
+        return new CollectionDropParamsBuilder();
     }
 
     Optional<Boolean> getIsSystem();

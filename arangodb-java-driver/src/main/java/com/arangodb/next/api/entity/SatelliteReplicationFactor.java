@@ -26,6 +26,9 @@ import org.immutables.value.Value;
  * @author Michele Rastelli
  */
 @Value.Immutable(builder = false)
+@Value.Style(
+        overshadowImplementation = true,
+        visibility = Value.Style.ImplementationVisibility.PACKAGE)
 public abstract class SatelliteReplicationFactor implements ReplicationFactor {
 
     public static final String VALUE = "satellite";

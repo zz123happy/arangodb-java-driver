@@ -22,20 +22,20 @@ package com.arangodb.next.api.database.entity;
 
 
 import com.arangodb.next.api.entity.ReplicationFactor;
+import com.arangodb.next.entity.ApiEntity;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
-import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@ApiEntity
 public interface DatabaseEntity {
 
     @VPackPOJOBuilder
-    static ImmutableDatabaseEntity.Builder builder() {
-        return ImmutableDatabaseEntity.builder();
+    static DatabaseEntityBuilder builder() {
+        return new DatabaseEntityBuilder();
     }
 
     /**

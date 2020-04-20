@@ -21,7 +21,7 @@
 package com.arangodb.next.api.collection.entity;
 
 
-import org.immutables.value.Value;
+import com.arangodb.next.entity.ApiEntity;
 
 import java.util.Optional;
 
@@ -31,14 +31,13 @@ import java.util.Optional;
  * @see <a href="https://www.arangodb.com/docs/stable/http/collection-getting.html#reads-all-collections">API
  * Documentation</a>
  */
-
-@Value.Immutable
+@ApiEntity
 public interface CollectionsReadParams {
 
     String EXCLUDE_SYSTEM_PARAM = "excludeSystem";
 
-    static ImmutableCollectionsReadParams.Builder builder() {
-        return ImmutableCollectionsReadParams.builder();
+    static CollectionsReadParamsBuilder builder() {
+        return new CollectionsReadParamsBuilder();
     }
 
     /**

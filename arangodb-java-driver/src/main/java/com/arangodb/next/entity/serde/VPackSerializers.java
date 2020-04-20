@@ -20,9 +20,12 @@
 
 package com.arangodb.next.entity.serde;
 
-import com.arangodb.next.api.collection.entity.*;
+import com.arangodb.next.api.collection.entity.CollectionType;
+import com.arangodb.next.api.collection.entity.KeyType;
+import com.arangodb.next.api.collection.entity.ShardingStrategy;
 import com.arangodb.next.api.database.entity.Sharding;
 import com.arangodb.next.api.entity.NumericReplicationFactor;
+import com.arangodb.next.api.entity.ReplicationFactor;
 import com.arangodb.next.api.entity.SatelliteReplicationFactor;
 import com.arangodb.velocypack.VPackSerializer;
 
@@ -34,11 +37,16 @@ public final class VPackSerializers {
     private VPackSerializers() {
     }
 
-    public static final VPackSerializer<SatelliteReplicationFactor> SATELLITE_REPLICATION_FACTOR =
-            (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
-
-    public static final VPackSerializer<NumericReplicationFactor> NUMERIC_REPLICATION_FACTOR =
-            (builder, attribute, value, context) -> builder.add(attribute, value.getValue());
+    public static final VPackSerializer<ReplicationFactor> REPLICATION_FACTOR =
+            (builder, attribute, value, context) -> {
+                if (value instanceof NumericReplicationFactor) {
+                    builder.add(attribute, ((NumericReplicationFactor) value).getValue());
+                } else if (value instanceof SatelliteReplicationFactor) {
+                    builder.add(attribute, ((SatelliteReplicationFactor) value).getValue());
+                } else {
+                    throw new IllegalArgumentException("Unknown class for replication factor: " + value.getClass().getName());
+                }
+            };
 
     //region DatabaseApi
     public static final VPackSerializer<Sharding> SHARDING =

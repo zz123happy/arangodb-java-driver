@@ -21,18 +21,18 @@
 package com.arangodb.next.api.collection.entity;
 
 
+import com.arangodb.next.entity.ApiEntity;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
-import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@ApiEntity
 public interface CollectionChecksumEntity {
 
     @VPackPOJOBuilder
-    static ImmutableCollectionChecksumEntity.Builder builder() {
-        return ImmutableCollectionChecksumEntity.builder();
+    static CollectionChecksumEntityBuilder builder() {
+        return new CollectionChecksumEntityBuilder();
     }
 
     /**

@@ -22,8 +22,8 @@
 package com.arangodb.next.api.collection.entity;
 
 
+import com.arangodb.next.entity.ApiEntity;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
-import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
 
@@ -31,12 +31,12 @@ import javax.annotation.Nullable;
  * @author Mark Vollmary
  * @author Michele Rastelli
  */
-@Value.Immutable
+@ApiEntity
 public interface KeyOptions {
 
     @VPackPOJOBuilder
-    static ImmutableKeyOptions.Builder builder() {
-        return ImmutableKeyOptions.builder();
+    static KeyOptionsBuilder builder() {
+        return new KeyOptionsBuilder();
     }
 
     /**

@@ -20,10 +20,11 @@
 
 package com.arangodb.next.entity.serde;
 
-import com.arangodb.next.api.collection.entity.*;
+import com.arangodb.next.api.collection.entity.CollectionStatus;
+import com.arangodb.next.api.collection.entity.CollectionType;
+import com.arangodb.next.api.collection.entity.KeyType;
+import com.arangodb.next.api.collection.entity.ShardingStrategy;
 import com.arangodb.next.api.database.entity.Sharding;
-import com.arangodb.next.api.entity.ImmutableNumericReplicationFactor;
-import com.arangodb.next.api.entity.ImmutableSatelliteReplicationFactor;
 import com.arangodb.next.api.entity.ReplicationFactor;
 import com.arangodb.next.entity.model.Engine;
 import com.arangodb.velocypack.VPackModule;
@@ -42,8 +43,7 @@ public final class VPackDriverModule implements VPackModule, VPackParserModule {
         // --- SERIALIZERS ---
         // --- --- --- --- ---
 
-        context.registerSerializer(ImmutableSatelliteReplicationFactor.class, VPackSerializers.SATELLITE_REPLICATION_FACTOR);
-        context.registerSerializer(ImmutableNumericReplicationFactor.class, VPackSerializers.NUMERIC_REPLICATION_FACTOR);
+        context.registerSerializer(ReplicationFactor.class, VPackSerializers.REPLICATION_FACTOR);
 
         //region DatabaseApi
         context.registerSerializer(Sharding.class, VPackSerializers.SHARDING);

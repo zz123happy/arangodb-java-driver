@@ -21,8 +21,8 @@
 package com.arangodb.next.api.collection.entity;
 
 import com.arangodb.next.api.entity.ReplicationFactor;
+import com.arangodb.next.entity.ApiEntity;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
-import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -31,12 +31,12 @@ import java.util.List;
  * @author Michele Rastelli
  * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html">API Documentation</a>
  */
-@Value.Immutable
+@ApiEntity
 public interface DetailedCollectionEntity extends CollectionEntity {
 
     @VPackPOJOBuilder
-    static ImmutableDetailedCollectionEntity.Builder builder() {
-        return ImmutableDetailedCollectionEntity.builder();
+    static DetailedCollectionEntityBuilder builder() {
+        return new DetailedCollectionEntityBuilder();
     }
 
     /**

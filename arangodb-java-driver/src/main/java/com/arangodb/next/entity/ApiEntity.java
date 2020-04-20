@@ -18,21 +18,20 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.api.collection.entity;
+package com.arangodb.next.entity;
 
 
-import com.arangodb.next.entity.ApiEntity;
+import org.immutables.value.Value;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 
 /**
  * @author Michele Rastelli
- * @see <a href="https://www.arangodb.com/docs/stable/http/collection-modifying.html#rename-collection">API
- * Documentation</a>
  */
-@ApiEntity
-public interface CollectionRenameOptions extends CollectionNameOptions {
-
-    static CollectionRenameOptionsBuilder builder() {
-        return new CollectionRenameOptionsBuilder();
-    }
-
+@Target(ElementType.TYPE)
+@Value.Style(
+        overshadowImplementation = true,
+        visibility = Value.Style.ImplementationVisibility.PRIVATE)
+public @interface ApiEntity {
 }

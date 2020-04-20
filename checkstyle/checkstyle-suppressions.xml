@@ -11,4 +11,5 @@
     <suppress files=".*" checks="LineLength"/>
     <suppress files="com.arangodb.next.connection.vst.Chunk" checks="HiddenField"/>
     <suppress files="Immutable.*" checks=".*"/>
+    <suppress files=".*Builder" checks=".*"/>
 </suppressions>

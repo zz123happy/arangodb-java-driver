@@ -21,18 +21,18 @@
 package com.arangodb.next.api.database.entity;
 
 import com.arangodb.next.api.entity.ReplicationFactor;
-import org.immutables.value.Value;
+import com.arangodb.next.entity.ApiEntity;
 
 import javax.annotation.Nullable;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@ApiEntity
 public interface DatabaseCreateOptions {
 
-    static ImmutableDatabaseCreateOptions.Builder builder() {
-        return ImmutableDatabaseCreateOptions.builder();
+    static DatabaseCreateOptionsBuilder builder() {
+        return new DatabaseCreateOptionsBuilder();
     }
 
     /**
@@ -47,11 +47,11 @@ public interface DatabaseCreateOptions {
     @Nullable
     Options getOptions();
 
-    @Value.Immutable
+    @ApiEntity
     interface Options {
 
-        static ImmutableOptions.Builder builder() {
-            return ImmutableOptions.builder();
+        static OptionsBuilder builder() {
+            return new OptionsBuilder();
         }
 
         /**

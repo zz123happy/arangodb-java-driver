@@ -22,7 +22,7 @@ package com.arangodb.next.api.collection.entity;
 
 
 import com.arangodb.next.api.entity.ReplicationFactor;
-import org.immutables.value.Value;
+import com.arangodb.next.entity.ApiEntity;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -32,11 +32,11 @@ import java.util.List;
  * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html#create-collection">API
  * Documentation</a>
  */
-@Value.Immutable
+@ApiEntity
 public interface CollectionCreateOptions extends CollectionPropertiesOptions, CollectionNameOptions {
 
-    static ImmutableCollectionCreateOptions.Builder builder() {
-        return ImmutableCollectionCreateOptions.builder();
+    static CollectionCreateOptionsBuilder builder() {
+        return new CollectionCreateOptionsBuilder();
     }
 
     /**

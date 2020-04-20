@@ -20,19 +20,19 @@
 
 package com.arangodb.next.api.collection.entity;
 
+import com.arangodb.next.entity.ApiEntity;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
-import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
  * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html">API Documentation</a>
  */
-@Value.Immutable
+@ApiEntity
 public interface SimpleCollectionEntity extends CollectionEntity {
 
     @VPackPOJOBuilder
-    static ImmutableSimpleCollectionEntity.Builder builder() {
-        return ImmutableSimpleCollectionEntity.builder();
+    static SimpleCollectionEntityBuilder builder() {
+        return new SimpleCollectionEntityBuilder();
     }
 
 }

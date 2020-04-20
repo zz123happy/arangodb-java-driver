@@ -21,21 +21,21 @@
 package com.arangodb.next.api.collection.entity;
 
 
-import org.immutables.value.Value;
+import com.arangodb.next.entity.ApiEntity;
 
 import java.util.Optional;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@ApiEntity
 public interface CollectionChecksumParams {
 
     String WITH_REVISIONS = "withRevisions";
     String WITH_DATA = "withData";
 
-    static ImmutableCollectionChecksumParams.Builder builder() {
-        return ImmutableCollectionChecksumParams.builder();
+    static CollectionChecksumParamsBuilder builder() {
+        return new CollectionChecksumParamsBuilder();
     }
 
     /**

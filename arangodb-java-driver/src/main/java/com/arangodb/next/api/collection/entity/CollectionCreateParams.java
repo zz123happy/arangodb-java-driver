@@ -21,18 +21,18 @@
 package com.arangodb.next.api.collection.entity;
 
 
-import org.immutables.value.Value;
+import com.arangodb.next.entity.ApiEntity;
 
 import java.util.Optional;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@ApiEntity
 public interface CollectionCreateParams {
 
-    static ImmutableCollectionCreateParams.Builder builder() {
-        return ImmutableCollectionCreateParams.builder();
+    static CollectionCreateParamsBuilder builder() {
+        return new CollectionCreateParamsBuilder();
     }
 
     Optional<Boolean> getWaitForSyncReplication();
