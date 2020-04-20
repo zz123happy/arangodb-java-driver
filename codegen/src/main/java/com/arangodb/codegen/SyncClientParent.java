@@ -3,6 +3,6 @@ package com.arangodb.codegen;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
-@Target({ElementType.TYPE_USE})
-public @interface UserPayload {
+@Target({ElementType.TYPE})
+public @interface SyncClientParent {
 }

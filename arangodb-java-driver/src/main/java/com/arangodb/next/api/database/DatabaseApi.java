@@ -21,6 +21,7 @@
 package com.arangodb.next.api.database;
 
 
+import com.arangodb.codegen.GenerateSyncApi;
 import com.arangodb.next.api.database.entity.DatabaseCreateOptions;
 import com.arangodb.next.api.database.entity.DatabaseEntity;
 import com.arangodb.next.api.reactive.ArangoClient;
@@ -30,6 +31,7 @@ import reactor.core.publisher.Mono;
 /**
  * @author Michele Rastelli
  */
+@GenerateSyncApi
 public interface DatabaseApi extends ArangoClient {
 
     /**

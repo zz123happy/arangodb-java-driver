@@ -21,6 +21,7 @@
 package com.arangodb.next.api.sync.impl;
 
 
+import com.arangodb.codegen.SyncClientParentImpl;
 import com.arangodb.next.api.reactive.ArangoClient;
 import com.arangodb.next.api.sync.ArangoClientSync;
 import com.arangodb.next.api.sync.ConversationManagerSync;
@@ -28,6 +29,7 @@ import com.arangodb.next.api.sync.ConversationManagerSync;
 /**
  * @author Michele Rastelli
  */
+@SyncClientParentImpl
 public abstract class ClientSyncImpl<T extends ArangoClient> implements ArangoClientSync<T> {
     private final T delegate;
     private final ConversationManagerSync conversationManager;

@@ -21,11 +21,13 @@
 package com.arangodb.next.api.sync;
 
 
+import com.arangodb.codegen.SyncClientParent;
 import com.arangodb.next.api.reactive.ArangoClient;
 
 /**
  * @author Michele Rastelli
  */
+@SyncClientParent
 public interface ArangoClientSync<T extends ArangoClient> {
 
     /**
