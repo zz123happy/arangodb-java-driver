@@ -45,6 +45,11 @@ public final class JsonSerde extends ArangoSerde {
     }
 
     @Override
+    public byte[] serialize(final Object value, final Type type) {
+        return parser.toJson(serializeToVPackSlice(value, type), true).getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Override
     public <T> T deserialize(final byte[] buffer, final Type type) {
         return deserialize(parser.fromJson(new String(buffer, StandardCharsets.UTF_8)), type);
     }

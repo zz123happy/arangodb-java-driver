@@ -50,6 +50,8 @@ public abstract class ArangoSerde {
 
     public abstract byte[] serialize(Object value);
 
+    public abstract byte[] serialize(Object value, Type type);
+
     public abstract <T> T deserialize(byte[] buffer, Type type);
 
     public final String toJsonString(final byte[] buffer) {
@@ -82,6 +84,10 @@ public abstract class ArangoSerde {
 
     protected final VPackSlice serializeToVPackSlice(final Object value) {
         return vPack.serialize(value);
+    }
+
+    protected final VPackSlice serializeToVPackSlice(final Object value, final Type type) {
+        return vPack.serialize(value, new VPack.SerializeOptions().type(type));
     }
 
 }

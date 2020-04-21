@@ -103,7 +103,7 @@ class SerializationTest {
 
     private void verify(Object original, ContentType contentType, Class<?> clazz) {
         ArangoSerde serde = ArangoSerde.of(contentType);
-        byte[] serialized = serde.serialize(original);
+        byte[] serialized = serde.serialize(original, clazz);
         Object deserialized = serde.deserialize(serialized, clazz);
         assertThat(deserialized).isEqualTo(original);
     }

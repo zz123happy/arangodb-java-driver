@@ -41,6 +41,11 @@ public final class VpackSerde extends ArangoSerde {
     }
 
     @Override
+    public byte[] serialize(final Object value, final Type type) {
+        return serializeToVPackSlice(value, type).toByteArray();
+    }
+
+    @Override
     public <T> T deserialize(final byte[] buffer, final Type type) {
         return deserialize(new VPackSlice(buffer), type);
     }
