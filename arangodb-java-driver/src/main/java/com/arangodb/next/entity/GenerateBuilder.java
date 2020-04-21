@@ -33,5 +33,5 @@ import java.lang.annotation.Target;
 @Value.Style(
         overshadowImplementation = true,
         visibility = Value.Style.ImplementationVisibility.PRIVATE)
-public @interface ApiEntity {
+public @interface GenerateBuilder {
 }

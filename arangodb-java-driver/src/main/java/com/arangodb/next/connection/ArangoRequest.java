@@ -20,6 +20,7 @@
 
 package com.arangodb.next.connection;
 
+import com.arangodb.next.entity.GenerateBuilder;
 import org.immutables.value.Value;
 
 import java.util.Map;
@@ -30,12 +31,12 @@ import java.util.Optional;
  * @author Michele Rastelli
  * @see <a href="https://github.com/arangodb/velocystream#request--response">API</a>
  */
-@Value.Immutable
+@GenerateBuilder
 @SuppressWarnings("SameReturnValue")
 public interface ArangoRequest {
 
-    static ImmutableArangoRequest.Builder builder() {
-        return ImmutableArangoRequest.builder();
+    static ArangoRequestBuilder builder() {
+        return new ArangoRequestBuilder();
     }
 
     default int getVersion() {

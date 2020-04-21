@@ -27,11 +27,11 @@ package com.arangodb.next.api.entity;
 public interface ReplicationFactor {
 
     static ReplicationFactor of(int value) {
-        return ImmutableNumericReplicationFactor.of(value);
+        return new NumericReplicationFactorBuilder().value(value).build();
     }
 
     static ReplicationFactor ofSatellite() {
-        return ImmutableSatelliteReplicationFactor.of();
+        return new SatelliteReplicationFactorBuilder().build();
     }
 
     Object getValue();

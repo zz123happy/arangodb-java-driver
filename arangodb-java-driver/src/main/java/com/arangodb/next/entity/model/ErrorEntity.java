@@ -20,18 +20,18 @@
 
 package com.arangodb.next.entity.model;
 
+import com.arangodb.next.entity.GenerateBuilder;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
-import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@GenerateBuilder
 public interface ErrorEntity extends ArangoEntity {
 
     @VPackPOJOBuilder
-    static ImmutableErrorEntity.Builder builder() {
-        return ImmutableErrorEntity.builder();
+    static ErrorEntityBuilder builder() {
+        return new ErrorEntityBuilder();
     }
 
     String getErrorMessage();

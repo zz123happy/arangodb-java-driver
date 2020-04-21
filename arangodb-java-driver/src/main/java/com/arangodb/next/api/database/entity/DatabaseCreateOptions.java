@@ -21,14 +21,14 @@
 package com.arangodb.next.api.database.entity;
 
 import com.arangodb.next.api.entity.ReplicationFactor;
-import com.arangodb.next.entity.ApiEntity;
+import com.arangodb.next.entity.GenerateBuilder;
 
 import javax.annotation.Nullable;
 
 /**
  * @author Michele Rastelli
  */
-@ApiEntity
+@GenerateBuilder
 public interface DatabaseCreateOptions {
 
     static DatabaseCreateOptionsBuilder builder() {
@@ -47,7 +47,7 @@ public interface DatabaseCreateOptions {
     @Nullable
     Options getOptions();
 
-    @ApiEntity
+    @GenerateBuilder
     interface Options {
 
         static OptionsBuilder builder() {

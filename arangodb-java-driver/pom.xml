@@ -260,11 +260,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.arangodb</groupId>
-            <artifactId>codegen</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
             <groupId>io.projectreactor.netty</groupId>
             <artifactId>reactor-netty</artifactId>
         </dependency>
@@ -275,6 +270,12 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.arangodb</groupId>
+            <artifactId>codegen</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.immutables</groupId>

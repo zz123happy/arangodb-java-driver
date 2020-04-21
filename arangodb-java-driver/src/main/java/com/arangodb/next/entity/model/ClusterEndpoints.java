@@ -22,8 +22,8 @@ package com.arangodb.next.entity.model;
 
 
 import com.arangodb.next.connection.HostDescription;
+import com.arangodb.next.entity.GenerateBuilder;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
-import org.immutables.value.Value;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,12 +31,12 @@ import java.util.stream.Collectors;
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@GenerateBuilder
 public interface ClusterEndpoints extends ArangoEntity {
 
     @VPackPOJOBuilder
-    static ImmutableClusterEndpoints.Builder builder() {
-        return ImmutableClusterEndpoints.builder();
+    static ClusterEndpointsBuilder builder() {
+        return new ClusterEndpointsBuilder();
     }
 
     Set<ClusterEndpointsEntry> getEndpoints();

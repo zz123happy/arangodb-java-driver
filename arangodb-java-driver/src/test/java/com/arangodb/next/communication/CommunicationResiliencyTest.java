@@ -56,7 +56,7 @@ class CommunicationResiliencyTest {
 
     @Container
     private final static ProxiedContainerDeployment deployment = ProxiedContainerDeployment.ofCluster(2, 2);
-    private final ImmutableCommunicationConfig.Builder config;
+    private final CommunicationConfigBuilder config;
 
     CommunicationResiliencyTest() {
         config = CommunicationConfig.builder()

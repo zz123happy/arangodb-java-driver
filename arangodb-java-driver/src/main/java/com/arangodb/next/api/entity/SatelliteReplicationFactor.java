@@ -20,15 +20,12 @@
 
 package com.arangodb.next.api.entity;
 
-import org.immutables.value.Value;
+import com.arangodb.next.entity.GeneratePackagePrivateBuilder;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable(builder = false)
-@Value.Style(
-        overshadowImplementation = true,
-        visibility = Value.Style.ImplementationVisibility.PACKAGE)
+@GeneratePackagePrivateBuilder
 public abstract class SatelliteReplicationFactor implements ReplicationFactor {
 
     public static final String VALUE = "satellite";
@@ -37,7 +34,6 @@ public abstract class SatelliteReplicationFactor implements ReplicationFactor {
      * @return {@value #VALUE}
      */
     @Override
-    @Value.Parameter
     public String getValue() {
         return VALUE;
     }

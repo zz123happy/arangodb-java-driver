@@ -20,8 +20,8 @@
 
 package com.arangodb.next.entity.model;
 
+import com.arangodb.next.entity.GenerateBuilder;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
-import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
@@ -29,12 +29,12 @@ import org.immutables.value.Value;
  * href="https://www.arangodb.com/docs/stable/http/miscellaneous-functions.html#return-server-database-engine-type">API
  * Documentation</a>
  */
-@Value.Immutable
+@GenerateBuilder
 public interface Engine {
 
     @VPackPOJOBuilder
-    static ImmutableEngine.Builder builder() {
-        return ImmutableEngine.builder();
+    static EngineBuilder builder() {
+        return new EngineBuilder();
     }
 
     enum StorageEngineName {

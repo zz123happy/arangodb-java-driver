@@ -22,12 +22,12 @@ package com.arangodb.next.communication;
 
 
 import com.arangodb.next.connection.*;
+import com.arangodb.next.entity.model.ClusterEndpoints;
 import com.arangodb.next.entity.model.ClusterEndpointsEntry;
-import com.arangodb.next.entity.model.ImmutableClusterEndpoints;
-import com.arangodb.next.entity.model.ImmutableErrorEntity;
+import com.arangodb.next.entity.model.ErrorEntity;
 import com.arangodb.next.entity.serde.ArangoSerde;
-import com.arangodb.next.exceptions.server.ArangoServerException;
 import com.arangodb.next.exceptions.NoHostsAvailableException;
+import com.arangodb.next.exceptions.server.ArangoServerException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import reactor.core.Exceptions;
@@ -212,7 +212,7 @@ public class AcquireHostListMockTest {
                         ArangoResponse.builder()
                                 .responseCode(500)
                                 .body(
-                                        ArangoSerde.of(contentType).serialize(ImmutableErrorEntity
+                                        ArangoSerde.of(contentType).serialize(ErrorEntity
                                                 .builder()
                                                 .errorMessage("Error 8000")
                                                 .errorNum(8000)
@@ -254,7 +254,7 @@ public class AcquireHostListMockTest {
                                 ArangoResponse.builder()
                                         .responseCode(500)
                                         .body(
-                                                ArangoSerde.of(contentType).serialize(ImmutableErrorEntity
+                                                ArangoSerde.of(contentType).serialize(ErrorEntity
                                                         .builder()
                                                         .errorMessage("Error 8000")
                                                         .errorNum(8000)
@@ -333,7 +333,7 @@ public class AcquireHostListMockTest {
             byte[] responseBody = ArangoSerde
                     .of(contentType)
                     .serialize(
-                            ImmutableClusterEndpoints.builder()
+                            ClusterEndpoints.builder()
                                     .error(false)
                                     .code(200)
                                     .endpoints(getHosts().stream()

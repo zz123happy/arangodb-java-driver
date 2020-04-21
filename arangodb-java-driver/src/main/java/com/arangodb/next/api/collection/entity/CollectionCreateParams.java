@@ -21,14 +21,14 @@
 package com.arangodb.next.api.collection.entity;
 
 
-import com.arangodb.next.entity.ApiEntity;
+import com.arangodb.next.entity.GenerateBuilder;
 
 import java.util.Optional;
 
 /**
  * @author Michele Rastelli
  */
-@ApiEntity
+@GenerateBuilder
 public interface CollectionCreateParams {
 
     static CollectionCreateParamsBuilder builder() {

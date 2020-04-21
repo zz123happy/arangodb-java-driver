@@ -22,7 +22,10 @@ package com.arangodb.next.entity.serde;
 
 import com.arangodb.next.api.entity.ReplicationFactor;
 import com.arangodb.next.connection.ContentType;
-import com.arangodb.next.entity.model.*;
+import com.arangodb.next.entity.model.ClusterEndpoints;
+import com.arangodb.next.entity.model.ClusterEndpointsEntry;
+import com.arangodb.next.entity.model.ErrorEntity;
+import com.arangodb.next.entity.model.Version;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -37,7 +40,7 @@ class SerializationTest {
     @EnumSource(ContentType.class)
     void version(ContentType contentType) {
         verify(
-                ImmutableVersion.builder()
+                Version.builder()
                         .server("server")
                         .version("version")
                         .license("license")
@@ -52,7 +55,7 @@ class SerializationTest {
     @EnumSource(ContentType.class)
     void clusterEndpoints(ContentType contentType) {
         verify(
-                ImmutableClusterEndpoints.builder()
+                ClusterEndpoints.builder()
                         .error(false)
                         .code(200)
                         .addEndpoints(
@@ -69,7 +72,7 @@ class SerializationTest {
     @EnumSource(ContentType.class)
     void errorEntity(ContentType contentType) {
         verify(
-                ImmutableErrorEntity.builder()
+                ErrorEntity.builder()
                         .error(false)
                         .code(200)
                         .errorNum(109)

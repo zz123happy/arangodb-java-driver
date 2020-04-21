@@ -20,19 +20,20 @@
 
 package com.arangodb.next.connection;
 
-import org.immutables.value.Value;
+import com.arangodb.next.entity.GeneratePackagePrivateBuilder;
 
-@Value.Immutable(builder = false)
+@GeneratePackagePrivateBuilder
 public interface HostDescription {
 
     static HostDescription of(String host, int port) {
-        return ImmutableHostDescription.of(host, port);
+        return new HostDescriptionBuilder()
+                .host(host)
+                .port(port)
+                .build();
     }
 
-    @Value.Parameter(order = 1)
     String getHost();
 
-    @Value.Parameter(order = 2)
     int getPort();
 
 }

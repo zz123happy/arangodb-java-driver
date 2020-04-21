@@ -46,7 +46,7 @@ class CommunicationActiveFailoverTest {
 
     @Container
     private final static ContainerDeployment deployment = ContainerDeployment.ofReusableActiveFailover();
-    private final ImmutableCommunicationConfig.Builder config;
+    private final CommunicationConfigBuilder config;
     private final List<HostDescription> hosts;
 
     CommunicationActiveFailoverTest() {

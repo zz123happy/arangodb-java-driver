@@ -22,7 +22,6 @@ package com.arangodb.next.exceptions.server;
 
 import com.arangodb.next.entity.model.ErrorEntity;
 import com.arangodb.next.exceptions.ArangoException;
-import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
@@ -32,16 +31,20 @@ public abstract class ArangoServerException extends ArangoException {
     public static ArangoServerException of(final int responseCode, final ErrorEntity errorEntity) {
         switch (errorEntity.getErrorNum()) {
             case CollectionOrViewNotFoundException.ERROR_NUM:
-                return ImmutableCollectionOrViewNotFoundException.of(responseCode, errorEntity);
+                return new CollectionOrViewNotFoundExceptionBuilder()
+                        .responseCode(responseCode)
+                        .entity(errorEntity)
+                        .build();
             default:
-                return ImmutableGenericArangoServerException.of(responseCode, errorEntity);
+                return new GenericArangoServerExceptionBuilder()
+                        .responseCode(responseCode)
+                        .entity(errorEntity)
+                        .build();
         }
     }
 
-    @Value.Parameter(order = 1)
     public abstract int getResponseCode();
 
-    @Value.Parameter(order = 2)
     public abstract ErrorEntity getEntity();
 
 }

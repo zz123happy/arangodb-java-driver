@@ -22,8 +22,8 @@ package com.arangodb.next.connection.vst;
 
 
 import com.arangodb.next.connection.ArangoResponse;
+import com.arangodb.next.connection.ArangoResponseBuilder;
 import com.arangodb.next.connection.IOUtils;
-import com.arangodb.next.connection.ImmutableArangoResponse;
 import com.arangodb.velocypack.VPackSlice;
 import io.netty.buffer.ByteBuf;
 
@@ -42,7 +42,7 @@ final class VPackVstDeserializers {
         byte[] bodyBytes = IOUtils.getByteArray(body);
         body.release();
 
-        ImmutableArangoResponse.Builder builder = ArangoResponse.builder()
+        ArangoResponseBuilder builder = ArangoResponse.builder()
                 .body(bodyBytes)
                 .version(vpack.get(0).getAsInt())
                 .type(vpack.get(1).getAsInt())

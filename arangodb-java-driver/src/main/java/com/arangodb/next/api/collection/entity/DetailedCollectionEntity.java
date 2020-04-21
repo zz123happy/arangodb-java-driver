@@ -21,7 +21,7 @@
 package com.arangodb.next.api.collection.entity;
 
 import com.arangodb.next.api.entity.ReplicationFactor;
-import com.arangodb.next.entity.ApiEntity;
+import com.arangodb.next.entity.GenerateBuilder;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
 
 import javax.annotation.Nullable;
@@ -31,7 +31,7 @@ import java.util.List;
  * @author Michele Rastelli
  * @see <a href="https://www.arangodb.com/docs/stable/http/collection-creating.html">API Documentation</a>
  */
-@ApiEntity
+@GenerateBuilder
 public interface DetailedCollectionEntity extends CollectionEntity {
 
     @VPackPOJOBuilder

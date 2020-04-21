@@ -21,14 +21,14 @@
 package com.arangodb.next.api.collection.entity;
 
 
-import com.arangodb.next.entity.ApiEntity;
+import com.arangodb.next.entity.GenerateBuilder;
 
 /**
  * @author Mark Vollmary
  * @see <a href="https://www.arangodb.com/docs/stable/http/collection-modifying.html#change-properties-of-a-collection">API
  * Documentation</a>
  */
-@ApiEntity
+@GenerateBuilder
 public interface CollectionChangePropertiesOptions extends CollectionPropertiesOptions {
 
     static CollectionChangePropertiesOptionsBuilder builder() {

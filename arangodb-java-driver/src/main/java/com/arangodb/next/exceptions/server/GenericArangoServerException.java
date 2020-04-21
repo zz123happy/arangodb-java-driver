@@ -20,13 +20,13 @@
 
 package com.arangodb.next.exceptions.server;
 
-import org.immutables.value.Value;
+import com.arangodb.next.entity.GeneratePackagePrivateBuilder;
 
 /**
  * ArangoServerException representing an unknown (not typed) server error.
  *
  * @author Michele Rastelli
  */
-@Value.Immutable(builder = false)
+@GeneratePackagePrivateBuilder
 public abstract class GenericArangoServerException extends ArangoServerException {
 }

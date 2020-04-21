@@ -20,16 +20,16 @@
 
 package com.arangodb.next.exceptions;
 
-import org.immutables.value.Value;
+import com.arangodb.next.entity.GenerateBuilder;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@GenerateBuilder
 public abstract class LeaderNotAvailableException extends ArangoException {
 
-    public static ImmutableLeaderNotAvailableException.Builder builder() {
-        return ImmutableLeaderNotAvailableException.builder();
+    public static LeaderNotAvailableExceptionBuilder builder() {
+        return new LeaderNotAvailableExceptionBuilder();
     }
 
     @Override

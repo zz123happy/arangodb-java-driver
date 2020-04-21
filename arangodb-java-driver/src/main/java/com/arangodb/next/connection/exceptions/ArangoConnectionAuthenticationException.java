@@ -21,20 +21,19 @@
 package com.arangodb.next.connection.exceptions;
 
 import com.arangodb.next.connection.ArangoResponse;
+import com.arangodb.next.entity.GeneratePackagePrivateBuilder;
 import com.arangodb.next.exceptions.ArangoException;
-import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable(builder = false)
+@GeneratePackagePrivateBuilder
 public abstract class ArangoConnectionAuthenticationException extends ArangoException {
 
     public static ArangoConnectionAuthenticationException of(final ArangoResponse response) {
-        return ImmutableArangoConnectionAuthenticationException.of(response);
+        return new ArangoConnectionAuthenticationExceptionBuilder().response(response).build();
     }
 
-    @Value.Parameter
     public abstract ArangoResponse getResponse();
 
 }

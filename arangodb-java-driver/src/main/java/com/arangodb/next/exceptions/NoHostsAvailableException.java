@@ -20,16 +20,16 @@
 
 package com.arangodb.next.exceptions;
 
-import org.immutables.value.Value;
+import com.arangodb.next.entity.GeneratePackagePrivateBuilder;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@GeneratePackagePrivateBuilder
 public abstract class NoHostsAvailableException extends ArangoException {
 
-    public static ImmutableNoHostsAvailableException.Builder builder() {
-        return ImmutableNoHostsAvailableException.builder();
+    public static NoHostsAvailableException create() {
+        return new NoHostsAvailableExceptionBuilder().build();
     }
 
 }

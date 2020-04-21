@@ -23,10 +23,9 @@ package com.arangodb.next.communication;
 
 import com.arangodb.next.connection.*;
 import com.arangodb.next.entity.model.ErrorEntity;
-import com.arangodb.next.entity.model.ImmutableErrorEntity;
 import com.arangodb.next.entity.serde.ArangoSerde;
-import com.arangodb.next.exceptions.server.ArangoServerException;
 import com.arangodb.next.exceptions.LeaderNotAvailableException;
+import com.arangodb.next.exceptions.server.ArangoServerException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import reactor.core.publisher.Mono;
@@ -143,7 +142,7 @@ public class ActiveFailoverCommunicationMockTest {
     @ParameterizedTest
     @EnumSource(ContentType.class)
     void executeThrowing503ShouldTriggerFindLeader(ContentType contentType) {
-        ErrorEntity error = ImmutableErrorEntity.builder()
+        ErrorEntity error = ErrorEntity.builder()
                 .error(true)
                 .errorMessage("not a leader")
                 .errorNum(1496)

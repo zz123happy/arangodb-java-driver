@@ -21,16 +21,16 @@
 package com.arangodb.next.exceptions;
 
 
-import org.immutables.value.Value;
+import com.arangodb.next.entity.GenerateBuilder;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@GenerateBuilder
 public abstract class SerdeException extends ArangoException {
 
-    public static ImmutableSerdeException.Builder builder() {
-        return ImmutableSerdeException.builder();
+    public static SerdeExceptionBuilder builder() {
+        return new SerdeExceptionBuilder();
     }
 
 }

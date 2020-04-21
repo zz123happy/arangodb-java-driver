@@ -22,7 +22,7 @@ package com.arangodb.next.api.database.entity;
 
 
 import com.arangodb.next.api.entity.ReplicationFactor;
-import com.arangodb.next.entity.ApiEntity;
+import com.arangodb.next.entity.GenerateBuilder;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
 
 import javax.annotation.Nullable;
@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
 /**
  * @author Michele Rastelli
  */
-@ApiEntity
+@GenerateBuilder
 public interface DatabaseEntity {
 
     @VPackPOJOBuilder

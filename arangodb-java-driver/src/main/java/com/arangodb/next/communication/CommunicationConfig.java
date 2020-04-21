@@ -22,6 +22,7 @@ package com.arangodb.next.communication;
 
 
 import com.arangodb.next.connection.*;
+import com.arangodb.next.entity.GenerateBuilder;
 import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
@@ -31,11 +32,11 @@ import java.util.Set;
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@GenerateBuilder
 @SuppressWarnings("SameReturnValue")
 public interface CommunicationConfig {
-    static ImmutableCommunicationConfig.Builder builder() {
-        return ImmutableCommunicationConfig.builder();
+    static CommunicationConfigBuilder builder() {
+        return new CommunicationConfigBuilder();
     }
 
     /**

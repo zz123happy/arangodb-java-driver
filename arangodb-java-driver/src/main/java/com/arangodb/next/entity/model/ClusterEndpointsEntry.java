@@ -20,22 +20,21 @@
 
 package com.arangodb.next.entity.model;
 
+import com.arangodb.next.entity.GeneratePackagePrivateBuilder;
 import com.arangodb.velocypack.annotations.SerializedName;
 import com.arangodb.velocypack.annotations.VPackCreator;
-import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable(builder = false)
+@GeneratePackagePrivateBuilder
 public abstract class ClusterEndpointsEntry {
 
     @VPackCreator
     public static ClusterEndpointsEntry of(@SerializedName("endpoint") final String endpoint) {
-        return ImmutableClusterEndpointsEntry.of(endpoint);
+        return new ClusterEndpointsEntryBuilder().endpoint(endpoint).build();
     }
 
-    @Value.Parameter
     public abstract String getEndpoint();
 
 }

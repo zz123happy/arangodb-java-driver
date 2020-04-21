@@ -21,8 +21,8 @@
 package com.arangodb.next.entity.model;
 
 
+import com.arangodb.next.entity.GenerateBuilder;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
-import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -30,12 +30,12 @@ import java.util.Map;
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@GenerateBuilder
 public interface Version {
 
     @VPackPOJOBuilder
-    static ImmutableVersion.Builder builder() {
-        return ImmutableVersion.builder();
+    static VersionBuilder builder() {
+        return new VersionBuilder();
     }
 
     String getServer();

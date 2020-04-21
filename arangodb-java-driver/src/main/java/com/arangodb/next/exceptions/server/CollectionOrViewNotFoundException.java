@@ -21,7 +21,7 @@
 package com.arangodb.next.exceptions.server;
 
 
-import org.immutables.value.Value;
+import com.arangodb.next.entity.GeneratePackagePrivateBuilder;
 
 /**
  * ArangoServerException having:
@@ -36,7 +36,7 @@ import org.immutables.value.Value;
  *
  * @author Michele Rastelli
  */
-@Value.Immutable(builder = false)
+@GeneratePackagePrivateBuilder
 public abstract class CollectionOrViewNotFoundException extends ArangoServerException {
     static final int ERROR_NUM = 1203;
 }

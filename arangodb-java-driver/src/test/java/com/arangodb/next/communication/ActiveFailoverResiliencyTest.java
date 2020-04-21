@@ -53,7 +53,7 @@ class ActiveFailoverResiliencyTest {
 
     @Container
     private final static ProxiedContainerDeployment deployment = ProxiedContainerDeployment.ofActiveFailover(3);
-    private final ImmutableCommunicationConfig.Builder config;
+    private final CommunicationConfigBuilder config;
 
     ActiveFailoverResiliencyTest() {
         config = CommunicationConfig.builder()

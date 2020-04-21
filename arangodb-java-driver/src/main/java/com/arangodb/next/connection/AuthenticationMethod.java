@@ -20,10 +20,10 @@
 
 package com.arangodb.next.connection;
 
+import com.arangodb.next.entity.GeneratePackagePrivateBuilder;
 import com.arangodb.velocypack.VPackBuilder;
 import com.arangodb.velocypack.ValueType;
 import io.netty.buffer.ByteBuf;
-import org.immutables.value.Value;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -34,11 +34,17 @@ import java.util.Base64;
 public interface AuthenticationMethod {
 
     static AuthenticationMethod ofJwt(final String user, final String jwt) {
-        return ImmutableJwtAuthenticationMethod.of(user, jwt);
+        return new JwtAuthenticationMethodBuilder()
+                .user(user)
+                .jwt(jwt)
+                .build();
     }
 
     static AuthenticationMethod ofBasic(final String user, final String password) {
-        return ImmutableBasicAuthenticationMethod.of(user, password);
+        return new BasicAuthenticationMethodBuilder()
+                .user(user)
+                .password(password)
+                .build();
     }
 
     String getUser();
@@ -50,13 +56,9 @@ public interface AuthenticationMethod {
     /**
      * @see <a href="https://github.com/arangodb/velocystream#authentication">API</a>
      */
-    @Value.Immutable(builder = false)
+    @GeneratePackagePrivateBuilder
     abstract class JwtAuthenticationMethod implements AuthenticationMethod {
 
-        @Value.Parameter(order = 1)
-        public abstract String getUser();
-
-        @Value.Parameter(order = 2)
         abstract String getJwt();
 
         @Override
@@ -78,13 +80,9 @@ public interface AuthenticationMethod {
 
     }
 
-    @Value.Immutable(builder = false)
+    @GeneratePackagePrivateBuilder
     abstract class BasicAuthenticationMethod implements AuthenticationMethod {
 
-        @Value.Parameter(order = 1)
-        public abstract String getUser();
-
-        @Value.Parameter(order = 2)
         abstract String getPassword();
 
         @Override

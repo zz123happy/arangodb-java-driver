@@ -22,24 +22,25 @@ package com.arangodb.next.communication;
 
 
 import com.arangodb.next.connection.HostDescription;
-import org.immutables.value.Value;
+import com.arangodb.next.entity.GeneratePackagePrivateBuilder;
 
 /**
  * Represents an object carrying information about the host affinity of a sequence of client operations.
  *
  * @author Michele Rastelli
  */
-@Value.Immutable(builder = false)
+@GeneratePackagePrivateBuilder
 public interface Conversation {
 
     static Conversation of(HostDescription host, Level level) {
-        return ImmutableConversation.of(host, level);
+        return new ConversationBuilder()
+                .host(host)
+                .level(level)
+                .build();
     }
 
-    @Value.Parameter(order = 1)
     HostDescription getHost();
 
-    @Value.Parameter(order = 2)
     Level getLevel();
 
     enum Level {
@@ -52,7 +53,7 @@ public interface Conversation {
         /**
          * if the host is not available this causes ArangoCommunication to execute the request on another host
          */
-        PREFERRED;
+        PREFERRED
 
     }
 

@@ -20,18 +20,18 @@
 
 package com.arangodb.next.entity.model;
 
+import com.arangodb.next.entity.GenerateBuilder;
 import com.arangodb.velocypack.annotations.VPackPOJOBuilder;
-import org.immutables.value.Value;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@GenerateBuilder
 public interface SuccessEntity<T> extends ArangoEntity {
 
     @VPackPOJOBuilder
-    static <U> ImmutableSuccessEntity.Builder<U> builder() {
-        return ImmutableSuccessEntity.builder();
+    static <U> SuccessEntityBuilder<U> builder() {
+        return new SuccessEntityBuilder<>();
     }
 
     T getResult();

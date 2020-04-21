@@ -1,7 +1,7 @@
 /*
  * DISCLAIMER
  *
- * Copyright 2018 ArangoDB GmbH, Cologne, Germany
+ * Copyright 2016 ArangoDB GmbH, Cologne, Germany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,21 @@
  * Copyright holder is ArangoDB GmbH, Cologne, Germany
  */
 
-package com.arangodb.next.api.entity;
+package com.arangodb.next.entity;
 
-import com.arangodb.next.entity.GeneratePackagePrivateBuilder;
+
+import org.immutables.value.Value;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 
 /**
  * @author Michele Rastelli
  */
-@GeneratePackagePrivateBuilder
-public abstract class NumericReplicationFactor implements ReplicationFactor {
-
-    @Override
-    public abstract Integer getValue();
-
+@Target(ElementType.TYPE)
+@Value.Style(
+        overshadowImplementation = true,
+        visibility = Value.Style.ImplementationVisibility.PRIVATE,
+        builderVisibility = Value.Style.BuilderVisibility.PACKAGE)
+public @interface GeneratePackagePrivateBuilder {
 }

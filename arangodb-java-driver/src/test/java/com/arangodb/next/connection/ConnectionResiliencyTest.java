@@ -52,7 +52,7 @@ class ConnectionResiliencyTest {
 
     @Container
     private static final ProxiedContainerDeployment deployment = ProxiedContainerDeployment.ofSingleServer();
-    private final ImmutableConnectionConfig.Builder config;
+    private final ConnectionConfigBuilder config;
 
     ConnectionResiliencyTest() {
         config = ConnectionConfig.builder();

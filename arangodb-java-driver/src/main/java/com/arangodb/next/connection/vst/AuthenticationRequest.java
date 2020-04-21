@@ -20,19 +20,19 @@
 
 package com.arangodb.next.connection.vst;
 
-import org.immutables.value.Value;
+import com.arangodb.next.entity.GenerateBuilder;
 
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
-abstract class AuthenticationRequest {
+@GenerateBuilder
+interface AuthenticationRequest {
 
-    abstract String getUser();
+    String getUser();
 
-    abstract String getPassword();
+    String getPassword();
 
-    abstract String getEncryption();
+    String getEncryption();
 
 }

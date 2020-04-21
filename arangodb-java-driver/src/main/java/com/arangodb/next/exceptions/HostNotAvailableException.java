@@ -21,16 +21,16 @@
 package com.arangodb.next.exceptions;
 
 import com.arangodb.next.connection.HostDescription;
-import org.immutables.value.Value;
+import com.arangodb.next.entity.GenerateBuilder;
 
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@GenerateBuilder
 public abstract class HostNotAvailableException extends ArangoException {
 
-    public static ImmutableHostNotAvailableException.Builder builder() {
-        return ImmutableHostNotAvailableException.builder();
+    public static HostNotAvailableExceptionBuilder builder() {
+        return new HostNotAvailableExceptionBuilder();
     }
 
     public abstract HostDescription getHost();

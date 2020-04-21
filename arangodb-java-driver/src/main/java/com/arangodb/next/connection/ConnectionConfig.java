@@ -21,6 +21,7 @@
 package com.arangodb.next.connection;
 
 
+import com.arangodb.next.entity.GenerateBuilder;
 import io.netty.handler.ssl.SslContext;
 import org.immutables.value.Value;
 
@@ -34,12 +35,12 @@ import static com.arangodb.next.ArangoDefaults.DEFAULT_TIMEOUT;
 /**
  * @author Michele Rastelli
  */
-@Value.Immutable
+@GenerateBuilder
 @SuppressWarnings("SameReturnValue")
 public interface ConnectionConfig {
 
-    static ImmutableConnectionConfig.Builder builder() {
-        return ImmutableConnectionConfig.builder();
+    static ConnectionConfigBuilder builder() {
+        return new ConnectionConfigBuilder();
     }
 
     /**
