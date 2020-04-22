@@ -1,0 +1,25 @@
+---
+getCollectionStatistics
+---
+
+2020-04-21T21:48:19.3151455Z [ERROR] com.arangodb.next.api.collection.CollectionApiTest.getCollectionStatistics(TestContext,CollectionApi)  Time elapsed: 0.574 s  <<< ERROR!
+2020-04-21T21:48:19.3171805Z com.arangodb.velocypack.exception.VPackParserException: java.lang.ArrayIndexOutOfBoundsException: Index 0 out of bounds for length 0
+2020-04-21T21:48:19.3176918Z Caused by: java.lang.ArrayIndexOutOfBoundsException: Index 0 out of bounds for length 0
+
+---
+getCollectionStatistics
+---
+
+2020-04-21T21:48:18.0780589Z [ERROR] Tests run: 135, Failures: 0, Errors: 2, Skipped: 9, Time elapsed: 21.196 s <<< FAILURE! - in com.arangodb.next.api.database.DatabaseApiSyncTest
+2020-04-21T21:48:18.0896873Z [ERROR] com.arangodb.next.api.collection.CollectionApiTest.getCollectionStatistics(TestContext,CollectionApi)  Time elapsed: 0.624 s  <<< ERROR!
+2020-04-21T21:48:18.0925322Z com.arangodb.velocypack.exception.VPackParserException: java.lang.ArrayIndexOutOfBoundsException: 0
+2020-04-21T21:48:18.0942623Z Caused by: java.lang.ArrayIndexOutOfBoundsException: 0
+2020-04-21T21:48:18.0943539Z
+2020-04-21T21:48:18.0964895Z [ERROR] com.arangodb.next.api.collection.CollectionApiTest.getCollectionStatistics(TestContext,CollectionApi)  Time elapsed: 0.658 s  <<< ERROR!
+2020-04-21T21:48:18.1004775Z com.arangodb.velocypack.exception.VPackParserException: com.arangodb.velocypack.exception.VPackValueTypeException: Expecting type OBJECT
+2020-04-21T21:48:18.1068872Z Caused by: com.arangodb.velocypack.exception.VPackValueTypeException: Expecting type OBJECT
+
+
+Affects:
+- docker.io/arangodb/arangodb-preview:3.7.0-alpha.2
+- docker.io/arangodb/enterprise-preview:3.7.0-alpha.2
