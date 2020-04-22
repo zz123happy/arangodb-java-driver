@@ -1,0 +1,11 @@
+[[coordinator1]] STDERR: 2020-04-21T21:48:18Z |INFO| Wait on 16 returned component=arangodb core-dump=true signal="segmentation fault" trap-cause=-1
+
+--- HTTP ---
+Caused by: reactor.netty.http.client.PrematureCloseException: Connection prematurely closed BEFORE response
+
+--- VST ---
+Caused by: java.io.IOException: Connection closed!
+
+Affects:
+- docker.io/arangodb/arangodb:3.6.2
+- docker.io/arangodb/enterprise:3.6.2
