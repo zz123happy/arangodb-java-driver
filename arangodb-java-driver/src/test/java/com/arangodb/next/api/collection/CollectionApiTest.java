@@ -26,6 +26,7 @@ import com.arangodb.next.api.reactive.ConversationManager;
 import com.arangodb.next.api.utils.CollectionApiProvider;
 import com.arangodb.next.api.utils.TestContext;
 import com.arangodb.next.communication.Conversation;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -39,6 +40,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 /**
  * @author Michele Rastelli
  */
+@Tag("api")
 class CollectionApiTest {
 
     @ParameterizedTest(name = "{0}")

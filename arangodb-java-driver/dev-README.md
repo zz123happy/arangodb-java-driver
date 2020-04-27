@@ -22,6 +22,8 @@ mvn clean test
 
 To skip resiliency tests (which are slower): `-DexcludedGroups="resiliency"`
 
+To run Api tests only: `-Dgroups="api"`
+
 Code coverage report is generated here: [target/site/jacoco/index.html](target/site/jacoco/index.html)
 
 ### docker image

@@ -22,6 +22,7 @@ package com.arangodb.next.api.reactive;
 
 import com.arangodb.next.api.utils.ArangoDBProvider;
 import com.arangodb.next.api.utils.TestContext;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import reactor.core.publisher.Mono;
@@ -32,6 +33,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 /**
  * @author Michele Rastelli
  */
+@Tag("api")
 class ArangoDBTest {
 
     @ParameterizedTest(name = "{0}")

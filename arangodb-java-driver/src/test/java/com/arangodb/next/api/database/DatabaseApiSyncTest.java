@@ -28,6 +28,7 @@ import com.arangodb.next.api.sync.ThreadConversation;
 import com.arangodb.next.api.utils.DatabaseApiSyncProvider;
 import com.arangodb.next.api.utils.TestContext;
 import com.arangodb.next.exceptions.server.ArangoServerException;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -40,6 +41,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 /**
  * @author Michele Rastelli
  */
+@Tag("api")
 class DatabaseApiSyncTest {
 
     @ParameterizedTest(name = "{0}")
