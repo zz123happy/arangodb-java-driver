@@ -30,7 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.Set;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -41,18 +42,18 @@ public enum TestUtils {
 
     private static final String DEFAULT_DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.6.2";
 
-    private final Logger log;
+    private final Logger log = LoggerFactory.getLogger(TestUtils.class);
     private final String arangoLicenseKey;
     private final String testDockerImage;
     private final ArangoVersion testArangodbVersion;
     private final boolean testContainersReuse;
-    private final Set<HostDescription> hosts;
+    private final boolean isEnterprise;
+    private final boolean useProvidedDeployment;
+    private final List<HostDescription> hosts;
     private final AuthenticationMethod authentication;
     private final ArangoTopology topology;
 
     TestUtils() {
-        log = LoggerFactory.getLogger(TestUtils.class);
-
         arangoLicenseKey = readArangoLicenseKey();
         log.info("Using arango license key: {}", arangoLicenseKey.replaceAll(".", "*"));
 
@@ -65,8 +66,14 @@ public enum TestUtils {
         testContainersReuse = readTestcontainersReuseEnable();
         log.info("Using testcontainers reuse: {}", testContainersReuse);
 
-        hosts = readHosts();
-        if (hosts != null) {
+        isEnterprise = readIsEnterprise();
+        log.info("isEnterprise: {}", isEnterprise);
+
+        useProvidedDeployment = readUseProvidedDeployment();
+        log.info("Using provided deplyoment: {}", useProvidedDeployment);
+
+        if (useProvidedDeployment) {
+            hosts = readHosts();
             log.info("Using hosts: {}", hosts);
 
             authentication = readAuthentication();
@@ -75,6 +82,7 @@ public enum TestUtils {
             topology = readTopology();
             log.info("Using topology: {}", topology);
         } else {
+            hosts = null;
             authentication = null;
             topology = null;
         }
@@ -108,15 +116,28 @@ public enum TestUtils {
         return Boolean.parseBoolean(System.getProperty("testcontainers.reuse.enable"));
     }
 
-    private Set<HostDescription> readHosts() {
+    private boolean readIsEnterprise() {
+        String prop = System.getProperty("test.arangodb.isEnterprise");
+        if (prop != null) {
+            return Boolean.parseBoolean(prop);
+        } else {
+            return testDockerImage.contains("enterprise");
+        }
+    }
+
+    private boolean readUseProvidedDeployment() {
+        return Boolean.parseBoolean(System.getProperty("test.useProvidedDeployment"));
+    }
+
+    private List<HostDescription> readHosts() {
         String prop = System.getProperty("test.arangodb.hosts");
         if (prop == null) {
-            return null;
+            return Collections.emptyList();
         }
         return Arrays.stream(prop.split(","))
                 .map(it -> it.split(":"))
                 .map(it -> HostDescription.of(it[0], Integer.parseInt(it[1])))
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
     }
 
     private AuthenticationMethod readAuthentication() {
@@ -140,9 +161,27 @@ public enum TestUtils {
         return testArangodbVersion;
     }
 
+    public boolean isEnterprise() {
+        return isEnterprise;
+    }
+
+    public boolean isUseProvidedDeployment() {
+        return useProvidedDeployment;
+    }
+
     public boolean isTestContainersReuse() {
         return testContainersReuse;
     }
 
+    public List<HostDescription> getHosts() {
+        return hosts;
+    }
 
+    public AuthenticationMethod getAuthentication() {
+        return authentication;
+    }
+
+    public ArangoTopology getTopology() {
+        return topology;
+    }
 }

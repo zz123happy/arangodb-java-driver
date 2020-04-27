@@ -48,6 +48,50 @@ Test containers used in API tests can be reused. To enable it:
 - add the option `-Dtestcontainers.reuse.enable=true` when running tests
 
 
+### test provided deployment
+
+API tests can be executed also against a provided deployment, setting the following properties:
+- `test.useProvidedDeployment`: avoids starting containers and runs tests against the provided deployment
+- `test.arangodb.version`: version of the target deployment, eg. `x.y.z` 
+- `test.arangodb.isEnterprise`: whether the target deployment is enterprise 
+- `test.arangodb.hosts`: comma separated host list, eg. `1.2.3.4:8529,4.5.6.7:8529` 
+- `test.arangodb.authentication`: username and password separated by colon, eg. `username:passwd`  
+- `test.arangodb.topology`: topology of the target deployment, can be: `SINGLE_SERVER`, `ACTIVE_FAILOVER` or `CLUSTER`
+
+Eg. for single server:
+```shell script
+mvn test -Dgroups="api" \
+  -Dtest.useProvidedDeployment="true" \
+  -Dtest.arangodb.version="3.6.3" \
+  -Dtest.arangodb.isEnterprise="false" \
+  -Dtest.arangodb.hosts="localhost:8529" \
+  -Dtest.arangodb.authentication="root:test" \
+  -Dtest.arangodb.topology="SINGLE_SERVER"
+```
+
+Eg. for active failover:
+```shell script
+mvn test -Dgroups="api" \
+  -Dtest.useProvidedDeployment="true" \
+  -Dtest.arangodb.version="3.6.3" \
+  -Dtest.arangodb.isEnterprise="false" \
+  -Dtest.arangodb.hosts="server1:8529,server2:8529,server3:8529" \
+  -Dtest.arangodb.authentication="root:test" \
+  -Dtest.arangodb.topology="ACTIVE_FAILOVER"
+```
+
+Eg. for cluster:
+```shell script
+mvn test -Dgroups="api" \
+  -Dtest.useProvidedDeployment="true" \
+  -Dtest.arangodb.version="3.6.3" \
+  -Dtest.arangodb.isEnterprise="false" \
+  -Dtest.arangodb.hosts="coordinator1:8529,coordinator2:8529" \
+  -Dtest.arangodb.authentication="root:test" \
+  -Dtest.arangodb.topology="CLUSTER"
+```
+
+
 ## GH Actions
 
 To trigger GH Actions:

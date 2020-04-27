@@ -80,6 +80,14 @@ public abstract class ContainerDeployment implements Startable {
         return new SingleServerNoAuthDeployment(vstMaxSize);
     }
 
+    public static ContainerDeployment ofProvidedDeployment() {
+        return new ProvidedDeployment(
+                TestUtils.INSTANCE.getHosts(),
+                TestUtils.INSTANCE.getTopology(),
+                TestUtils.INSTANCE.getAuthentication()
+        );
+    }
+
     private final boolean reuse;
     private volatile boolean started = false;
 
@@ -87,8 +95,36 @@ public abstract class ContainerDeployment implements Startable {
         reuse = TestUtils.INSTANCE.isTestContainersReuse();
     }
 
+    public abstract List<HostDescription> getHosts();
+
+    public abstract ArangoTopology getTopology();
+
+    abstract CompletableFuture<? extends ContainerDeployment> asyncStart();
+
+    abstract CompletableFuture<ContainerDeployment> asyncStop();
+
+    public AuthenticationMethod getAuthentication() {
+        return AuthenticationMethod.ofBasic(getUser(), getPassword());
+    }
+
+    public String getUser() {
+        return "root";
+    }
+
+    public String getPassword() {
+        return "test";
+    }
+
+    public String getBasicAuthentication() {
+        return "Basic cm9vdDp0ZXN0";
+    }
+
+    protected String getSslProtocol() {
+        return null;
+    }
+
     @Override
-    public synchronized void start() {
+    public final synchronized void start() {
         if (started) return;
         try {
             asyncStart().join();
@@ -106,15 +142,11 @@ public abstract class ContainerDeployment implements Startable {
     }
 
     @Override
-    public synchronized void stop() {
+    public final synchronized void stop() {
         asyncStop().join();
     }
 
-    public AuthenticationMethod getAuthentication() {
-        return AuthenticationMethod.ofBasic(getUser(), getPassword());
-    }
-
-    public AuthenticationMethod getJwtAuthentication() throws IOException {
+    public final AuthenticationMethod getJwtAuthentication() throws IOException {
         SslContext sslContext = SslContextBuilder
                 .forClient()
                 .protocols(getSslProtocol())
@@ -135,52 +167,29 @@ public abstract class ContainerDeployment implements Startable {
         return AuthenticationMethod.ofJwt(getUser(), jwt);
     }
 
-    public String getUser() {
-        return "root";
+    public final boolean isEnterprise() {
+        return TestUtils.INSTANCE.isEnterprise();
     }
 
-    public String getPassword() {
-        return "test";
-    }
 
-    public String getBasicAuthentication() {
-        return "Basic cm9vdDp0ZXN0";
-    }
-
-    public abstract List<HostDescription> getHosts();
-
-    public boolean isEnterprise() {
-        return getImage().contains("enterprise");
-    }
-
-    public abstract ArangoTopology getTopology();
-
-    public boolean isAtLeastVersion(final int major, final int minor) {
+    public final boolean isAtLeastVersion(final int major, final int minor) {
         final String[] split = getImage().split(":")[1].split("\\.");
         return Integer.parseInt(split[0]) >= major && Integer.parseInt(split[1]) >= minor;
     }
 
-    protected String getImage() {
+    protected final String getImage() {
         return TestUtils.INSTANCE.getTestDockerImage();
     }
 
-    protected String getLicenseKey() {
+    protected final String getLicenseKey() {
         return TestUtils.INSTANCE.getArangoLicenseKey();
     }
 
-    abstract CompletableFuture<? extends ContainerDeployment> asyncStart();
-
-    abstract CompletableFuture<ContainerDeployment> asyncStop();
-
-    protected String getSslProtocol() {
-        return null;
-    }
-
-    protected boolean isReuse() {
+    protected final boolean isReuse() {
         return reuse;
     }
 
-    protected boolean isStarted() {
+    protected final boolean isStarted() {
         return started;
     }
 }

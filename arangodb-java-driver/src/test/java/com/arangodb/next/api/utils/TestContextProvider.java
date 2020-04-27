@@ -23,8 +23,10 @@ package com.arangodb.next.api.utils;
 import deployments.ContainerDeployment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import utils.TestUtils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Supplier;
@@ -44,22 +46,30 @@ public enum TestContextProvider implements Supplier<List<TestContext>> {
     TestContextProvider() {
         long start = new Date().getTime();
 
-        List<ContainerDeployment> deployments = Arrays.asList(
-                ContainerDeployment.ofReusableSingleServer(),
-                ContainerDeployment.ofReusableActiveFailover(),
-                ContainerDeployment.ofReusableCluster()
-        );
+        List<ContainerDeployment> deployments;
 
-        List<Thread> startingTasks = deployments.stream()
-                .map(it -> new Thread(it::start))
-                .collect(Collectors.toList());
+        if (TestUtils.INSTANCE.isUseProvidedDeployment()) {
+            log.info("Using provided database deployment");
+            deployments = Collections.singletonList(ContainerDeployment.ofProvidedDeployment());
+        } else {
+            log.info("No database deployment provided, starting containers...");
+            deployments = Arrays.asList(
+                    ContainerDeployment.ofReusableSingleServer(),
+                    ContainerDeployment.ofReusableActiveFailover(),
+                    ContainerDeployment.ofReusableCluster()
+            );
 
-        startingTasks.forEach(Thread::start);
-        for (Thread t : startingTasks) {
-            try {
-                t.join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+            List<Thread> startingTasks = deployments.stream()
+                    .map(it -> new Thread(it::start))
+                    .collect(Collectors.toList());
+
+            startingTasks.forEach(Thread::start);
+            for (Thread t : startingTasks) {
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
