@@ -25,18 +25,17 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Network;
+import utils.TestUtils;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static deployments.ContainerUtils.getImage;
 
 /**
  * @author Michele Rastelli
  */
 public class ReusableNetwork implements Network {
 
-    private static final String NAME_SUFFIX = "-arangodb-java-" + getImage().split(":")[1];
+    private static final String NAME_SUFFIX = "-arangodb-java-" + TestUtils.INSTANCE.getTestDockerImage().split(":")[1];
     private static final Map<String, ReusableNetwork> instances = new HashMap<>();
     private final String name;
     private final String id;

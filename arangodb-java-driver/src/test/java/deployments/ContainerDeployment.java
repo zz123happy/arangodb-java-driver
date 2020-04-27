@@ -35,6 +35,7 @@ import org.testcontainers.containers.ContainerLaunchException;
 import org.testcontainers.lifecycle.Startable;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import utils.TestUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -83,7 +84,7 @@ public abstract class ContainerDeployment implements Startable {
     private volatile boolean started = false;
 
     public ContainerDeployment() {
-        reuse = Boolean.parseBoolean(System.getProperty("testcontainers.reuse.enable"));
+        reuse = TestUtils.INSTANCE.isTestContainersReuse();
     }
 
     @Override
@@ -154,13 +155,17 @@ public abstract class ContainerDeployment implements Startable {
 
     public abstract ArangoTopology getTopology();
 
-    public boolean isAtLeastVersion(final int major, final int minor){
+    public boolean isAtLeastVersion(final int major, final int minor) {
         final String[] split = getImage().split(":")[1].split("\\.");
         return Integer.parseInt(split[0]) >= major && Integer.parseInt(split[1]) >= minor;
     }
 
     protected String getImage() {
-        return ContainerUtils.getImage();
+        return TestUtils.INSTANCE.getTestDockerImage();
+    }
+
+    protected String getLicenseKey() {
+        return TestUtils.INSTANCE.getArangoLicenseKey();
     }
 
     abstract CompletableFuture<? extends ContainerDeployment> asyncStart();

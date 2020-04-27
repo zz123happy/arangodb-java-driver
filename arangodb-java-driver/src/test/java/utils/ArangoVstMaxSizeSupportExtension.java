@@ -21,7 +21,6 @@
 package utils;
 
 import deployments.ArangoVersion;
-import deployments.ContainerUtils;
 import deployments.ImmutableArangoVersion;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
@@ -36,7 +35,7 @@ public class ArangoVstMaxSizeSupportExtension implements ExecutionCondition {
 
     @Override
     public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
-        ArangoVersion version = ContainerUtils.getVersion();
+        ArangoVersion version = TestUtils.INSTANCE.getTestArangodbVersion();
 
         if (version.compareTo(maxVersion) < 0) {
             return ConditionEvaluationResult.enabled("Enabled on DB version < " + maxVersion);

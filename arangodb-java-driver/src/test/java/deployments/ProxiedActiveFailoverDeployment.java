@@ -116,7 +116,7 @@ public class ProxiedActiveFailoverDeployment extends ProxiedContainerDeployment 
 
     private GenericContainer<?> createContainer(String name) {
         return new GenericContainer<>(getImage())
-                .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
+                .withEnv("ARANGO_LICENSE_KEY", getLicenseKey())
                 .withCopyFileToContainer(MountableFile.forClasspathResource("deployments/jwtSecret"), "/jwtSecret")
                 .withExposedPorts(8529)
                 .withNetworkAliases(name)

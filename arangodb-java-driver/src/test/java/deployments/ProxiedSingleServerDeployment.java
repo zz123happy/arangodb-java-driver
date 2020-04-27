@@ -28,7 +28,7 @@ public class ProxiedSingleServerDeployment extends ProxiedContainerDeployment {
     ProxiedSingleServerDeployment() {
         toxiproxy = new ToxiproxyContainer();
         container = new GenericContainer<>(getImage())
-                .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
+                .withEnv("ARANGO_LICENSE_KEY", getLicenseKey())
                 .withEnv("ARANGO_ROOT_PASSWORD", getPassword())
                 .withExposedPorts(PORT)
                 .withNetworkAliases("db")

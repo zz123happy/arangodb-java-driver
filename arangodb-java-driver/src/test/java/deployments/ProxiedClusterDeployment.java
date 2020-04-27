@@ -118,7 +118,7 @@ public class ProxiedClusterDeployment extends ProxiedContainerDeployment {
 
     private GenericContainer<?> createContainer(String name, int port) {
         return new GenericContainer<>(getImage())
-                .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
+                .withEnv("ARANGO_LICENSE_KEY", getLicenseKey())
                 .withCopyFileToContainer(MountableFile.forClasspathResource("deployments/jwtSecret"), "/jwtSecret")
                 .withExposedPorts(port)
                 .withNetworkAliases(name)

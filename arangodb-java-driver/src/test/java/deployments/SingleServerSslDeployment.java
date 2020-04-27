@@ -26,7 +26,7 @@ class SingleServerSslDeployment extends ContainerDeployment {
     SingleServerSslDeployment() {
         String SSL_CERT_PATH = Paths.get("../docker/server.pem").toAbsolutePath().toString();
         container = new GenericContainer<>(getImage())
-                .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
+                .withEnv("ARANGO_LICENSE_KEY", getLicenseKey())
                 .withEnv("ARANGO_ROOT_PASSWORD", getPassword())
                 .withExposedPorts(8529)
                 .withFileSystemBind(SSL_CERT_PATH, "/server.pem", BindMode.READ_ONLY)

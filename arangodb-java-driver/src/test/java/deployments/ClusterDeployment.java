@@ -148,7 +148,7 @@ public class ClusterDeployment extends ContainerDeployment {
     private GenericContainer<?> createContainer(String name, int port) {
         GenericContainer<?> c = new GenericContainer<>(getImage())
                 .withReuse(isReuse())
-                .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
+                .withEnv("ARANGO_LICENSE_KEY", getLicenseKey())
                 .withCopyFileToContainer(MountableFile.forClasspathResource("deployments/jwtSecret"), "/jwtSecret")
                 .withExposedPorts(port)
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[" + name + "]"))

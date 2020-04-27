@@ -22,7 +22,7 @@ public class SingleServerNoAuthDeployment extends ContainerDeployment {
 
     SingleServerNoAuthDeployment() {
         container = new GenericContainer<>(getImage())
-                .withEnv("ARANGO_LICENSE_KEY", ContainerUtils.getLicenseKey())
+                .withEnv("ARANGO_LICENSE_KEY", getLicenseKey())
                 .withEnv("ARANGO_NO_AUTH", "1")
                 .withExposedPorts(8529)
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("[DB_LOG]"))

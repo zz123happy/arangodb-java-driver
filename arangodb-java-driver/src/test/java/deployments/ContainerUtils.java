@@ -33,21 +33,9 @@ import java.util.Objects;
  */
 public class ContainerUtils {
 
-    private static final String DEFAULT_DOCKER_IMAGE = "docker.io/arangodb/arangodb:3.6.2";
     private static final Logger log = LoggerFactory.getLogger(ContainerUtils.class);
 
-    static String getImage() {
-        String dockerImageFromProperties = System.getProperty("test.docker.image");
-        String dockerImage = dockerImageFromProperties != null ? dockerImageFromProperties : DEFAULT_DOCKER_IMAGE;
-        log.info("Using docker image: {}", dockerImage);
-        return dockerImage;
-    }
-
-    static String getLicenseKey() {
-        String arangoLicenseKeyFromProperties = System.getProperty("arango.license.key");
-        String arangoLicenseKey = arangoLicenseKeyFromProperties != null ? arangoLicenseKeyFromProperties : "";
-        log.info("Using arango license key: {}", arangoLicenseKey.replaceAll(".", "*"));
-        return arangoLicenseKey;
+    private ContainerUtils() {
     }
 
     static void waitForAuthenticationUpdate(ContainerDeployment deployment) {
@@ -71,15 +59,6 @@ public class ContainerUtils {
                 }
             }
         } while (authErrors);
-    }
-
-    static public ArangoVersion getVersion() {
-        String[] parts = getImage().split(":")[1].split("\\.");
-        return ImmutableArangoVersion.of(
-                Integer.parseInt(parts[0]),
-                Integer.parseInt(parts[1]),
-                Integer.parseInt(parts[2].split("-")[0])
-        );
     }
 
 }
