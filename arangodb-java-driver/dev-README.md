@@ -57,6 +57,7 @@ API tests can be executed also against a provided deployment, setting the follow
 - `test.arangodb.hosts`: comma separated host list, eg. `1.2.3.4:8529,4.5.6.7:8529` 
 - `test.arangodb.authentication`: username and password separated by colon, eg. `username:passwd`  
 - `test.arangodb.topology`: topology of the target deployment, can be: `SINGLE_SERVER`, `ACTIVE_FAILOVER` or `CLUSTER`
+- `test.arangodb.requestTimeout`: requests timeout in ms
 
 Eg. for single server:
 ```shell script
