@@ -24,8 +24,10 @@ package com.arangodb.next.api.utils;
 import com.arangodb.next.communication.ArangoTopology;
 import com.arangodb.next.communication.CommunicationConfig;
 import com.arangodb.next.connection.ArangoProtocol;
+import com.arangodb.next.connection.ConnectionConfig;
 import com.arangodb.next.connection.ContentType;
 import deployments.ContainerDeployment;
+import utils.TestUtils;
 
 import java.util.AbstractMap;
 import java.util.stream.Stream;
@@ -50,6 +52,10 @@ public class TestContext {
                         .addAllHosts(deployment.getHosts())
                         .authenticationMethod(deployment.getAuthentication())
                         .topology(deployment.getTopology())
+                        .connectionConfig(ConnectionConfig
+                                .builder()
+                                .timeout(TestUtils.INSTANCE.getRequestTimeout())
+                                .build())
                         .build()
                 )
                 .map(config -> new TestContext(deployment, config));

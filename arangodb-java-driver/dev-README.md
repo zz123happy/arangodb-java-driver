@@ -61,6 +61,7 @@ API tests can be executed also against a provided deployment, setting the follow
 Eg. for single server:
 ```shell script
 mvn test -Dgroups="api" \
+  -Dtest.arangodb.requestTimeout="5000" \
   -Dtest.useProvidedDeployment="true" \
   -Dtest.arangodb.version="3.6.3" \
   -Dtest.arangodb.isEnterprise="false" \
@@ -72,6 +73,7 @@ mvn test -Dgroups="api" \
 Eg. for active failover:
 ```shell script
 mvn test -Dgroups="api" \
+  -Dtest.arangodb.requestTimeout="5000" \
   -Dtest.useProvidedDeployment="true" \
   -Dtest.arangodb.version="3.6.3" \
   -Dtest.arangodb.isEnterprise="false" \
@@ -83,6 +85,7 @@ mvn test -Dgroups="api" \
 Eg. for cluster:
 ```shell script
 mvn test -Dgroups="api" \
+  -Dtest.arangodb.requestTimeout="5000" \
   -Dtest.useProvidedDeployment="true" \
   -Dtest.arangodb.version="3.6.3" \
   -Dtest.arangodb.isEnterprise="false" \

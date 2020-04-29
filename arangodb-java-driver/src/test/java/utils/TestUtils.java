@@ -48,6 +48,7 @@ public enum TestUtils {
     private final ArangoVersion testArangodbVersion;
     private final boolean testContainersReuse;
     private final boolean isEnterprise;
+    private final int requestTimeout;
     private final boolean useProvidedDeployment;
     private final List<HostDescription> hosts;
     private final AuthenticationMethod authentication;
@@ -68,6 +69,9 @@ public enum TestUtils {
 
         isEnterprise = readIsEnterprise();
         log.info("isEnterprise: {}", isEnterprise);
+
+        requestTimeout = readRequestTimeout();
+        log.info("Using requestTimeout: {}", requestTimeout);
 
         useProvidedDeployment = readUseProvidedDeployment();
         log.info("Using provided deplyoment: {}", useProvidedDeployment);
@@ -115,11 +119,12 @@ public enum TestUtils {
 
     private boolean readIsEnterprise() {
         String prop = System.getProperty("test.arangodb.isEnterprise");
-        if (prop != null) {
-            return Boolean.parseBoolean(prop);
-        } else {
-            return testDockerImage.contains("enterprise");
-        }
+        return prop != null ? Boolean.parseBoolean(prop) : testDockerImage.contains("enterprise");
+    }
+
+    private int readRequestTimeout() {
+        String timeout = System.getProperty("test.arangodb.requestTimeout");
+        return timeout != null ? Integer.parseInt(timeout) : 30;
     }
 
     private boolean readUseProvidedDeployment() {
@@ -128,10 +133,7 @@ public enum TestUtils {
 
     private List<HostDescription> readHosts() {
         String prop = System.getProperty("test.arangodb.hosts");
-        if (prop == null) {
-            return Collections.emptyList();
-        }
-        return Arrays.stream(prop.split(","))
+        return prop == null ? Collections.emptyList() : Arrays.stream(prop.split(","))
                 .map(it -> it.split(":"))
                 .map(it -> HostDescription.of(it[0], Integer.parseInt(it[1])))
                 .collect(Collectors.toList());
@@ -160,6 +162,10 @@ public enum TestUtils {
 
     public boolean isEnterprise() {
         return isEnterprise;
+    }
+
+    public int getRequestTimeout() {
+        return requestTimeout;
     }
 
     public boolean isUseProvidedDeployment() {
