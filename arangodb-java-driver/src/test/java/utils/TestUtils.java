@@ -100,11 +100,8 @@ public enum TestUtils {
 
     private ArangoVersion readTestArangodbVersion() {
         String versionFromProperties = System.getProperty("test.arangodb.version");
-        String version = versionFromProperties != null ? versionFromProperties :
-                testDockerImage
-                        .split(":")[1]  // docker image version
-                        .split("-")[0]; // ignore alpha suffix
-        String[] parts = version.split("\\.");
+        String version = versionFromProperties != null ? versionFromProperties : testDockerImage.split(":")[1];
+        String[] parts = version.split("-")[0].split("\\.");
         return ImmutableArangoVersion.of(
                 Integer.parseInt(parts[0]),
                 Integer.parseInt(parts[1]),
