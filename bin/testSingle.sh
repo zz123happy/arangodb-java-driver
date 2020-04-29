@@ -20,7 +20,12 @@ echo "==================================================="
 
 docker pull "$1"
 logfile=out-$(date +%s%N).txt
-mvn clean test -e -Dtest.docker.image="$1" -Darango.license.key="$ARANGO_LICENSE_KEY" >"$logfile" 2>&1
+# mvn clean test -e -Dtest.docker.image="$1" -Darango.license.key="$ARANGO_LICENSE_KEY" >"$logfile" 2>&1
+mvn -e test \
+  -DexcludedGroups="resiliency" \
+  -Dtest.arangodb.requestTimeout="5000" \
+  -Dtest.docker.image="$1" \
+  -Darango.license.key="$ARANGO_LICENSE_KEY" >"$logfile" 2>&1
 
 # remove logfile if the test completed successfully
 rm "$logfile"
