@@ -124,7 +124,7 @@ public enum TestUtils {
 
     private int readRequestTimeout() {
         String timeout = System.getProperty("test.arangodb.requestTimeout");
-        return timeout != null ? Integer.parseInt(timeout) : 30;
+        return timeout != null ? Integer.parseInt(timeout) : 30_000;
     }
 
     private boolean readUseProvidedDeployment() {
