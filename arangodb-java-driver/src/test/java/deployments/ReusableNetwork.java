@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public class ReusableNetwork implements Network {
 
-    private static final String NAME_SUFFIX = "-arangodb-java-" + TestUtils.INSTANCE.getTestDockerImage().split(":")[1];
+    private static final String NAME_SUFFIX = "-arangodb-java-" + TestUtils.INSTANCE.getTestDockerImage();
     private static final Map<String, ReusableNetwork> instances = new HashMap<>();
     private final String name;
     private final String id;
