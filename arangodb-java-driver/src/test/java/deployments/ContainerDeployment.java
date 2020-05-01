@@ -173,8 +173,8 @@ public abstract class ContainerDeployment implements Startable {
 
 
     public final boolean isAtLeastVersion(final int major, final int minor) {
-        final String[] split = getImage().split(":")[1].split("\\.");
-        return Integer.parseInt(split[0]) >= major && Integer.parseInt(split[1]) >= minor;
+        ArangoVersion version = TestUtils.INSTANCE.getTestArangodbVersion();
+        return version.getMajor() >= major && version.getMinor() >= minor;
     }
 
     protected final String getImage() {
