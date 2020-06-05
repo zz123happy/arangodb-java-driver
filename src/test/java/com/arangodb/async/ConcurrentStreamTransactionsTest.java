@@ -26,6 +26,7 @@ import com.arangodb.entity.BaseDocument;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.StreamTransactionEntity;
 import com.arangodb.model.DocumentCreateOptions;
+import com.arangodb.model.DocumentReadOptions;
 import com.arangodb.model.StreamTransactionOptions;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -131,12 +132,12 @@ public class ConcurrentStreamTransactionsTest extends BaseTest {
     }
 
     @Test
-    public void concurrentUseOfSameTransaction() throws ExecutionException, InterruptedException {
+    public void concurrentWriteWithinSameTransaction() throws ExecutionException, InterruptedException {
         assumeTrue(isAtLeastVersion(3, 5));
         assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
 
         StreamTransactionEntity tx = db.beginStreamTransaction(
-                new StreamTransactionOptions().readCollections(COLLECTION_NAME).writeCollections(COLLECTION_NAME)).join();
+                new StreamTransactionOptions().writeCollections(COLLECTION_NAME)).join();
 
         List<CompletableFuture<DocumentCreateEntity<BaseDocument>>> reqs = IntStream.range(0, 100)
                 .mapToObj(it -> db.collection(COLLECTION_NAME)
@@ -150,7 +151,28 @@ public class ConcurrentStreamTransactionsTest extends BaseTest {
             assertThat(it.getKey(), is(notNullValue()));
             assertThat(db.collection(COLLECTION_NAME).documentExists(it.getKey()).join(), is(true));
         });
+    }
 
+    @Test
+    public void concurrentReadWithinSameTransaction() throws ExecutionException, InterruptedException {
+        assumeTrue(isAtLeastVersion(3, 5));
+        assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
+
+        String key = "key-" + UUID.randomUUID().toString();
+        db.collection(COLLECTION_NAME).insertDocument(new BaseDocument(key)).join();
+
+        StreamTransactionEntity tx = db.beginStreamTransaction(
+                new StreamTransactionOptions().readCollections(COLLECTION_NAME)).join();
+
+        List<CompletableFuture<BaseDocument>> reqs = IntStream.range(0, 100)
+                .mapToObj(it -> db.collection(COLLECTION_NAME)
+                        .getDocument(key, BaseDocument.class, new DocumentReadOptions().streamTransactionId(tx.getId())))
+                .collect(Collectors.toList());
+
+        List<BaseDocument> results = reqs.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        db.commitStreamTransaction(tx.getId()).join();
+
+        results.forEach(it -> assertThat(it.getKey(), is(notNullValue())));
     }
 
 }
