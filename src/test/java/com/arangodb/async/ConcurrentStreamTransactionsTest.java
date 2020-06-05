@@ -25,6 +25,7 @@ import com.arangodb.entity.ArangoDBEngine;
 import com.arangodb.entity.BaseDocument;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.StreamTransactionEntity;
+import com.arangodb.model.AqlQueryOptions;
 import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.DocumentReadOptions;
 import com.arangodb.model.StreamTransactionOptions;
@@ -32,7 +33,9 @@ import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Test;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -150,6 +153,34 @@ public class ConcurrentStreamTransactionsTest extends BaseTest {
         results.forEach(it -> {
             assertThat(it.getKey(), is(notNullValue()));
             assertThat(db.collection(COLLECTION_NAME).documentExists(it.getKey()).join(), is(true));
+        });
+    }
+
+    @Test
+    public void concurrentAqlWriteWithinSameTransaction() throws ExecutionException, InterruptedException {
+        assumeTrue(isAtLeastVersion(3, 5));
+        assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
+
+        StreamTransactionEntity tx = db.beginStreamTransaction(
+                new StreamTransactionOptions().writeCollections(COLLECTION_NAME)).join();
+
+        List<CompletableFuture<ArangoCursorAsync<BaseDocument>>> reqs = IntStream.range(0, 100)
+                .mapToObj(it -> {
+                    Map<String, Object> params = new HashMap<>();
+                    params.put("doc", new BaseDocument("key-" + UUID.randomUUID().toString()));
+                    params.put("@col", COLLECTION_NAME);
+                    return db.query("INSERT @doc INTO @@col RETURN NEW", params,
+                            new AqlQueryOptions().streamTransactionId(tx.getId()), BaseDocument.class);
+                })
+                .collect(Collectors.toList());
+
+        List<ArangoCursorAsync<BaseDocument>> results = reqs.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        db.commitStreamTransaction(tx.getId()).join();
+
+        results.forEach(it -> {
+            String key = it.iterator().next().getKey();
+            assertThat(key, is(notNullValue()));
+            assertThat(db.collection(COLLECTION_NAME).documentExists(key).join(), is(true));
         });
     }
 
