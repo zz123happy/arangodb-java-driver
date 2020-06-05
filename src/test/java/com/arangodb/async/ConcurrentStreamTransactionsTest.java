@@ -23,6 +23,7 @@ package com.arangodb.async;
 import com.arangodb.ArangoDBException;
 import com.arangodb.entity.ArangoDBEngine;
 import com.arangodb.entity.BaseDocument;
+import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.StreamTransactionEntity;
 import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.StreamTransactionOptions;
@@ -30,10 +31,16 @@ import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -122,4 +129,28 @@ public class ConcurrentStreamTransactionsTest extends BaseTest {
 
         db.abortStreamTransaction(tx2.getId()).get();
     }
+
+    @Test
+    public void concurrentUseOfSameTransaction() throws ExecutionException, InterruptedException {
+        assumeTrue(isAtLeastVersion(3, 5));
+        assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
+
+        StreamTransactionEntity tx = db.beginStreamTransaction(
+                new StreamTransactionOptions().readCollections(COLLECTION_NAME).writeCollections(COLLECTION_NAME)).join();
+
+        List<CompletableFuture<DocumentCreateEntity<BaseDocument>>> reqs = IntStream.range(0, 100)
+                .mapToObj(it -> db.collection(COLLECTION_NAME)
+                        .insertDocument(new BaseDocument(), new DocumentCreateOptions().streamTransactionId(tx.getId())))
+                .collect(Collectors.toList());
+
+        List<DocumentCreateEntity<BaseDocument>> results = reqs.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        db.commitStreamTransaction(tx.getId()).join();
+
+        results.forEach(it -> {
+            assertThat(it.getKey(), is(notNullValue()));
+            assertThat(db.collection(COLLECTION_NAME).documentExists(it.getKey()).join(), is(true));
+        });
+
+    }
+
 }
