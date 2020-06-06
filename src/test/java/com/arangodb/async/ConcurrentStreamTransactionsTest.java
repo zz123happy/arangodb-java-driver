@@ -32,10 +32,7 @@ import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -166,6 +163,33 @@ public class ConcurrentStreamTransactionsTest extends BaseTest {
         db.commitStreamTransaction(tx.getId()).join();
 
         results.forEach(it -> assertThat(it.getKey(), is(notNullValue())));
+    }
+
+    @Test
+    public void concurrentAqlReadWithinSameTransaction() throws ExecutionException, InterruptedException {
+        assumeTrue(isAtLeastVersion(3, 5));
+        assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
+
+        String key = "key-" + UUID.randomUUID().toString();
+        String id = COLLECTION_NAME + "/" + key;
+        db.collection(COLLECTION_NAME).insertDocument(new BaseDocument(key)).join();
+
+        StreamTransactionEntity tx = db.beginStreamTransaction(
+                new StreamTransactionOptions().readCollections(COLLECTION_NAME)).join();
+
+        List<CompletableFuture<ArangoCursorAsync<BaseDocument>>> reqs = IntStream.range(0, 100)
+                .mapToObj(it -> db.query(
+                        "RETURN DOCUMENT(@id)",
+                        Collections.singletonMap("id", id),
+                        new AqlQueryOptions().streamTransactionId(tx.getId()), BaseDocument.class))
+                .collect(Collectors.toList());
+
+        List<ArangoCursorAsync<BaseDocument>> results = reqs.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
+
+        db.commitStreamTransaction(tx.getId()).join();
+        results.forEach(it -> assertThat(it.iterator().next().getKey(), is(key)));
     }
 
 }
