@@ -20,7 +20,6 @@
 
 package com.arangodb.async;
 
-import com.arangodb.ArangoDBException;
 import com.arangodb.entity.ArangoDBEngine;
 import com.arangodb.entity.BaseDocument;
 import com.arangodb.entity.DocumentCreateEntity;
@@ -29,8 +28,8 @@ import com.arangodb.model.AqlQueryOptions;
 import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.DocumentReadOptions;
 import com.arangodb.model.StreamTransactionOptions;
-import org.hamcrest.Matchers;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -45,7 +44,6 @@ import java.util.stream.IntStream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -66,72 +64,6 @@ public class ConcurrentStreamTransactionsTest extends BaseTest {
     public void teardown() throws ExecutionException, InterruptedException {
         if (db.collection(COLLECTION_NAME).exists().get())
             db.collection(COLLECTION_NAME).drop().get();
-    }
-
-    @Test
-    public void conflictOnInsertDocumentWithNotYetCommittedTx() throws ExecutionException, InterruptedException {
-        assumeTrue(isSingleServer());
-        assumeTrue(isAtLeastVersion(3, 5));
-        assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
-
-        StreamTransactionEntity tx1 = db.beginStreamTransaction(
-                new StreamTransactionOptions().readCollections(COLLECTION_NAME).writeCollections(COLLECTION_NAME)).get();
-
-        StreamTransactionEntity tx2 = db.beginStreamTransaction(
-                new StreamTransactionOptions().readCollections(COLLECTION_NAME).writeCollections(COLLECTION_NAME)).get();
-
-        String key = UUID.randomUUID().toString();
-
-        // insert a document from within tx1
-        db.collection(COLLECTION_NAME)
-                .insertDocument(new BaseDocument(key), new DocumentCreateOptions().streamTransactionId(tx1.getId())).get();
-
-        try {
-            // insert conflicting document from within tx2
-            db.collection(COLLECTION_NAME).insertDocument(new BaseDocument(key),
-                    new DocumentCreateOptions().streamTransactionId(tx2.getId())).get();
-            fail();
-        } catch (ExecutionException e) {
-            assertThat(e.getCause(), Matchers.instanceOf(ArangoDBException.class));
-            e.getCause().printStackTrace();
-        }
-
-        db.abortStreamTransaction(tx1.getId()).get();
-        db.abortStreamTransaction(tx2.getId()).get();
-    }
-
-    @Test
-    public void conflictOnInsertDocumentWithAlreadyCommittedTx() throws ExecutionException, InterruptedException {
-        assumeTrue(isSingleServer());
-        assumeTrue(isAtLeastVersion(3, 5));
-        assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
-
-        StreamTransactionEntity tx1 = db.beginStreamTransaction(
-                new StreamTransactionOptions().readCollections(COLLECTION_NAME).writeCollections(COLLECTION_NAME)).get();
-
-        StreamTransactionEntity tx2 = db.beginStreamTransaction(
-                new StreamTransactionOptions().readCollections(COLLECTION_NAME).writeCollections(COLLECTION_NAME)).get();
-
-        String key = UUID.randomUUID().toString();
-
-        // insert a document from within tx1
-        db.collection(COLLECTION_NAME)
-                .insertDocument(new BaseDocument(key), new DocumentCreateOptions().streamTransactionId(tx1.getId())).get();
-
-        // commit tx1
-        db.commitStreamTransaction(tx1.getId()).get();
-
-        try {
-            // insert conflicting document from within tx2
-            db.collection(COLLECTION_NAME).insertDocument(new BaseDocument(key),
-                    new DocumentCreateOptions().streamTransactionId(tx2.getId())).get();
-            fail();
-        } catch (ExecutionException e) {
-            assertThat(e.getCause(), Matchers.instanceOf(ArangoDBException.class));
-            e.getCause().printStackTrace();
-        }
-
-        db.abortStreamTransaction(tx2.getId()).get();
     }
 
     @Test
@@ -174,7 +106,10 @@ public class ConcurrentStreamTransactionsTest extends BaseTest {
                 })
                 .collect(Collectors.toList());
 
-        List<ArangoCursorAsync<BaseDocument>> results = reqs.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        List<ArangoCursorAsync<BaseDocument>> results = reqs.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
+
         db.commitStreamTransaction(tx.getId()).join();
 
         results.forEach(it -> {
@@ -182,6 +117,33 @@ public class ConcurrentStreamTransactionsTest extends BaseTest {
             assertThat(key, is(notNullValue()));
             assertThat(db.collection(COLLECTION_NAME).documentExists(key).join(), is(true));
         });
+    }
+
+    @Ignore
+    @Test
+    public void failingAqlFromBTS57() throws ExecutionException, InterruptedException {
+        assumeTrue(isAtLeastVersion(3, 5));
+        assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
+
+        String key = "key-" + UUID.randomUUID().toString();
+        String id = COLLECTION_NAME + "/" + key;
+        db.collection(COLLECTION_NAME).insertDocument(new BaseDocument(key)).join();
+
+        StreamTransactionEntity tx = db.beginStreamTransaction(
+                new StreamTransactionOptions().writeCollections(COLLECTION_NAME)).join();
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("id", id);
+        params.put("@col", COLLECTION_NAME);
+        CompletableFuture<ArangoCursorAsync<Boolean>> req = db.query("" +
+                        "LET d = DOCUMENT(@id)\n" +
+                        "UPDATE d WITH { \"aaa\": \"aaa\" } IN @@col " +
+                        "RETURN true",
+                params,
+                new AqlQueryOptions().streamTransactionId(tx.getId()), Boolean.class);
+
+        req.join();
+        db.commitStreamTransaction(tx.getId()).join();
     }
 
     @Test
