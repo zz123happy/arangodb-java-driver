@@ -35,6 +35,7 @@ jobs:
           - docker.io/arangodb/arangodb-test:3.5-nightly
           - docker.io/arangodb/arangodb-test:3.6-nightly
           - docker.io/arangodb/arangodb-test:3.7-nightly
+          - docker.io/arangodb/arangodb-test:bts-57
         topology:
           - single
           - cluster

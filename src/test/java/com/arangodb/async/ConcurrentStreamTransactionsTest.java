@@ -29,7 +29,6 @@ import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.DocumentReadOptions;
 import com.arangodb.model.StreamTransactionOptions;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.*;
