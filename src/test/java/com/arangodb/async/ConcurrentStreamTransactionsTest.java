@@ -116,7 +116,7 @@ public class ConcurrentStreamTransactionsTest extends BaseTest {
         });
     }
 
-    @Ignore
+
     @Test
     public void failingAqlFromBTS57() throws ExecutionException, InterruptedException {
         assumeTrue(isAtLeastVersion(3, 5));
