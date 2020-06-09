@@ -22,18 +22,26 @@ package com.arangodb;
 
 import com.arangodb.entity.ArangoDBEngine;
 import com.arangodb.entity.BaseDocument;
+import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.StreamTransactionEntity;
+import com.arangodb.model.AqlQueryOptions;
 import com.arangodb.model.DocumentCreateOptions;
+import com.arangodb.model.DocumentReadOptions;
 import com.arangodb.model.StreamTransactionOptions;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-import static org.junit.Assert.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -44,79 +52,145 @@ public class ConcurrentStreamTransactionsTest extends BaseTest {
 
     private static final String COLLECTION_NAME = "db_concurrent_stream_transactions_test";
 
+    public ConcurrentStreamTransactionsTest(final ArangoDB arangoDB) {
+        super(arangoDB);
+    }
+
     @BeforeClass
     public static void init() {
         BaseTest.initCollections(COLLECTION_NAME);
     }
 
-    public ConcurrentStreamTransactionsTest(final ArangoDB arangoDB) {
-        super(arangoDB);
-    }
-
     @Test
-    @Ignore
-    public void conflictOnInsertDocumentWithNotYetCommittedTx() {
-        assumeTrue(isSingleServer());
+    public void concurrentWriteWithinSameTransaction() {
         assumeTrue(isAtLeastVersion(3, 5));
         assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
 
-        StreamTransactionEntity tx1 = db.beginStreamTransaction(
-                new StreamTransactionOptions().readCollections(COLLECTION_NAME).writeCollections(COLLECTION_NAME));
+        StreamTransactionEntity tx = db.beginStreamTransaction(
+                new StreamTransactionOptions().writeCollections(COLLECTION_NAME));
 
-        StreamTransactionEntity tx2 = db.beginStreamTransaction(
-                new StreamTransactionOptions().readCollections(COLLECTION_NAME).writeCollections(COLLECTION_NAME));
+        List<CompletableFuture<DocumentCreateEntity<BaseDocument>>> reqs = IntStream.range(0, 100)
+                .mapToObj(it -> CompletableFuture.supplyAsync(() -> db.collection(COLLECTION_NAME)
+                                .insertDocument(new BaseDocument(), new DocumentCreateOptions().streamTransactionId(tx.getId())),
+                        Executors.newCachedThreadPool()))
+                .collect(Collectors.toList());
 
-        String key = UUID.randomUUID().toString();
+        List<DocumentCreateEntity<BaseDocument>> results = reqs.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        db.commitStreamTransaction(tx.getId());
 
-        // insert a document from within tx1
-        db.collection(COLLECTION_NAME)
-                .insertDocument(new BaseDocument(key), new DocumentCreateOptions().streamTransactionId(tx1.getId()));
-
-        try {
-            // insert conflicting document from within tx2
-            db.collection(COLLECTION_NAME).insertDocument(new BaseDocument(key),
-                    new DocumentCreateOptions().streamTransactionId(tx2.getId()));
-
-            fail();
-        } catch (ArangoDBException e) {
-            e.printStackTrace();
-        }
-
-        db.abortStreamTransaction(tx1.getId());
-        db.abortStreamTransaction(tx2.getId());
+        results.forEach(it -> {
+            assertThat(it.getKey(), is(notNullValue()));
+            assertThat(db.collection(COLLECTION_NAME).documentExists(it.getKey()), is(true));
+        });
     }
 
     @Test
-    public void conflictOnInsertDocumentWithAlreadyCommittedTx() {
-        assumeTrue(isSingleServer());
+    public void concurrentAqlWriteWithinSameTransaction() {
         assumeTrue(isAtLeastVersion(3, 5));
         assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
 
-        StreamTransactionEntity tx1 = db.beginStreamTransaction(
-                new StreamTransactionOptions().readCollections(COLLECTION_NAME).writeCollections(COLLECTION_NAME));
+        StreamTransactionEntity tx = db.beginStreamTransaction(
+                new StreamTransactionOptions().writeCollections(COLLECTION_NAME));
 
-        StreamTransactionEntity tx2 = db.beginStreamTransaction(
-                new StreamTransactionOptions().readCollections(COLLECTION_NAME).writeCollections(COLLECTION_NAME));
+        List<CompletableFuture<ArangoCursor<BaseDocument>>> reqs = IntStream.range(0, 100)
+                .mapToObj(it -> CompletableFuture.supplyAsync(() -> {
+                            Map<String, Object> params = new HashMap<>();
+                            params.put("doc", new BaseDocument("key-" + UUID.randomUUID().toString()));
+                            params.put("@col", COLLECTION_NAME);
+                            return db.query("INSERT @doc INTO @@col RETURN NEW", params,
+                                    new AqlQueryOptions().streamTransactionId(tx.getId()), BaseDocument.class);
+                        },
+                        Executors.newCachedThreadPool()))
+                .collect(Collectors.toList());
 
-        String key = UUID.randomUUID().toString();
+        List<ArangoCursor<BaseDocument>> results = reqs.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
 
-        // insert a document from within tx1
-        db.collection(COLLECTION_NAME)
-                .insertDocument(new BaseDocument(key), new DocumentCreateOptions().streamTransactionId(tx1.getId()));
+        db.commitStreamTransaction(tx.getId());
 
-        // commit tx1
-        db.commitStreamTransaction(tx1.getId());
-
-        try {
-            // insert conflicting document from within tx2
-            db.collection(COLLECTION_NAME).insertDocument(new BaseDocument(key),
-                    new DocumentCreateOptions().streamTransactionId(tx2.getId()));
-
-            fail();
-        } catch (ArangoDBException e) {
-            e.printStackTrace();
-        }
-
-        db.abortStreamTransaction(tx2.getId());
+        results.forEach(it -> {
+            String key = it.iterator().next().getKey();
+            assertThat(key, is(notNullValue()));
+            assertThat(db.collection(COLLECTION_NAME).documentExists(key), is(true));
+        });
     }
+
+
+    @Test
+    public void failingAqlFromBTS57() {
+        assumeTrue(isAtLeastVersion(3, 5));
+        assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
+
+        String key = "key-" + UUID.randomUUID().toString();
+        String id = COLLECTION_NAME + "/" + key;
+        db.collection(COLLECTION_NAME).insertDocument(new BaseDocument(key));
+
+        StreamTransactionEntity tx = db.beginStreamTransaction(
+                new StreamTransactionOptions().writeCollections(COLLECTION_NAME));
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("id", id);
+        params.put("@col", COLLECTION_NAME);
+        ArangoCursor<Boolean> req = db.query("" +
+                        "LET d = DOCUMENT(@id)\n" +
+                        "UPDATE d WITH { \"aaa\": \"aaa\" } IN @@col " +
+                        "RETURN true",
+                params,
+                new AqlQueryOptions().streamTransactionId(tx.getId()), Boolean.class);
+
+        db.commitStreamTransaction(tx.getId());
+    }
+
+    @Test
+    public void concurrentReadWithinSameTransaction() {
+        assumeTrue(isAtLeastVersion(3, 5));
+        assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
+
+        String key = "key-" + UUID.randomUUID().toString();
+        db.collection(COLLECTION_NAME).insertDocument(new BaseDocument(key));
+
+        StreamTransactionEntity tx = db.beginStreamTransaction(
+                new StreamTransactionOptions().readCollections(COLLECTION_NAME));
+
+        List<CompletableFuture<BaseDocument>> reqs = IntStream.range(0, 100)
+                .mapToObj(it -> CompletableFuture.supplyAsync(() -> db.collection(COLLECTION_NAME)
+                                .getDocument(key, BaseDocument.class, new DocumentReadOptions().streamTransactionId(tx.getId())),
+                        Executors.newCachedThreadPool()))
+                .collect(Collectors.toList());
+
+        List<BaseDocument> results = reqs.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        db.commitStreamTransaction(tx.getId());
+
+        results.forEach(it -> assertThat(it.getKey(), is(notNullValue())));
+    }
+
+    @Test
+    public void concurrentAqlReadWithinSameTransaction() {
+        assumeTrue(isAtLeastVersion(3, 5));
+        assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
+
+        String key = "key-" + UUID.randomUUID().toString();
+        String id = COLLECTION_NAME + "/" + key;
+        db.collection(COLLECTION_NAME).insertDocument(new BaseDocument(key));
+
+        StreamTransactionEntity tx = db.beginStreamTransaction(
+                new StreamTransactionOptions().readCollections(COLLECTION_NAME));
+
+        List<CompletableFuture<ArangoCursor<BaseDocument>>> reqs = IntStream.range(0, 100)
+                .mapToObj(it -> CompletableFuture.supplyAsync(() -> db.query(
+                        "RETURN DOCUMENT(@id)",
+                        Collections.singletonMap("id", id),
+                        new AqlQueryOptions().streamTransactionId(tx.getId()), BaseDocument.class),
+                        Executors.newCachedThreadPool()))
+                .collect(Collectors.toList());
+
+        List<ArangoCursor<BaseDocument>> results = reqs.stream()
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
+
+        db.commitStreamTransaction(tx.getId());
+        results.forEach(it -> assertThat(it.iterator().next().getKey(), is(key)));
+    }
+
 }

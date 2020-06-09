@@ -28,6 +28,7 @@ import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.StreamTransactionOptions;
 import org.hamcrest.Matchers;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.UUID;
@@ -59,6 +60,7 @@ public class StreamTransactionConflictsTest extends BaseTest {
     }
 
     @Test
+    @Ignore
     public void conflictOnInsertDocumentWithNotYetCommittedTx() throws ExecutionException, InterruptedException {
         assumeTrue(isAtLeastVersion(3, 5));
         assumeTrue(isStorageEngine(ArangoDBEngine.StorageEngineName.rocksdb));
