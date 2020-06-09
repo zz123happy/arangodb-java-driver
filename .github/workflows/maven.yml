@@ -30,11 +30,6 @@ jobs:
       fail-fast: false
       matrix:
         docker-img:
-          - docker.io/arangodb:3.5.5
-          - docker.io/arangodb:3.6.4
-          - docker.io/arangodb/arangodb-test:3.5-nightly
-          - docker.io/arangodb/arangodb-test:3.6-nightly
-          - docker.io/arangodb/arangodb-test:3.7-nightly
           - docker.io/arangodb/arangodb-test:bts-57
         topology:
           - single
