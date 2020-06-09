@@ -121,8 +121,7 @@ public class StreamTransactionConflictsTest extends BaseTest {
         } catch (ExecutionException e) {
             assertThat(e.getCause(), Matchers.instanceOf(ArangoDBException.class));
             ArangoDBException arangoDBException = (ArangoDBException) e.getCause();
-            assertThat(arangoDBException.getResponseCode(), is(409));
-            assertThat(arangoDBException.getErrorNum(), is(1210));
+            arangoDBException.printStackTrace();
         }
 
         db.abortStreamTransaction(tx2.getId()).get();
